@@ -1,0 +1,7 @@
+# env files
+.env
+*.env
+backend/.env
+frontend/.env
+.env.local
+.env.production
