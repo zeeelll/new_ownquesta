@@ -1,4 +1,4 @@
-const BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
+const BASE = process.env.NEXT_PUBLIC_API_URL;
 
 export async function api(path: string, options: RequestInit = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -17,4 +17,9 @@ export async function api(path: string, options: RequestInit = {}) {
   }
 
   return data;
+}
+
+// Test endpoint
+export async function testHelloAPI() {
+  return api("/hello");
 }
