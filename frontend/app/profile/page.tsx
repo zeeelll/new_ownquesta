@@ -32,7 +32,7 @@ interface Message {
 }
 
 const OwnquestaProfile: React.FC = () => {
-  const STORAGE_KEY = 'ownquesta_user_profile';
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
   const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2300d4ff;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%237c3aed;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23grad)' width='140' height='140'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='56' font-weight='bold' fill='white'%3EU%3C/text%3E%3C/svg%3E";
 
   const [userData, setUserData] = useState<UserProfile>({
@@ -64,20 +64,79 @@ const OwnquestaProfile: React.FC = () => {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  const saveProfile = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
-  }, [STORAGE_KEY, userData]);
-
-  const loadProfile = useCallback(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsedData = JSON.parse(stored);
-      setUserData(parsedData);
-      setCurrentAvatar(parsedData.avatar || DEFAULT_AVATAR);
-    } else {
-      saveProfile();
+  const loadProfile = useCallback(async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+        credentials: 'include',
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.user) {
+          const user = data.user;
+          setUserData({
+            name: user.name || 'User Profile',
+            email: user.email || '',
+            phone: user.phone || '',
+            dateOfBirth: user.dateOfBirth || '',
+            bio: user.bio || '',
+            company: user.company || '',
+            jobTitle: user.jobTitle || '',
+            location: user.location || '',
+            department: user.department || '',
+            website: user.website || '',
+            avatar: user.avatar || DEFAULT_AVATAR,
+            memberSince: user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            emailNotif: user.emailNotif !== undefined ? user.emailNotif : true,
+            marketingEmails: user.marketingEmails !== undefined ? user.marketingEmails : false,
+            publicProfile: user.publicProfile !== undefined ? user.publicProfile : true,
+            twoFactorAuth: user.twoFactorAuth !== undefined ? user.twoFactorAuth : false,
+            language: user.language || 'en',
+            timezone: user.timezone || 'UTC'
+          });
+          setCurrentAvatar(user.avatar || DEFAULT_AVATAR);
+        }
+      } else {
+        router.push('/login');
+      }
+    } catch (err) {
+      console.error('Failed to load profile:', err);
+      router.push('/login');
     }
-  }, [STORAGE_KEY, DEFAULT_AVATAR, saveProfile]);
+  }, [BACKEND_URL, DEFAULT_AVATAR, router]);
+
+  const saveProfile = useCallback(async (profileData: Partial<UserProfile>) => {
+    try {
+      console.log('🔄 Saving profile to backend:', profileData);
+      console.log('📡 API URL:', `${BACKEND_URL}/api/auth/profile`);
+      
+      const response = await fetch(`${BACKEND_URL}/api/auth/profile`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(profileData)
+      });
+
+      console.log('📥 Response status:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Profile saved successfully:', data);
+        return { success: true, user: data.user };
+      } else {
+        const error = await response.json();
+        console.error('❌ Save failed:', error);
+        return { success: false, message: error.message || 'Failed to update profile' };
+      }
+    } catch (err) {
+      console.error('❌ Save profile error:', err);
+      return { success: false, message: 'Network error' };
+    }
+  }, [BACKEND_URL]);
 
   const updateMemberDays = useCallback(() => {
     if (!userData.memberSince) return;
@@ -132,55 +191,71 @@ const OwnquestaProfile: React.FC = () => {
     showMessage('✓ Avatar removed! Click Save to apply permanently.', 'success');
   };
 
-  const handleProfileSubmit = (e: FormEvent) => {
+  const handleProfileSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const updatedData = {
-      ...userData,
       name: (document.getElementById('name') as HTMLInputElement)?.value || userData.name,
       phone: (document.getElementById('phone') as HTMLInputElement)?.value || userData.phone,
       dateOfBirth: (document.getElementById('dateOfBirth') as HTMLInputElement)?.value || userData.dateOfBirth,
       bio: (document.getElementById('bio') as HTMLTextAreaElement)?.value || userData.bio,
       avatar: currentAvatar
     };
-    setUserData(updatedData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-    showMessage('✓ Profile updated successfully! All changes saved permanently.', 'success');
+    
+    const result = await saveProfile(updatedData);
+    if (result.success) {
+      setUserData(prev => ({ ...prev, ...updatedData }));
+      showMessage('✓ Profile updated successfully!', 'success');
+    } else {
+      showMessage(`✕ ${result.message}`, 'error');
+    }
   };
 
-  const handleWorkSubmit = (e: FormEvent) => {
+  const handleWorkSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const updatedData = {
-      ...userData,
       company: (document.getElementById('company') as HTMLInputElement)?.value || userData.company,
       jobTitle: (document.getElementById('jobTitle') as HTMLInputElement)?.value || userData.jobTitle,
       location: (document.getElementById('location') as HTMLInputElement)?.value || userData.location,
       department: (document.getElementById('department') as HTMLInputElement)?.value || userData.department,
       website: (document.getElementById('website') as HTMLInputElement)?.value || userData.website
     };
-    setUserData(updatedData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-    showMessage('✓ Work information saved successfully! All changes saved permanently.', 'success');
+    
+    const result = await saveProfile(updatedData);
+    if (result.success) {
+      setUserData(prev => ({ ...prev, ...updatedData }));
+      showMessage('✓ Work information saved successfully!', 'success');
+    } else {
+      showMessage(`✕ ${result.message}`, 'error');
+    }
   };
 
   const toggleSetting = (setting: keyof Pick<UserProfile, 'emailNotif' | 'marketingEmails' | 'publicProfile' | 'twoFactorAuth'>) => {
-    setUserData(prev => ({
-      ...prev,
-      [setting]: !prev[setting]
-    }));
+    setUserData(prev => {
+      const newValue = !prev[setting];
+      saveProfile({ [setting]: newValue });
+      return {
+        ...prev,
+        [setting]: newValue
+      };
+    });
   };
 
-  const saveSettings = () => {
+  const saveSettings = async () => {
     const language = (document.getElementById('language') as HTMLSelectElement)?.value || 'en';
     const timezone = (document.getElementById('timezone') as HTMLSelectElement)?.value || 'UTC';
     
     const updatedData = {
-      ...userData,
       language,
       timezone
     };
-    setUserData(updatedData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-    showMessage('✓ Preferences saved successfully! All changes saved permanently.', 'success');
+    
+    const result = await saveProfile(updatedData);
+    if (result.success) {
+      setUserData(prev => ({ ...prev, ...updatedData }));
+      showMessage('✓ Preferences saved successfully!', 'success');
+    } else {
+      showMessage(`✕ ${result.message}`, 'error');
+    }
   };
 
   const changePassword = () => {

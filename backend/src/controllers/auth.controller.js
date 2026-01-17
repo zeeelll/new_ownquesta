@@ -17,11 +17,40 @@ exports.register = async (req, res) => {
       name,
       email,
       password: hash,
-      provider: "local"
+      provider: "local",
+      avatar: "",
+      phone: "",
+      dateOfBirth: "",
+      bio: "",
+      company: "",
+      jobTitle: "",
+      location: "",
+      department: "",
+      website: "",
+      emailNotif: true,
+      marketingEmails: false,
+      publicProfile: true,
+      twoFactorAuth: false,
+      language: "en",
+      timezone: "UTC",
+      isActive: true,
+      role: "user",
+      subscription: "free",
+      settings: {
+        emailNotif: true,
+        marketingEmails: false,
+        publicProfile: true,
+        twoFactorAuth: false,
+        language: "en",
+        timezone: "UTC"
+      }
     });
+
+    console.log("✅ New user registered:", user._id);
 
     res.status(201).json({ message: "Registered successfully", user });
   } catch (err) {
+    console.error("❌ Registration error:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -46,10 +75,76 @@ exports.logout = (req, res) => {
 
 exports.me = (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
-  res.json({ user: req.user });
+  
+  const userObj = req.user.toObject();
+  delete userObj.password;
+  
+  console.log("👤 User profile requested:", req.user._id);
+  res.json({ user: userObj });
 };
 
 exports.check = (req, res) => {
   if (req.isAuthenticated && req.isAuthenticated()) return res.sendStatus(200);
   return res.sendStatus(401);
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ message: "Unauthorized" });
+
+    console.log("📝 Updating profile for user:", req.user._id);
+    console.log("📦 Update data:", req.body);
+
+    const {
+      name,
+      phone,
+      dateOfBirth,
+      bio,
+      company,
+      jobTitle,
+      location,
+      department,
+      website,
+      avatar,
+      emailNotif,
+      marketingEmails,
+      publicProfile,
+      twoFactorAuth,
+      language,
+      timezone
+    } = req.body;
+
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (phone !== undefined) updateData.phone = phone;
+    if (dateOfBirth !== undefined) updateData.dateOfBirth = dateOfBirth;
+    if (bio !== undefined) updateData.bio = bio;
+    if (company !== undefined) updateData.company = company;
+    if (jobTitle !== undefined) updateData.jobTitle = jobTitle;
+    if (location !== undefined) updateData.location = location;
+    if (department !== undefined) updateData.department = department;
+    if (website !== undefined) updateData.website = website;
+    if (avatar !== undefined) updateData.avatar = avatar;
+    if (emailNotif !== undefined) updateData.emailNotif = emailNotif;
+    if (marketingEmails !== undefined) updateData.marketingEmails = marketingEmails;
+    if (publicProfile !== undefined) updateData.publicProfile = publicProfile;
+    if (twoFactorAuth !== undefined) updateData.twoFactorAuth = twoFactorAuth;
+    if (language !== undefined) updateData.language = language;
+    if (timezone !== undefined) updateData.timezone = timezone;
+
+    console.log("💾 Saving to database:", updateData);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      updateData,
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    console.log("✅ Profile updated successfully");
+
+    res.json({ message: "Profile updated successfully", user: updatedUser });
+  } catch (err) {
+    console.error("❌ Profile update error:", err);
+    res.status(500).json({ message: err.message });
+  }
 };

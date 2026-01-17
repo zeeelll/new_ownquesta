@@ -52,8 +52,34 @@ passport.use(
             name: profile.displayName,
             email: profile.emails?.[0]?.value || "",
             avatar: profile.photos?.[0]?.value || "",
-            provider: "google"
+            provider: "google",
+            phone: "",
+            dateOfBirth: "",
+            bio: "",
+            company: "",
+            jobTitle: "",
+            location: "",
+            department: "",
+            website: "",
+            emailNotif: true,
+            marketingEmails: false,
+            publicProfile: true,
+            twoFactorAuth: false,
+            language: "en",
+            timezone: "UTC",
+            isActive: true,
+            role: "user",
+            subscription: "free",
+            settings: {
+              emailNotif: true,
+              marketingEmails: false,
+              publicProfile: true,
+              twoFactorAuth: false,
+              language: "en",
+              timezone: "UTC"
+            }
           });
+          console.log("✅ New Google user created:", user._id);
         }
 
         user.lastLogin = new Date();
