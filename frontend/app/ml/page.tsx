@@ -397,7 +397,7 @@ const MLPage: React.FC = () => {
                   </div>
                   <div className="check-item success">
                     <span className="check-icon">✓</span>
-                    <span className="check-text">Outliers identified: 2 (< 0.1%)</span>
+                    <span className="check-text">Outliers identified: 2 (&lt; 0.1%)</span>
                   </div>
                   <div className="check-item warning">
                     <span className="check-icon">!</span>
