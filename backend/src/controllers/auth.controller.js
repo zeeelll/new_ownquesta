@@ -48,3 +48,8 @@ exports.me = (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
   res.json({ user: req.user });
 };
+
+exports.check = (req, res) => {
+  if (req.isAuthenticated && req.isAuthenticated()) return res.sendStatus(200);
+  return res.sendStatus(401);
+};

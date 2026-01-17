@@ -21,8 +21,8 @@ export default function RegisterPage() {
       });
 
       router.push("/login");
-    } catch (err: any) {
-      setMsg(err.message);
+    } catch (err: unknown) {
+      setMsg(err instanceof Error ? err.message : 'Registration failed');
     }
   }
 

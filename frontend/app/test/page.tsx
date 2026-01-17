@@ -4,7 +4,7 @@ import { useState } from "react";
 import { testHelloAPI } from "@/services/api";
 
 export default function TestAPIPage() {
-  const [response, setResponse] = useState<any>(null);
+  const [response, setResponse] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,8 +14,8 @@ export default function TestAPIPage() {
     try {
       const data = await testHelloAPI();
       setResponse(data);
-    } catch (err: any) {
-      setError(err.message || "Failed to call API");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to call API");
     } finally {
       setLoading(false);
     }

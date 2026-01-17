@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function LandingPage() {
@@ -46,6 +47,30 @@ export default function LandingPage() {
     };
   }, []);
 
+<<<<<<< HEAD
+=======
+  const router = useRouter();
+
+  const handleLogout = () => {
+    setUserDropdownOpen(false);
+    
+    // Immediately update UI to show logged out state
+    setUser({ authenticated: false });
+    
+    // Call backend logout
+    fetch(`${BACKEND_URL}/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    })
+      .finally(() => {
+        // Force complete reload after a brief moment to ensure backend processed logout
+        setTimeout(() => {
+          window.location.replace('/');
+        }, 100);
+      });
+  };
+
+>>>>>>> 65333659a66f0d38b4c218413148ceeb44433019
   return (
     <div className="relative bg-[#0a0e1a] text-[#e6eef8] overflow-x-hidden">
       <style jsx global>{`
@@ -118,12 +143,64 @@ export default function LandingPage() {
         </Link>
 
         <div className="flex items-center gap-3">
+<<<<<<< HEAD
           <Link href="/login" className="px-6 py-2.5 bg-[rgba(110,84,200,0.15)] border border-[rgba(110,84,200,0.4)] rounded-lg text-sm font-semibold transition-all hover:bg-[rgba(110,84,200,0.3)] hover:border-[rgba(110,84,200,0.6)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(110,84,200,0.3)]">
             Log In
           </Link>
           <Link href="/about" className="px-6 py-2.5 bg-[rgba(110,84,200,0.15)] border border-[rgba(110,84,200,0.4)] rounded-lg text-sm font-semibold transition-all hover:bg-[rgba(110,84,200,0.3)] hover:border-[rgba(110,84,200,0.6)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(110,84,200,0.3)]">
             About
           </Link>
+=======
+          {!user?.authenticated ? (
+            <>
+              <Link href="/login" className="px-6 py-2.5 bg-[rgba(110,84,200,0.15)] border border-[rgba(110,84,200,0.4)] rounded-lg text-sm font-semibold transition-all hover:bg-[rgba(110,84,200,0.3)] hover:border-[rgba(110,84,200,0.6)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(110,84,200,0.3)]">
+                Log In
+              </Link>
+              <Link href="/about" className="px-6 py-2.5 bg-[rgba(110,84,200,0.15)] border border-[rgba(110,84,200,0.4)] rounded-lg text-sm font-semibold transition-all hover:bg-[rgba(110,84,200,0.3)] hover:border-[rgba(110,84,200,0.6)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(110,84,200,0.3)]">
+                About
+              </Link>
+            </>
+          ) : (
+            <div id="user-dropdown" className="relative">
+              <div 
+                className="flex items-center gap-2.5 cursor-pointer px-4 py-2 rounded-lg transition-all hover:bg-[rgba(110,84,200,0.15)]"
+                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+              >
+                <img src={user.avatar || 'https://via.placeholder.com/36'} alt="User" className="w-9 h-9 rounded-full border-2 border-[rgba(110,84,200,0.6)]" />
+                <span>{user.name}</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 11L3 6h10l-5 5z"/>
+                </svg>
+              </div>
+              
+              {userDropdownOpen && (
+                <div className="absolute top-full right-0 mt-2.5 bg-[rgba(11,18,33,0.95)] backdrop-blur-md rounded-xl shadow-[0_8px_32px_rgba(110,84,200,0.3)] border border-[rgba(255,255,255,0.1)] min-w-[200px]">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => { setUserDropdownOpen(false); router.push('/profile'); }}
+                    onKeyPress={(e) => { if (e.key === 'Enter') { setUserDropdownOpen(false); router.push('/profile'); } }}
+                    className="flex items-center gap-3 px-5 py-3 border-b border-[rgba(255,255,255,0.05)] transition-all hover:bg-[rgba(110,84,200,0.2)] hover:pl-6 cursor-pointer"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>Profile</span>
+                  </div>
+                  <div onClick={handleLogout} className="flex items-center gap-3 px-5 py-3 cursor-pointer transition-all hover:bg-[rgba(110,84,200,0.2)] hover:pl-6">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                      <polyline points="16 17 21 12 16 7"/>
+                      <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    <span>Logout</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+>>>>>>> 65333659a66f0d38b4c218413148ceeb44433019
         </div>
       </nav>
 
@@ -145,8 +222,52 @@ export default function LandingPage() {
             A complete no-code AI platform to explore datasets, create features, and train production-ready ML and deep learning models with explainable intelligence.
           </p>
 
+<<<<<<< HEAD
           <div className="mb-[100px]">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-[60px]">
+=======
+          {!user?.authenticated && (
+            <div className="mb-[100px]">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-[60px]">
+                {[
+                  { num: '1', title: 'Upload Dataset' },
+                  { num: '2', title: 'Understand Data' },
+                  { num: '3', title: 'Build Model' }
+                ].map((step, i) => (
+                  <div key={i} className="opacity-0 animate-[fadeIn_0.8s_ease_forwards]" style={{ animationDelay: `${i * 0.15}s` }}>
+                    <div className="inline-flex items-center justify-center w-[72px] h-[72px] bg-[rgba(110,84,200,0.2)] border-2 border-[rgba(110,84,200,0.4)] rounded-2xl text-3xl font-bold mb-5 transition-all duration-500 hover:-translate-y-2 hover:scale-105 hover:shadow-[0_12px_32px_rgba(110,84,200,0.3)]">
+                      {step.num}
+                    </div>
+                    <div className="text-base font-semibold tracking-wide">{step.title}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {user?.authenticated && (
+            <Link 
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-3 px-10 py-4 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] text-white rounded-xl text-[17px] font-semibold shadow-[0_8px_24px_rgba(110,84,200,0.3)] transition-all duration-400 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_16px_40px_rgba(110,84,200,0.5)]"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              Go to Dashboard
+            </Link>
+          )}
+        </div>
+      </section>
+
+      {!user?.authenticated && (
+        <>
+          {/* Features Section */}
+          <section className="min-h-screen flex items-center justify-center px-5 py-[120px] bg-[rgba(15,23,42,0.3)] backdrop-blur-md border-y border-[rgba(255,255,255,0.05)]">
+            <div className="w-full max-w-[900px]">
+>>>>>>> 65333659a66f0d38b4c218413148ceeb44433019
               {[
                 { num: '1', title: 'Upload Dataset' },
                 { num: '2', title: 'Understand Data' },

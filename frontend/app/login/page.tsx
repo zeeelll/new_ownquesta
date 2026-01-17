@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -26,17 +25,29 @@ export default function LoginPage() {
   const [signUpSuccess, setSignUpSuccess] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in
-    fetch(`${BACKEND_URL}/api/auth/check`, {
-      credentials: 'include'
+    // Check authentication status and show user panel if logged in
+    fetch(`${BACKEND_URL}/api/auth/me`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' }
     })
-      .then(res => {
+      .then(async (res) => {
         if (res.ok) {
+<<<<<<< HEAD
           router.push('/home');
+=======
+          const data = await res.json();
+          if (data?.user) setCurrentUser({ authenticated: true, name: data.user.name, avatar: data.user.avatar });
+          else setCurrentUser({ authenticated: false });
+        } else {
+          setCurrentUser({ authenticated: false });
+>>>>>>> 65333659a66f0d38b4c218413148ceeb44433019
         }
       })
-      .catch(() => {});
+      .catch(() => setCurrentUser({ authenticated: false }));
   }, [router]);
+
+  const [currentUser, setCurrentUser] = useState<{ authenticated: boolean; name?: string; avatar?: string } | null>(null);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const handleSignIn = async () => {
     setSignInMessage('');
@@ -57,15 +68,22 @@ export default function LoginPage() {
         credentials: 'include'
       });
       
+<<<<<<< HEAD
       if (response.ok) {
         // Login successful - redirect to home page
         window.location.href = '/home';
+=======
+      if (response.redirected) {
+        window.location.href = response.url;
+      } else if (response.ok) {
+        router.replace('/');
+>>>>>>> 65333659a66f0d38b4c218413148ceeb44433019
       } else {
         const data = await response.json();
         setSignInMessage(data.error || 'Invalid email or password');
         setSignInSuccess(false);
       }
-    } catch (error) {
+    } catch {
       setSignInMessage('Network error. Please try again.');
       setSignInSuccess(false);
     } finally {
@@ -111,15 +129,22 @@ export default function LoginPage() {
         credentials: 'include'
       });
       
+<<<<<<< HEAD
       if (response.ok) {
         // Signup successful - redirect to home page
         window.location.href = '/home';
+=======
+      if (response.redirected) {
+        window.location.href = response.url;
+      } else if (response.ok) {
+        router.replace('/');
+>>>>>>> 65333659a66f0d38b4c218413148ceeb44433019
       } else {
         const errorText = await response.text();
         setSignUpMessage(errorText || 'Failed to create account');
         setSignUpSuccess(false);
       }
-    } catch (error) {
+    } catch {
       setSignUpMessage('Network error. Please try again.');
       setSignUpSuccess(false);
     } finally {
@@ -132,6 +157,21 @@ export default function LoginPage() {
     setTimeout(() => {
       window.location.href = `${BACKEND_URL}/api/auth/google`;
     }, 500);
+  };
+
+  const handleLogoutFromLogin = () => {
+    setLoading(true);
+    setUser({ authenticated: false });
+    
+    fetch(`${BACKEND_URL}/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    })
+      .finally(() => {
+        setTimeout(() => {
+          window.location.replace('/');
+        }, 100);
+      });
   };
 
   return (
@@ -209,6 +249,45 @@ export default function LoginPage() {
           {/* Sign In View */}
           {!isSignUp && (
             <div>
+              {/* If user already authenticated, show user name + dropdown instead of sign-in form */}
+              {currentUser?.authenticated ? (
+                <div id="login-user-dropdown" className="relative">
+                  <div
+                    className="flex items-center gap-3.5 cursor-pointer px-4 py-3 rounded-lg transition-all hover:bg-[rgba(110,84,200,0.05)]"
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  >
+                    <img src={currentUser.avatar || 'https://via.placeholder.com/36'} alt="User" className="w-9 h-9 rounded-full border-2 border-[rgba(110,84,200,0.6)]" />
+                    <span className="text-lg font-medium text-white">{currentUser.name}</span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M8 11L3 6h10l-5 5z" />
+                    </svg>
+                  </div>
+
+                  {userDropdownOpen && (
+                    <div className="absolute top-full right-0 mt-2.5 bg-[rgba(11,18,33,0.95)] backdrop-blur-md rounded-xl shadow-[0_8px_32px_rgba(110,84,200,0.3)] border border-[rgba(255,255,255,0.05)] min-w-[200px]">
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => { setUserDropdownOpen(false); router.push('/profile'); }}
+                        onKeyPress={(e) => { if (e.key === 'Enter') { setUserDropdownOpen(false); router.push('/profile'); } }}
+                        className="flex items-center gap-3 px-5 py-3 border-b border-[rgba(255,255,255,0.03)] transition-all hover:bg-[rgba(110,84,200,0.05)] hover:pl-6 cursor-pointer"
+                      >
+                        <span>Profile</span>
+                      </div>
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => { setUserDropdownOpen(false); handleLogoutFromLogin(); }}
+                        onKeyPress={(e) => { if (e.key === 'Enter') { setUserDropdownOpen(false); handleLogoutFromLogin(); } }}
+                        className="flex items-center gap-3 px-5 py-3 cursor-pointer transition-all hover:bg-[rgba(110,84,200,0.05)] hover:pl-6"
+                      >
+                        <span>Logout</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
               <div className="mb-8">
                 <h2 className="text-[32px] font-bold mb-2.5 text-[#f8fafc]">Welcome Back</h2>
                 <p className="text-[15px] text-[#94a3b8]">
@@ -288,6 +367,8 @@ export default function LoginPage() {
                   </div>
                 )}
               </div>
+              </div>
+              )}
             </div>
           )}
 
