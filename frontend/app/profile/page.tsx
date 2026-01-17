@@ -66,18 +66,7 @@ const OwnquestaProfile: React.FC = () => {
 
   const saveProfile = useCallback(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
-  }, [STORAGE_KEY, userData]);
-
-  const loadProfile = useCallback(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsedData = JSON.parse(stored);
-      setUserData(parsedData);
-      setCurrentAvatar(parsedData.avatar || DEFAULT_AVATAR);
-    } else {
-      saveProfile();
-    }
-  }, [STORAGE_KEY, DEFAULT_AVATAR, saveProfile]);
+  }, [userData]);
 
   const updateMemberDays = useCallback(() => {
     if (!userData.memberSince) return;
@@ -92,12 +81,17 @@ const OwnquestaProfile: React.FC = () => {
   // Load profile data on component mount
   useEffect(() => {
     setIsHydrated(true);
-    loadProfile();
-  }, [loadProfile]);
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsedData = JSON.parse(stored);
+      setUserData(parsedData);
+      setCurrentAvatar(parsedData.avatar || DEFAULT_AVATAR);
+    }
+  }, []); // Empty dependency array - only run once on mount
 
   useEffect(() => {
     updateMemberDays();
-  }, [userData.memberSince, updateMemberDays]);
+  }, [updateMemberDays]);
 
   const showMessage = (text: string, type: 'success' | 'error' | 'info') => {
     setMessage({ text, type, show: true });

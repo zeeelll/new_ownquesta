@@ -234,13 +234,6 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Scroll Indicator */}
-      {showScrollIndicator && (
-        <div className="fixed bottom-[60px] left-1/2 -translate-x-1/2 z-10 transition-opacity duration-500">
-          <div className="w-8 h-8 border-r-[3px] border-b-[3px] border-[#6e54c8] scroll-bounce" />
-        </div>
-      )}
-
       {/* Hero Section */}
       <section className="min-h-screen flex items-center justify-center px-5 pt-[180px] pb-[120px]">
         <div className="w-full max-w-[900px] text-center relative z-10">
