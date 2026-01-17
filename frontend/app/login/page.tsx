@@ -32,7 +32,7 @@ export default function LoginPage() {
     })
       .then(res => {
         if (res.ok) {
-          router.push('/');
+          router.push('/home');
         }
       })
       .catch(() => {});
@@ -57,10 +57,9 @@ export default function LoginPage() {
         credentials: 'include'
       });
       
-      if (response.redirected) {
-        window.location.href = response.url;
-      } else if (response.ok) {
-        window.location.href = '/';
+      if (response.ok) {
+        // Login successful - redirect to home page
+        window.location.href = '/home';
       } else {
         const data = await response.json();
         setSignInMessage(data.error || 'Invalid email or password');
@@ -112,10 +111,9 @@ export default function LoginPage() {
         credentials: 'include'
       });
       
-      if (response.redirected) {
-        window.location.href = response.url;
-      } else if (response.ok) {
-        window.location.href = '/';
+      if (response.ok) {
+        // Signup successful - redirect to home page
+        window.location.href = '/home';
       } else {
         const errorText = await response.text();
         setSignUpMessage(errorText || 'Failed to create account');
