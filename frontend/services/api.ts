@@ -1,4 +1,8 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL;
+// Prefer the same URL used for auth/session so cookies stay valid.
+const BASE =
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:5000";
 
 export async function api(path: string, options: RequestInit = {}) {
   const res = await fetch(`${BASE}${path}`, {
