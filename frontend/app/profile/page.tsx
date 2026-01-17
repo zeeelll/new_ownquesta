@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
+import React, { useState, useEffect, useRef, ChangeEvent, FormEvent, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import './OwnquestaProfile.css'; // We'll extract CSS separately
 
 interface UserProfile {
@@ -61,18 +62,13 @@ const OwnquestaProfile: React.FC = () => {
   const [memberDays, setMemberDays] = useState<number>(0);
   const [isHydrated, setIsHydrated] = useState<boolean>(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
-  // Load profile data on component mount
-  useEffect(() => {
-    setIsHydrated(true);
-    loadProfile();
-  }, []);
+  const saveProfile = useCallback(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+  }, [STORAGE_KEY, userData]);
 
-  useEffect(() => {
-    updateMemberDays();
-  }, [userData.memberSince]);
-
-  const loadProfile = () => {
+  const loadProfile = useCallback(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsedData = JSON.parse(stored);
@@ -81,13 +77,9 @@ const OwnquestaProfile: React.FC = () => {
     } else {
       saveProfile();
     }
-  };
+  }, [STORAGE_KEY, DEFAULT_AVATAR, saveProfile]);
 
-  const saveProfile = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
-  };
-
-  const updateMemberDays = () => {
+  const updateMemberDays = useCallback(() => {
     if (!userData.memberSince) return;
     const memberDate = new Date(userData.memberSince);
     const today = new Date();
@@ -95,7 +87,17 @@ const OwnquestaProfile: React.FC = () => {
     if (!isNaN(days)) {
       setMemberDays(days);
     }
-  };
+  }, [userData.memberSince]);
+
+  // Load profile data on component mount
+  useEffect(() => {
+    setIsHydrated(true);
+    loadProfile();
+  }, [loadProfile]);
+
+  useEffect(() => {
+    updateMemberDays();
+  }, [userData.memberSince, updateMemberDays]);
 
   const showMessage = (text: string, type: 'success' | 'error' | 'info') => {
     setMessage({ text, type, show: true });
@@ -232,7 +234,7 @@ const OwnquestaProfile: React.FC = () => {
   };
 
   const goToDashboard = () => {
-    window.location.href = '/dashboard';
+    router.push('/dashboard');
   };
 
   const switchTab = (tabName: string) => {

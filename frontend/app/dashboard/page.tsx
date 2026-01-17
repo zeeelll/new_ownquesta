@@ -29,7 +29,7 @@ interface MLStats {
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stats, setStats] = useState<MLStats>({
     validations: 0,
@@ -37,9 +37,18 @@ export default function DashboardPage() {
     avgConfidence: 0,
     totalRows: 0,
   });
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [projects] = useState<Project[]>([]);
+  const [activities] = useState<Activity[]>([]);
   const router = useRouter();
+
+  const loadDashboardData = () => {
+    // Load from localStorage or API
+    const mlData = localStorage.getItem("mlValidationStats");
+    if (mlData) {
+      const parsedStats = JSON.parse(mlData);
+      setStats(parsedStats);
+    }
+  };
 
   useEffect(() => {
     async function loadMe() {
@@ -53,58 +62,6 @@ export default function DashboardPage() {
     }
     loadMe();
   }, [router]);
-
-  const loadDashboardData = () => {
-    // Load from localStorage or API
-    const mlData = localStorage.getItem("mlValidationStats");
-    if (mlData) {
-      setStats(JSON.parse(mlData));
-    }
-
-    // Mock projects data
-    setProjects([
-      {
-        id: "1",
-        name: "Churn Prediction",
-        dataset: "churn.csv",
-        taskType: "classification",
-        status: "validated",
-        confidence: 86,
-        createdDate: "2024-01-08",
-      },
-      {
-        id: "2",
-        name: "House Price",
-        dataset: "house.csv",
-        taskType: "regression",
-        status: "clarify-needed",
-        confidence: 64,
-        createdDate: "2024-01-07",
-      },
-    ]);
-
-    // Mock activity data
-    setActivities([
-      {
-        id: "1",
-        action: "Uploaded dataset churn.csv",
-        timestamp: "2024-01-08 14:30",
-        type: "upload",
-      },
-      {
-        id: "2",
-        action: "Validation completed for Churn Prediction",
-        timestamp: "2024-01-08 14:35",
-        type: "validation",
-      },
-      {
-        id: "3",
-        action: 'AI asked clarification: "Confirm target variable"',
-        timestamp: "2024-01-08 14:40",
-        type: "clarification",
-      },
-    ]);
-  };
 
   const selectModelType = (type: string) => {
     setSidebarOpen(false);

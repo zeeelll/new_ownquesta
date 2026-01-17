@@ -30,7 +30,6 @@ const MLStudioAdvanced: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedTask, setSelectedTask] = useState<string>('');
   const [userQuery, setUserQuery] = useState<string>('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
