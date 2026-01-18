@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Node {
   x: number;
@@ -13,6 +14,11 @@ const DeepLearningPlatform: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mousePos, setMousePos] = useState({ x: 100, y: 100 });
   const [isHovering, setIsHovering] = useState(false);
+  const [user, setUser] = useState<{ name?: string; avatar?: string } | null>(null);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const router = useRouter();
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+  
   const nodesRef = useRef<Node[]>([
     { x: 100, y: 60, baseX: 100, baseY: 60 },
     { x: 60, y: 100, baseX: 60, baseY: 100 },
@@ -23,6 +29,16 @@ const DeepLearningPlatform: React.FC = () => {
   ]);
 
   useEffect(() => {
+    // Fetch user data
+    fetch(`${BACKEND_URL}/api/auth/me`, { credentials: 'include' })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.user) {
+          setUser({ name: data.user.name, avatar: data.user.avatar });
+        }
+      })
+      .catch(err => console.error('Failed to fetch user', err));
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -102,7 +118,18 @@ const DeepLearningPlatform: React.FC = () => {
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [mousePos, isHovering]);
+  }, [mousePos, isHovering, BACKEND_URL]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('#user-dropdown')) {
+        setUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -120,16 +147,24 @@ const DeepLearningPlatform: React.FC = () => {
     setIsHovering(false);
   };
 
+  const handleLogout = async () => {
+    try {
+      setUserDropdownOpen(false);
+      await fetch(`${BACKEND_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } finally {
+      window.location.href = '/';
+    }
+  };
+
   const handleBack = () => {
     window.history.back();
   };
 
   const handleDashboard = () => {
-    window.location.href = '/dashboard';
-  };
-
-  const handleProfile = () => {
-    window.location.href = '/profile.html';
+    router.push('/dashboard');
   };
 
   const handleMLPlatform = () => {
@@ -202,12 +237,46 @@ const DeepLearningPlatform: React.FC = () => {
           >
             🏠 Dashboard
           </button>
-          <button 
-            onClick={handleProfile}
-            className="px-4 py-2 rounded-lg font-medium text-sm bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/40 transition-all flex items-center gap-2"
-          >
-            <span>◉</span> Profile
-          </button>
+          
+          {/* User Dropdown */}
+          <div id="user-dropdown" className="relative">
+            <div 
+              className="cursor-pointer transition-all hover:opacity-80"
+              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+            >
+              <img 
+                src={user?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.name || 'User')} 
+                alt="User" 
+                className="w-10 h-10 rounded-full border-2 border-indigo-500/60 hover:border-indigo-500" 
+              />
+            </div>
+            
+            {userDropdownOpen && (
+              <div className="absolute top-full right-0 mt-2.5 bg-slate-900/95 backdrop-blur-md rounded-xl shadow-[0_8px_32px_rgba(110,84,200,0.3)] border border-slate-700/50 min-w-[200px] overflow-hidden">
+                <button 
+                  onClick={() => router.push('/profile')} 
+                  className="w-full flex items-center gap-3 px-5 py-3 border-b border-slate-700/50 transition-all hover:bg-indigo-500/20 text-left"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  <span className="text-white">Profile</span>
+                </button>
+                <button 
+                  onClick={handleLogout} 
+                  className="w-full flex items-center gap-3 px-5 py-3 cursor-pointer transition-all hover:bg-red-500/20 text-left"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  <span className="text-white">Logout</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 

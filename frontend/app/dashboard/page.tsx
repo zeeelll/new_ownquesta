@@ -29,8 +29,9 @@ interface MLStats {
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
+  const [user, setUser] = useState<{ name?: string; email?: string; avatar?: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [stats, setStats] = useState<MLStats>({
     validations: 0,
     datasets: 0,
@@ -62,6 +63,30 @@ export default function DashboardPage() {
     }
     loadMe();
   }, [router]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('#user-dropdown')) {
+        setUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+    try {
+      setUserDropdownOpen(false);
+      await fetch(`${BACKEND_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } finally {
+      window.location.href = '/';
+    }
+  };
 
   const selectModelType = (type: string) => {
     setSidebarOpen(false);
@@ -121,6 +146,21 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans text-sm">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0" style={{
+          background: `
+            radial-gradient(circle at 20% 30%, rgba(110, 84, 200, 0.25) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(124, 73, 169, 0.25) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(94, 114, 235, 0.18) 0%, transparent 60%)
+          `
+        }} />
+        
+        {/* Glow Orbs */}
+        <div className="absolute w-[350px] h-[350px] rounded-full blur-[70px] bg-[rgba(110,84,200,0.2)] top-[10%] left-[10%]" />
+        <div className="absolute w-[450px] h-[450px] rounded-full blur-[70px] bg-[rgba(124,73,169,0.18)] bottom-[10%] right-[10%]" />
+      </div>
+
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-8 bg-slate-900/80 backdrop-blur-xl border-b border-indigo-500/20">
         <div className="flex items-center gap-3">
@@ -136,12 +176,46 @@ export default function DashboardPage() {
           >
             Back
           </button>
-          <button
-            onClick={() => router.push("/profile")}
-            className="px-4 py-2 rounded-lg text-white font-medium text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
-          >
-            👤 Profile
-          </button>
+          
+          {/* User Dropdown */}
+          <div id="user-dropdown" className="relative">
+            <div 
+              className="cursor-pointer transition-all hover:opacity-80"
+              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+            >
+              <img 
+                src={user?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.name || 'User')} 
+                alt="User" 
+                className="w-10 h-10 rounded-full border-2 border-indigo-500/60 hover:border-indigo-500" 
+              />
+            </div>
+            
+            {userDropdownOpen && (
+              <div className="absolute top-full right-0 mt-2.5 bg-slate-900/95 backdrop-blur-md rounded-xl shadow-[0_8px_32px_rgba(110,84,200,0.3)] border border-slate-700/50 min-w-[200px] overflow-hidden">
+                <button 
+                  onClick={() => router.push('/profile')} 
+                  className="w-full flex items-center gap-3 px-5 py-3 border-b border-slate-700/50 transition-all hover:bg-indigo-500/20 text-left"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  <span className="text-white">Profile</span>
+                </button>
+                <button 
+                  onClick={handleLogout} 
+                  className="w-full flex items-center gap-3 px-5 py-3 cursor-pointer transition-all hover:bg-red-500/20 text-left"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  <span className="text-white">Logout</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 

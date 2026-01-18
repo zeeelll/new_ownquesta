@@ -36,6 +36,43 @@ const MLPage: React.FC = () => {
   const [userQuery, setUserQuery] = useState<string>('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [user, setUser] = useState<{ name?: string; avatar?: string } | null>(null);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const router = useRouter();
+    
+    // Fetch user data
+    fetch(`${BACKEND_URL}/api/auth/me`, { credentials: 'include' })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.user) {
+          setUser({ name: data.user.name, avatar: data.user.avatar });
+        }
+      })
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('#user-dropdown')) {
+        setUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      setUserDropdownOpen(false);
+      await fetch(`${BACKEND_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } finally {
+      window.location.href = '/';
+    }
+  };
+      .catch(err => console.error('Failed to fetch user', err));
+  }, [BACKEND_URLt BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
   useEffect(() => {
     setIsHydrated(true);

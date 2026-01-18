@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import ThreeBackground from './ThreeBackground';
 
 type AuthUser = {
   authenticated: boolean;
@@ -21,6 +22,24 @@ export default function HomePage() {
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
   useEffect(() => {
+    // Initialize Lenis smooth scrolling
+    let lenis: any;
+    if (typeof window !== 'undefined') {
+      import('lenis').then(({ default: Lenis }) => {
+        lenis = new Lenis({
+          duration: 1.2,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          smoothWheel: true,
+        });
+
+        function raf(time: number) {
+          lenis.raf(time);
+          requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+      });
+    }
+
     // Check authentication status
     fetch(`${BACKEND_URL}/api/auth/me`, {
       credentials: 'include',
@@ -68,6 +87,7 @@ export default function HomePage() {
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      lenis?.destroy();
     };
   }, [BACKEND_URL]);
 
@@ -100,6 +120,9 @@ export default function HomePage() {
 
   return (
     <div className="relative bg-[#0a0e1a] text-[#e6eef8] overflow-x-hidden min-h-screen">
+      {/* 3D Animated Background */}
+      <ThreeBackground />
+      
       <style jsx global>{`
         @keyframes logoShine {
           0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
@@ -125,18 +148,14 @@ export default function HomePage() {
       />
 
       {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none z-0">
+      <div className="fixed inset-0 pointer-events-none z-[1]">
         <div className="absolute inset-0" style={{
           background: `
-            radial-gradient(circle at 20% 30%, rgba(110, 84, 200, 0.25) 0%, transparent 50%),
-            radial-gradient(circle at 80% 70%, rgba(124, 73, 169, 0.25) 0%, transparent 50%),
-            radial-gradient(circle at 50% 50%, rgba(94, 114, 235, 0.18) 0%, transparent 60%)
+            radial-gradient(circle at 20% 30%, rgba(110, 84, 200, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(124, 73, 169, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(94, 114, 235, 0.1) 0%, transparent 60%)
           `
         }} />
-        
-        {/* Glow Orbs */}
-        <div className="absolute w-[350px] h-[350px] rounded-full blur-[70px] bg-[rgba(110,84,200,0.2)] top-[10%] left-[10%]" />
-        <div className="absolute w-[450px] h-[450px] rounded-full blur-[70px] bg-[rgba(124,73,169,0.18)] bottom-[10%] right-[10%]" />
       </div>
 
       {/* Navigation Bar */}
@@ -160,14 +179,10 @@ export default function HomePage() {
         <div className="flex items-center gap-3">
           <div id="user-dropdown" className="relative">
             <div 
-              className="flex items-center gap-2.5 cursor-pointer px-4 py-2 rounded-lg transition-all hover:bg-[rgba(110,84,200,0.15)]"
+              className="cursor-pointer transition-all hover:opacity-80"
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
             >
-              <img src={user.avatar || 'https://via.placeholder.com/36'} alt="User" className="w-9 h-9 rounded-full border-2 border-[rgba(110,84,200,0.6)]" />
-              <span>{user.name}</span>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 11L3 6h10l-5 5z"/>
-              </svg>
+              <img src={user.avatar || 'https://via.placeholder.com/36'} alt="User" className="w-10 h-10 rounded-full border-2 border-[rgba(110,84,200,0.6)] hover:border-[rgba(110,84,200,0.9)]" />
             </div>
             
             {userDropdownOpen && (
