@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import './ml.css';
 
 interface DataFile {
@@ -25,6 +26,7 @@ interface ChatMessage {
 }
 
 const MLPage: React.FC = () => {
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
   const [currentStep, setCurrentStep] = useState<'upload' | 'validate' | 'configure'>('upload');
   const [uploadedFile, setUploadedFile] = useState<DataFile | null>(null);
   const [dataPreview, setDataPreview] = useState<DataPreview | null>(null);
@@ -71,8 +73,21 @@ const MLPage: React.FC = () => {
       window.location.href = '/';
     }
   };
-      .catch(err => console.error('Failed to fetch user', err));
-  }, [BACKEND_URLt BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/auth/me`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        }
+      } catch (err) {
+        console.error('Failed to fetch user', err);
+      }
+    };
+    fetchUser();
+  }, [BACKEND_URL]);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -202,7 +217,33 @@ const MLPage: React.FC = () => {
   if (!isHydrated) return null;
 
   return (
-    <div className="ml-container">
+    <>
+      {/* Navigation Bar */}
+      <nav className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-8 bg-slate-900/80 backdrop-blur-xl border-b border-indigo-500/20">
+        <div className="flex items-center gap-3">
+          <a href="/home" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] rounded-xl flex items-center justify-center font-bold text-white relative overflow-hidden shadow-[0_4px_12px_rgba(110,84,200,0.4)]">
+              <div className="absolute inset-0 w-[150%] h-[150%] bg-gradient-to-br from-transparent via-[rgba(255,255,255,0.3)] to-transparent logo-shine" />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" opacity="0.9"/>
+                <path d="M2 17L12 22L22 17V12L12 17L2 12V17Z" fill="white" opacity="0.7"/>
+                <path d="M12 12L2 7V12L12 17L22 12V7L12 12Z" fill="white" opacity="0.5"/>
+              </svg>
+            </div>
+            <span className="text-lg font-bold text-white">Ownquesta</span>
+          </a>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.back()}
+            className="px-4 py-2 rounded-lg text-white font-medium text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all"
+          >
+            Back
+          </button>
+        </div>
+      </nav>
+
+      <div className="ml-container">
       {/* Header */}
       <div className="ml-header">
         <div className="ml-header-content">
@@ -529,7 +570,8 @@ const MLPage: React.FC = () => {
         <p>💡 Pro Tip: The more details you provide, the better the AI can assist you in building your model!</p>
       </div>
     </div>
-  );
+  </>
+);
 };
 
 export default MLPage;

@@ -160,7 +160,7 @@ const DeepLearningPlatform: React.FC = () => {
   };
 
   const handleBack = () => {
-    window.history.back();
+    router.back();
   };
 
   const handleDashboard = () => {
@@ -238,54 +238,8 @@ const DeepLearningPlatform: React.FC = () => {
             onClick={handleBack}
             className="px-4 py-2 rounded-lg font-medium text-sm bg-slate-700/50 border border-slate-400/20 backdrop-blur-sm text-white hover:bg-slate-700/80 hover:border-indigo-500/50 hover:-translate-y-0.5 transition-all"
           >
-            ← Back
+            Back
           </button>
-          <button 
-            onClick={handleDashboard}
-            className="px-4 py-2 rounded-lg font-medium text-sm bg-slate-700/50 border border-slate-400/20 backdrop-blur-sm text-white hover:bg-slate-700/80 hover:border-indigo-500/50 hover:-translate-y-0.5 transition-all"
-          >
-            🏠 Dashboard
-          </button>
-          
-          {/* User Dropdown */}
-          <div id="user-dropdown" className="relative">
-            <div 
-              className="cursor-pointer transition-all hover:opacity-80"
-              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-            >
-              <img 
-                src={user?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.name || 'User')} 
-                alt="User" 
-                className="w-10 h-10 rounded-full border-2 border-indigo-500/60 hover:border-indigo-500" 
-              />
-            </div>
-            
-            {userDropdownOpen && (
-              <div className="absolute top-full right-0 mt-2.5 bg-slate-900/95 backdrop-blur-md rounded-xl shadow-[0_8px_32px_rgba(110,84,200,0.3)] border border-slate-700/50 min-w-[200px] overflow-hidden">
-                <button 
-                  onClick={() => router.push('/profile')} 
-                  className="w-full flex items-center gap-3 px-5 py-3 border-b border-slate-700/50 transition-all hover:bg-indigo-500/20 text-left"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  </svg>
-                  <span className="text-white">Profile</span>
-                </button>
-                <button 
-                  onClick={handleLogout} 
-                  className="w-full flex items-center gap-3 px-5 py-3 cursor-pointer transition-all hover:bg-red-500/20 text-left"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                    <polyline points="16 17 21 12 16 7"/>
-                    <line x1="21" y1="12" x2="9" y2="12"/>
-                  </svg>
-                  <span className="text-white">Logout</span>
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </nav>
 
