@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<{ name?: string; email?: string; avatar?: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [stats, setStats] = useState<MLStats>({
     validations: 0,
     datasets: 0,
@@ -63,6 +64,16 @@ export default function DashboardPage() {
     }
     loadMe();
   }, [router]);
+
+  // Mouse tracking for interactive background
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -145,9 +156,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans text-sm">
-      {/* Background Effects */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans text-sm relative overflow-hidden">
+      {/* Ultra-Modern Interactive Background */}
       <div className="fixed inset-0 pointer-events-none z-0">
+        {/* Base Gradient Layers */}
         <div className="absolute inset-0" style={{
           background: `
             radial-gradient(circle at 20% 30%, rgba(110, 84, 200, 0.25) 0%, transparent 50%),
@@ -156,9 +168,50 @@ export default function DashboardPage() {
           `
         }} />
         
-        {/* Glow Orbs */}
-        <div className="absolute w-[350px] h-[350px] rounded-full blur-[70px] bg-[rgba(110,84,200,0.2)] top-[10%] left-[10%]" />
-        <div className="absolute w-[450px] h-[450px] rounded-full blur-[70px] bg-[rgba(124,73,169,0.18)] bottom-[10%] right-[10%]" />
+        {/* Mouse-Responsive Glow Orbs */}
+        <div 
+          className="absolute w-[350px] h-[350px] rounded-full blur-[70px] transition-all duration-1000 ease-out"
+          style={{
+            background: 'rgba(110,84,200,0.2)',
+            top: `${Math.max(10, Math.min(60, (mousePos.y / window.innerHeight) * 100))}%`,
+            left: `${Math.max(10, Math.min(60, (mousePos.x / window.innerWidth) * 100))}%`,
+            transform: `translate(-50%, -50%) scale(${1 + (mousePos.x / window.innerWidth) * 0.2})`
+          }}
+        />
+        <div 
+          className="absolute w-[450px] h-[450px] rounded-full blur-[70px] transition-all duration-1500 ease-out"
+          style={{
+            background: 'rgba(124,73,169,0.18)',
+            bottom: `${Math.max(10, Math.min(60, ((window.innerHeight - mousePos.y) / window.innerHeight) * 100))}%`,
+            right: `${Math.max(10, Math.min(60, ((window.innerWidth - mousePos.x) / window.innerWidth) * 100))}%`,
+            transform: `scale(${1 + (mousePos.y / window.innerHeight) * 0.15})`
+          }}
+        />
+
+        {/* Floating Geometric Shapes */}
+        <div className="absolute top-[15%] left-[8%] w-32 h-32 border border-indigo-400/30 rounded-full animate-pulse"
+             style={{ animationDelay: '0s', animationDuration: '4s' }} />
+        <div className="absolute top-[25%] right-[12%] w-24 h-24 border border-purple-400/25 rounded-lg rotate-45 animate-bounce"
+             style={{ animationDelay: '1s', animationDuration: '6s' }} />
+        <div className="absolute bottom-[20%] left-[15%] w-20 h-20 border border-violet-400/20 rounded-full animate-ping"
+             style={{ animationDelay: '2s', animationDuration: '5s' }} />
+        
+        {/* Animated Grid Pattern */}
+        <div className="absolute inset-0 opacity-[0.03]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }} />
+        </div>
+
+        {/* Subtle Particle Effects */}
+        <div className="absolute top-[30%] left-[25%] w-1 h-1 bg-indigo-400 rounded-full animate-pulse opacity-60" />
+        <div className="absolute top-[60%] right-[30%] w-1 h-1 bg-purple-400 rounded-full animate-pulse opacity-40" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-[40%] left-[40%] w-1 h-1 bg-violet-400 rounded-full animate-pulse opacity-50" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[45%] right-[20%] w-1 h-1 bg-indigo-300 rounded-full animate-pulse opacity-30" style={{ animationDelay: '0.5s' }} />
       </div>
 
       {/* Navigation */}

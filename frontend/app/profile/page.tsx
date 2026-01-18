@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Lenis from 'lenis';
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2300d4ff;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%237c3aed;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23grad)' width='140' height='140'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='56' font-weight='bold' fill='white'%3EU%3C/text%3E%3C/svg%3E";
 
@@ -33,6 +34,20 @@ export default function ProfilePage() {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
+  // Mouse interaction state for dynamic background
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth - 0.5) * 2,
+        y: (e.clientY / window.innerHeight - 0.5) * 2,
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -67,6 +82,22 @@ export default function ProfilePage() {
     };
     fetchProfile();
   }, [BACKEND_URL, router]);
+
+  // Simple Lenis smooth scrolling
+  useEffect(() => {
+    const lenis = new Lenis();
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
 
   const handleChange = (key: string, value: string) => {
     setProfile((prev: any) => ({ ...prev, [key]: value }));
@@ -118,7 +149,7 @@ export default function ProfilePage() {
   const saveSettings = async (newSettings: { emailNotif?: boolean; darkMode?: boolean }) => {
     if (!profile) return;
     // optimistic update
-    setProfile(prev => ({ ...prev, settings: { ...(prev?.settings || {}), ...newSettings } }));
+    setProfile((prev: any) => ({ ...prev, settings: { ...(prev?.settings || {}), ...newSettings } }));
     try {
       await fetch(`${BACKEND_URL}/api/auth/profile`, {
         method: 'PUT',
@@ -247,32 +278,96 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center relative overflow-hidden">
+        {/* Interactive loading cosmic background */}
+        <div
+          className="absolute w-[1000px] h-[1000px] bg-gradient-to-r from-indigo-600/40 via-purple-600/30 to-pink-600/40 rounded-full blur-[180px] animate-pulse"
+          style={{
+            top: `${-30 + mousePosition.y * 8}%`,
+            left: `${-20 + mousePosition.x * 12}%`,
+            animationDuration: '12s'
+          }}
+        ></div>
+        <div
+          className="absolute w-[800px] h-[800px] bg-gradient-to-l from-purple-600/35 via-blue-600/25 to-indigo-600/40 rounded-full blur-[160px] animate-pulse"
+          style={{
+            bottom: `${-25 - mousePosition.y * 10}%`,
+            right: `${-15 - mousePosition.x * 8}%`,
+            animationDuration: '15s',
+            animationDelay: '2s'
+          }}
+        ></div>
+        <div
+          className="absolute w-[500px] h-[500px] bg-gradient-to-br from-cyan-500/20 via-indigo-500/25 to-purple-500/30 rounded-full blur-[140px] animate-pulse"
+          style={{
+            top: `${20 + mousePosition.y * 6}%`,
+            right: `${10 + mousePosition.x * 10}%`,
+            animationDuration: '18s',
+            animationDelay: '4s'
+          }}
+        ></div>
         <div className="text-center relative z-10">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
-          <p className="mt-4 text-gray-400">Loading profile...</p>
+          <div className="inline-block animate-spin rounded-full h-20 w-20 border-4 border-indigo-500 border-t-transparent shadow-lg shadow-indigo-500/50"></div>
+          <p className="mt-8 text-gray-300 text-xl font-medium">Loading your profile...</p>
+          <div className="mt-6 flex justify-center space-x-2">
+            <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></div>
+            <div className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></div>
+            <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '600ms' }}></div>
+          </div>
         </div>
       </div>
     );
   }
-  
+
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center relative overflow-hidden">
+        {/* Interactive error cosmic background */}
+        <div
+          className="absolute w-[1000px] h-[1000px] bg-gradient-to-r from-red-600/30 via-orange-600/25 to-yellow-600/30 rounded-full blur-[180px] animate-pulse"
+          style={{
+            top: `${-30 + mousePosition.y * 8}%`,
+            left: `${-20 + mousePosition.x * 12}%`,
+            animationDuration: '12s'
+          }}
+        ></div>
+        <div
+          className="absolute w-[800px] h-[800px] bg-gradient-to-l from-orange-600/28 via-red-600/25 to-pink-600/30 rounded-full blur-[160px] animate-pulse"
+          style={{
+            bottom: `${-25 - mousePosition.y * 10}%`,
+            right: `${-15 - mousePosition.x * 8}%`,
+            animationDuration: '15s',
+            animationDelay: '2s'
+          }}
+        ></div>
         <div className="text-center relative z-10">
-          <p className="text-gray-400">Not authenticated</p>
+          <div className="w-24 h-24 mx-auto mb-8 rounded-full bg-gradient-to-r from-red-500/30 to-orange-500/30 flex items-center justify-center shadow-2xl shadow-red-500/20">
+            <svg className="w-12 h-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <p className="text-gray-300 text-2xl font-bold mb-2">Authentication Required</p>
+          <p className="text-gray-400 text-lg">Please log in to access your profile</p>
+          <div className="mt-6 flex justify-center space-x-1">
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
+            <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" style={{ animationDelay: '600ms' }}></div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white relative overflow-hidden">
-      {/* Animated Background Gradient Orbs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-[40%] left-[50%] w-[400px] h-[400px] bg-blue-600/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 text-white relative overflow-hidden">
+      {/* Minimal Brilliant Black Purple Background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {/* Deep Black to Purple Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-slate-900 to-purple-950" />
+
+        {/* Subtle Purple Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 via-transparent to-indigo-900/15" />
       </div>
 
       {/* Navigation Bar */}

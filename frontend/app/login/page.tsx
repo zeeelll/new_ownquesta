@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const router = useRouter();
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
   
@@ -46,6 +47,16 @@ export default function LoginPage() {
       })
       .catch(() => setCurrentUser({ authenticated: false }));
   }, [BACKEND_URL]);
+
+  // Mouse tracking for interactive background
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const handleSignIn = async () => {
     setSignInMessage('');
@@ -180,9 +191,62 @@ export default function LoginPage() {
         }
       `}</style>
 
-      {/* Background Effects */}
-      <div className="absolute w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(139,92,246,0.15)_0%,transparent_70%)] top-[-200px] right-[-200px] rounded-full pointer-events-none" />
-      <div className="absolute w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(59,130,246,0.1)_0%,transparent_70%)] bottom-[-150px] left-[-150px] rounded-full pointer-events-none" />
+      {/* Enhanced Interactive Background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {/* Base gradient layers */}
+        <div className="absolute inset-0" style={{
+          background: `
+            radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(147, 51, 234, 0.12) 0%, transparent 60%)
+          `
+        }} />
+        
+        {/* Mouse-responsive floating orbs */}
+        <div 
+          className="absolute w-[500px] h-[500px] rounded-full blur-[80px] transition-all duration-1000 ease-out"
+          style={{
+            background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)',
+            top: `${Math.max(-10, Math.min(40, (mousePos.y / window.innerHeight) * 100))}%`,
+            right: `${Math.max(-10, Math.min(40, (mousePos.x / window.innerWidth) * 100))}%`,
+            transform: `translate(50%, -50%) scale(${1 + (mousePos.x / window.innerWidth) * 0.3})`
+          }}
+        />
+        <div 
+          className="absolute w-[400px] h-[400px] rounded-full blur-[70px] transition-all duration-1500 ease-out"
+          style={{
+            background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)',
+            bottom: `${Math.max(-5, Math.min(45, ((window.innerHeight - mousePos.y) / window.innerHeight) * 100))}%`,
+            left: `${Math.max(-5, Math.min(45, ((window.innerWidth - mousePos.x) / window.innerWidth) * 100))}%`,
+            transform: `translate(-50%, 50%) scale(${1 + (mousePos.y / window.innerHeight) * 0.2})`
+          }}
+        />
+
+        {/* Floating geometric shapes */}
+        <div className="absolute top-[20%] left-[10%] w-24 h-24 border border-indigo-400/20 rounded-full animate-pulse"
+             style={{ animationDelay: '0s', animationDuration: '5s' }} />
+        <div className="absolute top-[15%] right-[15%] w-16 h-16 border border-purple-400/15 rounded-lg rotate-45 animate-bounce"
+             style={{ animationDelay: '1.5s', animationDuration: '7s' }} />
+        <div className="absolute bottom-[25%] left-[20%] w-20 h-20 border border-violet-400/18 rounded-full animate-ping"
+             style={{ animationDelay: '3s', animationDuration: '6s' }} />
+        
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(rgba(139, 92, 246, 0.08) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(139, 92, 246, 0.08) 1px, transparent 1px)
+            `,
+            backgroundSize: '40px 40px'
+          }} />
+        </div>
+
+        {/* Particle effects */}
+        <div className="absolute top-[35%] left-[30%] w-1 h-1 bg-indigo-400 rounded-full animate-pulse opacity-40" />
+        <div className="absolute top-[50%] right-[25%] w-1 h-1 bg-purple-400 rounded-full animate-pulse opacity-30" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-[30%] left-[35%] w-1 h-1 bg-violet-400 rounded-full animate-pulse opacity-35" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[25%] right-[35%] w-1 h-1 bg-indigo-300 rounded-full animate-pulse opacity-25" style={{ animationDelay: '0.5s' }} />
+      </div>
 
       <div className="w-full max-w-[1000px] bg-[rgba(15,23,42,0.7)] backdrop-blur-[20px] rounded-3xl border border-[rgba(255,255,255,0.1)] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] grid grid-cols-1 md:grid-cols-[45%_55%] relative z-10">
         
