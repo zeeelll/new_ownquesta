@@ -64,79 +64,20 @@ const OwnquestaProfile: React.FC = () => {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  const loadProfile = useCallback(async () => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-        credentials: 'include',
-        headers: { 'Accept': 'application/json' }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data?.user) {
-          const user = data.user;
-          setUserData({
-            name: user.name || 'User Profile',
-            email: user.email || '',
-            phone: user.phone || '',
-            dateOfBirth: user.dateOfBirth || '',
-            bio: user.bio || '',
-            company: user.company || '',
-            jobTitle: user.jobTitle || '',
-            location: user.location || '',
-            department: user.department || '',
-            website: user.website || '',
-            avatar: user.avatar || DEFAULT_AVATAR,
-            memberSince: user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            emailNotif: user.emailNotif !== undefined ? user.emailNotif : true,
-            marketingEmails: user.marketingEmails !== undefined ? user.marketingEmails : false,
-            publicProfile: user.publicProfile !== undefined ? user.publicProfile : true,
-            twoFactorAuth: user.twoFactorAuth !== undefined ? user.twoFactorAuth : false,
-            language: user.language || 'en',
-            timezone: user.timezone || 'UTC'
-          });
-          setCurrentAvatar(user.avatar || DEFAULT_AVATAR);
-        }
-      } else {
-        router.push('/login');
-      }
-    } catch (err) {
-      console.error('Failed to load profile:', err);
-      router.push('/login');
+  const saveProfile = useCallback(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+  }, [STORAGE_KEY, userData]);
+
+  const loadProfile = useCallback(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsedData = JSON.parse(stored);
+      setUserData(parsedData);
+      setCurrentAvatar(parsedData.avatar || DEFAULT_AVATAR);
+    } else {
+      saveProfile();
     }
-  }, [BACKEND_URL, DEFAULT_AVATAR, router]);
-
-  const saveProfile = useCallback(async (profileData: Partial<UserProfile>) => {
-    try {
-      console.log('🔄 Saving profile to backend:', profileData);
-      console.log('📡 API URL:', `${BACKEND_URL}/api/auth/profile`);
-      
-      const response = await fetch(`${BACKEND_URL}/api/auth/profile`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(profileData)
-      });
-
-      console.log('📥 Response status:', response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Profile saved successfully:', data);
-        return { success: true, user: data.user };
-      } else {
-        const error = await response.json();
-        console.error('❌ Save failed:', error);
-        return { success: false, message: error.message || 'Failed to update profile' };
-      }
-    } catch (err) {
-      console.error('❌ Save profile error:', err);
-      return { success: false, message: 'Network error' };
-    }
-  }, [BACKEND_URL]);
+  }, [STORAGE_KEY, DEFAULT_AVATAR, saveProfile]);
 
   const updateMemberDays = useCallback(() => {
     if (!userData.memberSince) return;
@@ -151,12 +92,17 @@ const OwnquestaProfile: React.FC = () => {
   // Load profile data on component mount
   useEffect(() => {
     setIsHydrated(true);
-    loadProfile();
-  }, [loadProfile]);
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsedData = JSON.parse(stored);
+      setUserData(parsedData);
+      setCurrentAvatar(parsedData.avatar || DEFAULT_AVATAR);
+    }
+  }, []); // Empty dependency array - only run once on mount
 
   useEffect(() => {
     updateMemberDays();
-  }, [userData.memberSince, updateMemberDays]);
+  }, [updateMemberDays]);
 
   const showMessage = (text: string, type: 'success' | 'error' | 'info') => {
     setMessage({ text, type, show: true });

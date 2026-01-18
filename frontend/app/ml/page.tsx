@@ -181,12 +181,10 @@ const MLPage: React.FC = () => {
               <span className="breadcrumb-number">1</span>
               <span>Upload Dataset</span>
             </span>
-            <span className="breadcrumb-arrow">→</span>
             <span className={`breadcrumb-item ${currentStep === 'validate' ? 'active' : ''}`}>
               <span className="breadcrumb-number">2</span>
               <span>Validate & Preview</span>
             </span>
-            <span className="breadcrumb-arrow">→</span>
             <span className={`breadcrumb-item ${currentStep === 'configure' ? 'active' : ''}`}>
               <span className="breadcrumb-number">3</span>
               <span>Configure Model</span>
