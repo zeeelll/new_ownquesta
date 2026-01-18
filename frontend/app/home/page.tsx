@@ -197,11 +197,11 @@ export default function HomePage() {
       <section className="min-h-screen flex items-center justify-center px-5 pt-[180px] pb-[120px]">
         <div className="w-full max-w-[900px] text-center relative z-10">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 gradient-text">
-            Welcome {user.name?.split(' ')[0]}!
+            Hey {user.name?.split(' ')[0]}, Welcome to Ownquesta!
           </h1>
           
           <p className="text-lg text-[#9fb3d9] leading-relaxed max-w-[700px] mx-auto mb-20">
-            Click on Go to Dashboard button to start your journey with Ownquesta
+            Start your journey with Ownquesta and transform data into powerful AI models—no coding required. Your next breakthrough is just one click away!
           </p>
 
           <Link 
