@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface DataFile {
   name: string;
@@ -40,6 +41,7 @@ const MLStudioAdvanced: React.FC = () => {
   const [validationResult, setValidationResult] = useState<any>(null);
   const [showLastRows, setShowLastRows] = useState(false);
   const [viewMode, setViewMode] = useState<'first' | 'last' | 'all'>('first');
+  const router = useRouter();
   const hasGoal = userQuery.trim().length > 0;
   const hasDataset = Boolean(uploadedFile && actualFile && dataPreview);
   const canProceedFromSetup = hasGoal && hasDataset;
@@ -101,7 +103,7 @@ const MLStudioAdvanced: React.FC = () => {
 
       // Display optional_questions if available
       if (result.optional_questions && result.optional_questions.length > 0) {
-        const questionsText = "📋 **Optional Questions:**\n" + 
+        const questionsText = "**Optional Questions:**\n" + 
           result.optional_questions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n');
         
         setChatMessages(prev => [...prev, {
@@ -270,7 +272,7 @@ const MLStudioAdvanced: React.FC = () => {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-2xl bg-slate-950/80 border-b border-indigo-500/20">
+      <header className="sticky top-0 z-50 backdrop-blur-2xl bg-slate-950/80 border-b border-indigo-500/20 relative">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between flex-wrap gap-6">
             <div className="flex items-center gap-4">
@@ -312,6 +314,14 @@ const MLStudioAdvanced: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Back Button in Upper Right Corner */}
+        <button
+          onClick={() => router.back()}
+          className="absolute top-4 right-6 px-4 py-2 rounded-lg text-white font-medium text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all"
+        >
+          Back
+        </button>
       </header>
 
       {/* Main Content */}
@@ -331,7 +341,11 @@ const MLStudioAdvanced: React.FC = () => {
               {/* Query Section */}
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><span className="text-xl">🎯</span></div>
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
                   <div><h3 className="text-xl font-bold">Define Your Goal</h3><p className="text-sm text-gray-400">What do you want to predict or analyze?</p></div>
                 </div>
 
@@ -350,9 +364,25 @@ const MLStudioAdvanced: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                  {[{ icon: '🎯', title: 'Classification', example: 'Yes/No' }, { icon: '📈', title: 'Regression', example: '$100+' }, { icon: '🔗', title: 'Clustering', example: 'A, B, C' }].map((item) => (
+                  {[
+                    { 
+                      icon: <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>, 
+                      title: 'Classification', 
+                      example: 'Yes/No' 
+                    }, 
+                    { 
+                      icon: <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>, 
+                      title: 'Regression', 
+                      example: '$100+' 
+                    }, 
+                    { 
+                      icon: <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>, 
+                      title: 'Clustering', 
+                      example: 'A, B, C' 
+                    }
+                  ].map((item) => (
                     <div key={item.title} className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-xl p-4 hover:border-indigo-500/40 hover:-translate-y-1 transition-all cursor-pointer group">
-                      <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">{item.icon}</div>
+                      <div className="mb-2 group-hover:scale-110 transition-transform">{item.icon}</div>
                       <h4 className="text-sm font-semibold mb-1">{item.title}</h4>
                       <code className="text-xs text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">{item.example}</code>
                     </div>
@@ -363,7 +393,11 @@ const MLStudioAdvanced: React.FC = () => {
               {/* Upload Section */}
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center"><span className="text-xl">📤</span></div>
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
                   <div><h3 className="text-xl font-bold">Upload Dataset</h3><p className="text-sm text-gray-400">CSV or Excel (Max 50MB)</p></div>
                 </div>
 
@@ -443,22 +477,22 @@ const MLStudioAdvanced: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 {
-                  icon: '📊',
+                  icon: <svg className="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
                   label: 'Rows',
                   value: validationResult?.dataset_summary?.rows?.toLocaleString() || dataPreview.rowCount.toLocaleString(),
                 },
                 {
-                  icon: '📋',
+                  icon: <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
                   label: 'Columns',
                   value: validationResult?.dataset_summary?.columns || dataPreview.columnCount,
                 },
                 {
-                  icon: '💾',
+                  icon: <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>,
                   label: 'Size',
                   value: validationResult?.dataset_summary?.file_size_mb ? `${validationResult.dataset_summary.file_size_mb} MB` : dataPreview.fileSize,
                 },
                 {
-                  icon: '✓',
+                  icon: <svg className="w-8 h-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
                   label: 'Quality',
                   value: isValidating ? (
                     <div className="flex items-center gap-2">
@@ -474,7 +508,7 @@ const MLStudioAdvanced: React.FC = () => {
                   key={stat.label}
                   className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6 hover:border-indigo-500/40 hover:-translate-y-1 transition-all group"
                 >
-                  <div className="text-3xl mb-2">{stat.icon}</div>
+                  <div className="mb-2">{stat.icon}</div>
                   <p className="text-sm text-gray-400 mb-1">{stat.label}</p>
                   <div className="text-2xl font-bold">
                     {typeof stat.value === 'string' || typeof stat.value === 'number' ? (
@@ -541,16 +575,29 @@ const MLStudioAdvanced: React.FC = () => {
             </div>
 
             <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><span>🤖</span> ML Agent Assistant</h3>
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                ML Agent Assistant
+              </h3>
               <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
                 {chatMessages.map((msg, i) => (
                   <div key={i} className={`flex gap-3 ${msg.type === 'user' ? 'justify-end' : ''}`}>
-                    {msg.type === 'ai' && <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center flex-shrink-0">🤖</div>}
+                    {msg.type === 'ai' && <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>}
                     <div className={`max-w-2xl p-4 rounded-xl ${msg.type === 'user' ? 'bg-indigo-500/20 border border-indigo-500/30' : 'bg-white/5 border border-white/10'}`}>
                       <p className="text-sm leading-relaxed">{renderMessage(msg.text)}</p>
                       <p className="text-xs text-gray-500 mt-1">{msg.timestamp}</p>
                     </div>
-                    {msg.type === 'user' && <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center flex-shrink-0">👤</div>}
+                    {msg.type === 'user' && <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>}
                   </div>
                 ))}
                 <div ref={chatEndRef} />
@@ -632,7 +679,12 @@ const MLStudioAdvanced: React.FC = () => {
                 {/* Dataset Summary Card */}
                 {validationResult.dataset_summary && (
                   <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
-                    <h3 className="text-2xl font-bold mb-4">📊 Dataset Summary</h3>
+                    <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                      <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      Dataset Summary
+                    </h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="bg-slate-800/50 rounded-xl p-4">
                         <p className="text-sm text-gray-400 mb-1">Rows</p>
@@ -658,7 +710,9 @@ const MLStudioAdvanced: React.FC = () => {
                 {validationResult.goal_understanding && (
                   <div className="backdrop-blur-2xl bg-slate-900/60 border border-green-500/30 rounded-2xl p-6">
                     <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                      <span>🎯</span>
+                      <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
                       Goal Understanding
                     </h3>
                     <div className="space-y-3">
@@ -680,8 +734,11 @@ const MLStudioAdvanced: React.FC = () => {
 
                 {/* Full JSON Response (Collapsible) */}
                 <details className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
-                  <summary className="text-xl font-bold cursor-pointer hover:text-indigo-300 transition-colors">
-                    🔍 View Full API Response
+                  <summary className="text-xl font-bold cursor-pointer hover:text-indigo-300 transition-colors flex items-center gap-2">
+                    <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    View Full API Response
                   </summary>
                   <div className="mt-4 bg-slate-800/50 rounded-xl p-4 font-mono text-xs overflow-x-auto">
                     <pre className="text-green-300">{JSON.stringify(validationResult, null, 2)}</pre>

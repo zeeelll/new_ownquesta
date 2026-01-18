@@ -260,7 +260,10 @@ export default function DashboardPage() {
             className="flex items-center gap-4 p-5 rounded-xl bg-slate-800/30 border border-slate-700/30 hover:border-indigo-500/50 hover:bg-indigo-500/5 cursor-pointer transition-all"
           >
             <div className="w-12 h-12 flex items-center justify-center bg-indigo-500/15 rounded-lg text-2xl">
-              ⚙️
+              <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
             </div>
             <div>
               <h3 className="text-white text-base font-semibold">
@@ -277,7 +280,9 @@ export default function DashboardPage() {
             className="flex items-center gap-4 p-5 rounded-xl bg-slate-800/30 border border-slate-700/30 hover:border-indigo-500/50 hover:bg-indigo-500/5 cursor-pointer transition-all"
           >
             <div className="w-12 h-12 flex items-center justify-center bg-indigo-500/15 rounded-lg text-2xl">
-              ◆
+              <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
             </div>
             <div>
               <h3 className="text-white text-base font-semibold">
@@ -309,13 +314,22 @@ export default function DashboardPage() {
                 onClick={() => setSidebarOpen(true)}
                 className="px-6 py-2.5 rounded-xl text-white font-semibold text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
               >
-                📱 Start New Validation
+                <svg className="w-4 h-4 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Start New Validation
               </button>
               <button className="px-6 py-2.5 rounded-xl text-white font-semibold text-sm bg-slate-700/50 border border-slate-600/20 hover:bg-slate-700/80 transition-all">
-                📋 View Projects
+                <svg className="w-4 h-4 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                View Projects
               </button>
               <button className="px-6 py-2.5 rounded-xl text-white font-semibold text-sm bg-slate-700/50 border border-slate-600/20 hover:bg-slate-700/80 transition-all">
-                ⚡ Continue Session
+                <svg className="w-4 h-4 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 11H15m-3 7.5A9.5 9.5 0 1121.5 12 9.5 9.5 0 0112 2.5z" />
+                </svg>
+                Continue Session
               </button>
             </div>
           </div>
@@ -323,7 +337,11 @@ export default function DashboardPage() {
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
             <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
-              <div className="text-3xl mb-2">✓</div>
+              <div className="text-3xl mb-2">
+              <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
               <div className="text-2xl font-bold text-white mb-1">
                 {stats.validations}
               </div>
@@ -332,7 +350,11 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
-              <div className="text-3xl mb-2">📊</div>
+              <div className="text-3xl mb-2">
+              <svg className="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
               <div className="text-2xl font-bold text-white mb-1">
                 {stats.datasets}
               </div>
@@ -341,7 +363,11 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
-              <div className="text-3xl mb-2">◎</div>
+              <div className="text-3xl mb-2">
+              <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
               <div className="text-2xl font-bold text-white mb-1">
                 {stats.avgConfidence}%
               </div>
@@ -350,7 +376,11 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
-              <div className="text-3xl mb-2">📈</div>
+              <div className="text-3xl mb-2">
+              <svg className="w-8 h-8 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
               <div className="text-2xl font-bold text-white mb-1">
                 {stats.totalRows.toLocaleString()}
               </div>
@@ -368,7 +398,9 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div className="flex flex-col items-center flex-1">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg shadow-green-500/40">
-                  ✓
+                  <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
                 <div className="text-white font-semibold text-sm mt-3">
                   Validation
@@ -381,7 +413,10 @@ export default function DashboardPage() {
 
               <div className="flex flex-col items-center flex-1">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl bg-slate-700/50 border-2 border-slate-600/30">
-                  ◆
+                  <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
                 </div>
                 <div className="text-white font-semibold text-sm mt-3">
                   Feature Engineering
@@ -392,7 +427,9 @@ export default function DashboardPage() {
 
               <div className="flex flex-col items-center flex-1">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl bg-slate-700/50 border-2 border-slate-600/30">
-                  🎨
+                  <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
                 </div>
                 <div className="text-white font-semibold text-sm mt-3">
                   Model Studio
@@ -403,7 +440,9 @@ export default function DashboardPage() {
 
               <div className="flex flex-col items-center flex-1">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl bg-slate-700/50 border-2 border-slate-600/30">
-                  🚀
+                  <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
                 </div>
                 <div className="text-white font-semibold text-sm mt-3">
                   Deploy

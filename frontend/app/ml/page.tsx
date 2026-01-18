@@ -248,9 +248,9 @@ const MLPage: React.FC = () => {
       <div className="ml-header">
         <div className="ml-header-content">
           <div className="ml-title">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z"></path>
-              <path d="M2 17L12 22L22 17V12L12 17L2 12V17Z"></path>
+            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <span>Machine Learning Studio</span>
           </div>
@@ -276,7 +276,12 @@ const MLPage: React.FC = () => {
         {currentStep === 'upload' && (
           <div className="ml-section upload-section">
             <div className="section-title">
-              <h2>📤 Upload Your Dataset</h2>
+              <h2>
+                <svg className="w-6 h-6 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Upload Your Dataset
+              </h2>
               <p>Support CSV and Excel formats (Max 50MB)</p>
             </div>
 
@@ -362,7 +367,12 @@ const MLPage: React.FC = () => {
           <div className="ml-section validate-section">
             <div className="section-header">
               <div className="section-title">
-                <h2>🔍 Dataset Preview & Validation</h2>
+                <h2>
+                  <svg className="w-6 h-6 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Dataset Preview & Validation
+                </h2>
                 <p>File: {uploadedFile?.name}</p>
               </div>
               <button className="btn-reset" onClick={() => {
@@ -379,7 +389,11 @@ const MLPage: React.FC = () => {
               {/* Data Statistics */}
               <div className="data-stats">
                 <div className="stat-box">
-                  <div className="stat-icon rows">📊</div>
+                  <div className="stat-icon rows">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
                   <div className="stat-info">
                     <div className="stat-label">Total Rows</div>
                     <div className="stat-value">{dataPreview.rowCount.toLocaleString()}</div>
@@ -387,7 +401,11 @@ const MLPage: React.FC = () => {
                 </div>
 
                 <div className="stat-box">
-                  <div className="stat-icon cols">📋</div>
+                  <div className="stat-icon cols">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </div>
                   <div className="stat-info">
                     <div className="stat-label">Total Columns</div>
                     <div className="stat-value">{dataPreview.columnCount}</div>
@@ -395,7 +413,11 @@ const MLPage: React.FC = () => {
                 </div>
 
                 <div className="stat-box">
-                  <div className="stat-icon size">💾</div>
+                  <div className="stat-icon size">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                    </svg>
+                  </div>
                   <div className="stat-info">
                     <div className="stat-label">File Size</div>
                     <div className="stat-value">{dataPreview.fileSize}</div>
@@ -403,7 +425,11 @@ const MLPage: React.FC = () => {
                 </div>
 
                 <div className="stat-box">
-                  <div className="stat-icon health">✓</div>
+                  <div className="stat-icon health">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
                   <div className="stat-info">
                     <div className="stat-label">Data Quality</div>
                     <div className="stat-value">98%</div>
@@ -442,17 +468,20 @@ const MLPage: React.FC = () => {
                 <h3>Select ML Task</h3>
                 <div className="task-options">
                   {[
-                    { id: 'classification', label: '🎯 Classification', desc: 'Predict categories (e.g., Yes/No)' },
-                    { id: 'regression', label: '📈 Regression', desc: 'Predict numerical values' },
-                    { id: 'clustering', label: '🔗 Clustering', desc: 'Group similar data points' },
-                    { id: 'anomaly', label: '⚠️ Anomaly Detection', desc: 'Find outliers and unusual patterns' }
+                    { id: 'classification', label: 'Classification', desc: 'Predict categories (e.g., Yes/No)', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+                    { id: 'regression', label: 'Regression', desc: 'Predict numerical values', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg> },
+                    { id: 'clustering', label: 'Clustering', desc: 'Group similar data points', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg> },
+                    { id: 'anomaly', label: 'Anomaly Detection', desc: 'Find outliers and unusual patterns', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg> }
                   ].map(task => (
                     <button
                       key={task.id}
                       className={`task-btn ${selectedTask === task.id ? 'selected' : ''}`}
                       onClick={() => setSelectedTask(task.id)}
                     >
-                      <div className="task-label">{task.label}</div>
+                      <div className="task-label">
+                        {task.icon}
+                        <span className="ml-2">{task.label}</span>
+                      </div>
                       <div className="task-desc">{task.desc}</div>
                     </button>
                   ))}
@@ -464,19 +493,35 @@ const MLPage: React.FC = () => {
                 <h3>Data Quality Report</h3>
                 <div className="check-list">
                   <div className="check-item success">
-                    <span className="check-icon">✓</span>
+                    <span className="check-icon">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
                     <span className="check-text">No missing values detected</span>
                   </div>
                   <div className="check-item success">
-                    <span className="check-icon">✓</span>
+                    <span className="check-icon">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
                     <span className="check-text">Data types detected correctly</span>
                   </div>
                   <div className="check-item success">
-                    <span className="check-icon">✓</span>
+                    <span className="check-icon">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
                     <span className="check-text">Outliers identified: 2 (&lt; 0.1%)</span>
                   </div>
                   <div className="check-item warning">
-                    <span className="check-icon">!</span>
+                    <span className="check-icon">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                    </span>
                     <span className="check-text">Some columns may need normalization</span>
                   </div>
                 </div>
@@ -488,7 +533,12 @@ const MLPage: React.FC = () => {
         {currentStep === 'validate' && (
           <div className="ml-section chat-section">
             <div className="section-title">
-              <h2>🤖 ML Agent Assistant</h2>
+              <h2>
+                <svg className="w-6 h-6 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                ML Agent Assistant
+              </h2>
               <p>Describe what you want to predict or analyze</p>
             </div>
 
@@ -497,7 +547,15 @@ const MLPage: React.FC = () => {
                 {chatMessages.map((msg, idx) => (
                   <div key={idx} className={`message message-${msg.type}`}>
                     <div className="message-avatar">
-                      {msg.type === 'user' ? '👤' : '🤖'}
+                      {msg.type === 'user' ? (
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      )}
                     </div>
                     <div className="message-content">
                       <div className="message-text">{msg.text}</div>
