@@ -201,7 +201,7 @@ export default function HomePage() {
           </h1>
           
           <p className="text-lg text-[#9fb3d9] leading-relaxed max-w-[700px] mx-auto mb-20">
-            Start your journey with Ownquesta and transform data into powerful AI models—no coding required. Your next breakthrough is just one click away!
+            Start your journey with Ownquesta and transform data into powerful AI models—no coding required. Your next breakthrough is just one click away.
           </p>
 
           <Link 
