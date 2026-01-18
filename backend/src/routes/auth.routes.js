@@ -10,6 +10,11 @@ router.post("/logout", authController.logout);
 router.get("/check", authController.check);
 router.get("/me", authController.me);
 router.put("/profile", authController.updateProfile);
+router.post("/change-password", authController.changePassword);
+router.post("/2fa/setup", authController.setup2fa);
+router.post("/2fa/verify", authController.verify2fa);
+router.post("/2fa/disable", authController.disable2fa);
+router.post("/delete-account", authController.deleteAccount);
 
 // Google
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));

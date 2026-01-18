@@ -16,6 +16,24 @@ export default function ProfilePage() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwdMessage, setPwdMessage] = useState<string | null>(null);
+  const [pwdLoading, setPwdLoading] = useState(false);
+
+  // 2FA state
+  const [twoFASecret, setTwoFASecret] = useState<string | null>(null);
+  const [twoFAUri, setTwoFAUri] = useState<string | null>(null);
+  const [twoFAToken, setTwoFAToken] = useState('');
+  const [twoFAMode, setTwoFAMode] = useState<'idle'|'setup'|'verifying'>('idle');
+  const [twoFAMessage, setTwoFAMessage] = useState<string | null>(null);
+  // Delete account state
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -35,7 +53,11 @@ export default function ProfilePage() {
           company: u.company || '',
           jobTitle: u.jobTitle || '',
           location: u.location || '',
-          skills: u.skills || ''
+          skills: u.skills || '',
+          settings: {
+            emailNotif: u.settings?.emailNotif ?? true,
+            darkMode: u.settings?.darkMode ?? true
+          }
         });
       } catch (err) {
         console.error('Failed to fetch profile', err);
@@ -78,7 +100,8 @@ export default function ProfilePage() {
           company: profile.company,
           jobTitle: profile.jobTitle,
           location: profile.location,
-          skills: profile.skills
+          skills: profile.skills,
+          settings: profile.settings
         })
       });
       const json = await res.json();
@@ -89,6 +112,136 @@ export default function ProfilePage() {
       alert('Save failed: ' + (err.message || err));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveSettings = async (newSettings: { emailNotif?: boolean; darkMode?: boolean }) => {
+    if (!profile) return;
+    // optimistic update
+    setProfile(prev => ({ ...prev, settings: { ...(prev?.settings || {}), ...newSettings } }));
+    try {
+      await fetch(`${BACKEND_URL}/api/auth/profile`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: { ...(profile.settings || {}), ...newSettings } })
+      });
+    } catch (err) {
+      console.error('Failed to save settings', err);
+    }
+  };
+
+  useEffect(() => {
+    if (profile?.settings?.darkMode) {
+      try { document.documentElement.classList.add('dark'); } catch {}
+    } else {
+      try { document.documentElement.classList.remove('dark'); } catch {}
+    }
+  }, [profile?.settings?.darkMode]);
+
+  const handleChangePassword = async () => {
+    setPwdMessage(null);
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPwdMessage('Please fill all password fields.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwdMessage('New passwords do not match.');
+      return;
+    }
+    setPwdLoading(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/auth/change-password`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      const js = await res.json();
+      if (!res.ok) throw new Error(js.message || 'Change failed');
+      setPwdMessage('Password updated successfully');
+      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+    } catch (err: any) {
+      setPwdMessage(err.message || 'Error changing password');
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
+  const start2FA = async () => {
+    setTwoFAMessage(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/auth/2fa/setup`, { method: 'POST', credentials: 'include' });
+      const js = await res.json();
+      if (!res.ok) throw new Error(js.message || '2FA setup failed');
+      setTwoFASecret(js.secret || null);
+      setTwoFAUri(js.otpauth_url || null);
+      setTwoFAMode('setup');
+    } catch (err: any) {
+      setTwoFAMessage(err.message || 'Failed to start 2FA');
+    }
+  };
+
+  const verify2FA = async () => {
+    setTwoFAMessage(null);
+    setTwoFAMode('verifying');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/auth/2fa/verify`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: twoFAToken, secret: twoFASecret })
+      });
+      const js = await res.json();
+      if (!res.ok) throw new Error(js.message || 'Verification failed');
+      // refresh profile state
+      setProfile(prev => ({ ...prev, settings: { ...(prev?.settings || {}), twoFactorAuth: true } }));
+      setTwoFAMessage('Two-factor authentication enabled');
+      setTwoFASecret(null);
+      setTwoFAToken('');
+      setTwoFAMode('idle');
+    } catch (err: any) {
+      setTwoFAMessage(err.message || 'Invalid code');
+      setTwoFAMode('setup');
+    }
+  };
+
+  const disable2FA = async () => {
+    setTwoFAMessage(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/auth/2fa/disable`, { method: 'POST', credentials: 'include' });
+      const js = await res.json();
+      if (!res.ok) throw new Error(js.message || 'Disable failed');
+      setProfile(prev => ({ ...prev, settings: { ...(prev?.settings || {}), twoFactorAuth: false } }));
+      setTwoFAMessage('Two-factor disabled');
+    } catch (err: any) {
+      setTwoFAMessage(err.message || 'Failed to disable 2FA');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteMessage(null);
+    if (!deletePassword) {
+      setDeleteMessage('Please enter your password to confirm');
+      return;
+    }
+    if (!confirm('This will permanently delete your account. Are you sure?')) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/auth/delete-account`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: deletePassword })
+      });
+      const js = await res.json();
+      if (!res.ok) throw new Error(js.message || 'Delete failed');
+      // on success redirect to home (logout occurred server-side)
+      window.location.href = '/';
+    } catch (err: any) {
+      setDeleteMessage(err.message || 'Failed to delete account');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -140,11 +293,8 @@ export default function ProfilePage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push('/home')}
-            className="px-4 py-2 rounded-lg text-white font-medium text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all flex items-center gap-2"
+            className="px-4 py-2 rounded-lg text-white font-medium text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
             Back
           </button>
           <button
@@ -429,7 +579,12 @@ export default function ProfilePage() {
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" defaultChecked />
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={!!profile?.settings?.emailNotif}
+                        onChange={(e) => saveSettings({ emailNotif: e.target.checked })}
+                      />
                       <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                     </label>
                   </div>
@@ -447,29 +602,18 @@ export default function ProfilePage() {
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" defaultChecked />
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={!!profile?.settings?.darkMode}
+                        onChange={(e) => saveSettings({ darkMode: e.target.checked })}
+                      />
                       <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                     </label>
                   </div>
                 </div>
 
-                <div className="p-6 border-2 border-slate-700 rounded-xl bg-slate-900/30">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                      </svg>
-                      <div>
-                        <h3 className="font-semibold text-white">AI Suggestions</h3>
-                        <p className="text-sm text-slate-400">Get personalized AI recommendations</p>
-                      </div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" defaultChecked />
-                      <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                    </label>
-                  </div>
-                </div>
+                {/* AI Suggestions removed as requested */}
               </div>
             )}
 
@@ -483,42 +627,135 @@ export default function ProfilePage() {
                     </svg>
                     <div>
                       <h3 className="font-semibold text-amber-400 mb-1">Security Settings</h3>
-                      <p className="text-sm text-slate-400">Password change and two-factor authentication features are coming soon.</p>
+                      <p className="text-sm text-slate-400">Change your password and enable two-factor authentication for added account security.</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6 border-2 border-slate-700 rounded-xl bg-slate-900/30 opacity-50 cursor-not-allowed">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                      </svg>
-                      <div>
-                        <h3 className="font-semibold text-slate-400">Change Password</h3>
-                        <p className="text-sm text-slate-500">Update your password regularly</p>
-                      </div>
+                {/* Change Password Panel */}
+                <div className="p-6 border-2 border-slate-700 rounded-xl bg-slate-900/30">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-white">Change Password</h3>
+                      <p className="text-sm text-slate-400">Update your password regularly</p>
                     </div>
-                    <button disabled className="px-4 py-2 bg-slate-700/30 text-slate-500 rounded-lg cursor-not-allowed">
-                      Coming Soon
-                    </button>
+                  </div>
+                  <div className="grid gap-3">
+                    <input
+                      type="password"
+                      placeholder="Current password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="w-full p-3 rounded-lg bg-slate-900/50 border border-slate-700 text-white"
+                    />
+                    <input
+                      type="password"
+                      placeholder="New password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full p-3 rounded-lg bg-slate-900/50 border border-slate-700 text-white"
+                    />
+                    <input
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full p-3 rounded-lg bg-slate-900/50 border border-slate-700 text-white"
+                    />
+                    {pwdMessage && <div className="text-sm text-yellow-300">{pwdMessage}</div>}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleChangePassword}
+                        disabled={pwdLoading}
+                        className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg disabled:opacity-60"
+                      >
+                        {pwdLoading ? 'Updating...' : 'Update Password'}
+                      </button>
+                      <button
+                        onClick={() => { setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setPwdMessage(null); }}
+                        className="px-4 py-2 border border-slate-600 rounded-lg text-slate-300"
+                      >
+                        Reset
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-6 border-2 border-slate-700 rounded-xl bg-slate-900/30 opacity-50 cursor-not-allowed">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      <div>
-                        <h3 className="font-semibold text-slate-400">Two-Factor Authentication</h3>
-                        <p className="text-sm text-slate-500">Add an extra layer of security</p>
-                      </div>
+                {/* Two-Factor Panel */}
+                <div className="p-6 border-2 border-slate-700 rounded-xl bg-slate-900/30">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-white">Two-Factor Authentication</h3>
+                      <p className="text-sm text-slate-400">Add an extra layer of security using TOTP (e.g., Google Authenticator).</p>
                     </div>
-                    <button disabled className="px-4 py-2 bg-slate-700/30 text-slate-500 rounded-lg cursor-not-allowed">
-                      Coming Soon
-                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {profile?.settings?.twoFactorAuth ? (
+                      <div className="flex items-center justify-between">
+                        <div className="text-slate-300">Two-factor is enabled on your account.</div>
+                        <button onClick={disable2FA} className="px-4 py-2 bg-red-600 text-white rounded-lg">Disable 2FA</button>
+                      </div>
+                    ) : (
+                      <div>
+                        {twoFAMode === 'setup' ? (
+                          <div className="grid sm:grid-cols-2 gap-4 items-start">
+                            <div className="flex flex-col items-center gap-3">
+                              {twoFAUri ? (
+                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(twoFAUri)}`} alt="2FA QR" className="bg-white p-2 rounded-md" />
+                              ) : (
+                                <div className="w-48 h-48 bg-slate-800 rounded-md flex items-center justify-center text-slate-500">QR unavailable</div>
+                              )}
+                              {twoFASecret && <div className="text-xs text-slate-400 break-all">Secret: {twoFASecret}</div>}
+                            </div>
+                            <div className="flex flex-col gap-3">
+                              <input
+                                placeholder="Enter code from authenticator"
+                                value={twoFAToken}
+                                onChange={(e) => setTwoFAToken(e.target.value)}
+                                className="w-full p-3 rounded-lg bg-slate-900/50 border border-slate-700 text-white"
+                              />
+                              {twoFAMessage && <div className="text-sm text-yellow-300">{twoFAMessage}</div>}
+                              <div className="flex gap-3">
+                                <button onClick={verify2FA} className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg">Verify & Enable</button>
+                                <button onClick={() => { setTwoFAMode('idle'); setTwoFASecret(null); setTwoFAUri(null); setTwoFAToken(''); setTwoFAMessage(null); }} className="px-4 py-2 border border-slate-600 rounded-lg text-slate-300">Cancel</button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <div className="text-slate-300">Two-factor is not enabled.</div>
+                            <div className="flex gap-3">
+                              <button onClick={start2FA} className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg">Enable 2FA</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {twoFAMessage && <div className="text-sm text-yellow-300">{twoFAMessage}</div>}
+                  </div>
+                </div>
+                {/* Delete Account Panel */}
+                <div className="p-6 border-2 border-red-700 rounded-xl bg-rose-900/10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-red-400">Delete Account</h3>
+                      <p className="text-sm text-slate-400">Permanently delete your account. This cannot be undone.</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-3">
+                    <input
+                      type="password"
+                      placeholder="Enter your password to confirm"
+                      value={deletePassword}
+                      onChange={(e) => setDeletePassword(e.target.value)}
+                      className="w-full p-3 rounded-lg bg-slate-900/50 border border-slate-700 text-white"
+                    />
+                    {deleteMessage && <div className="text-sm text-yellow-300">{deleteMessage}</div>}
+                    <div className="flex gap-3">
+                      <button onClick={handleDeleteAccount} disabled={deleting} className="px-4 py-2 bg-red-600 text-white rounded-lg">{deleting ? 'Deleting...' : 'Delete Account'}</button>
+                      <button onClick={() => { setDeletePassword(''); setDeleteMessage(null); }} className="px-4 py-2 border border-slate-600 rounded-lg text-slate-300">Cancel</button>
+                    </div>
                   </div>
                 </div>
               </div>
