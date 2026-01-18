@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/services/api";
 import { useRouter } from "next/navigation";
+import Lenis from 'lenis';
 
 interface Project {
   id: string;
@@ -33,6 +34,7 @@ export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [showWelcome, setShowWelcome] = useState(true);
   const [stats, setStats] = useState<MLStats>({
     validations: 0,
     datasets: 0,
@@ -64,6 +66,30 @@ export default function DashboardPage() {
     }
     loadMe();
   }, [router]);
+
+  // Initialize Lenis for smooth scrolling
+  useEffect(() => {
+    const lenis = new Lenis();
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
+
+  // Hide welcome animation after 3 seconds
+  useEffect(() => {
+    if (user) {
+      const timer = setTimeout(() => setShowWelcome(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
 
   // Mouse tracking for interactive background
   useEffect(() => {
@@ -156,63 +182,141 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans text-sm relative overflow-hidden">
-      {/* Ultra-Modern Interactive Background */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 font-sans text-sm relative overflow-hidden">
+      {/* Welcome Background Animation */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        {/* Base Gradient Layers */}
+        {/* Welcome Message Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center opacity-10 animate-pulse">
+            <h1 className="text-6xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 mb-4">
+              Welcome Back
+            </h1>
+            <p className="text-xl md:text-2xl text-indigo-300/50">
+              {user?.name ? `Hello, ${user.name}!` : 'Ready to explore?'}
+            </p>
+          </div>
+        </div>
+
+        {/* Enhanced Gradient Layers */}
         <div className="absolute inset-0" style={{
           background: `
-            radial-gradient(circle at 20% 30%, rgba(110, 84, 200, 0.25) 0%, transparent 50%),
-            radial-gradient(circle at 80% 70%, rgba(124, 73, 169, 0.25) 0%, transparent 50%),
-            radial-gradient(circle at 50% 50%, rgba(94, 114, 235, 0.18) 0%, transparent 60%)
+            radial-gradient(circle at 20% 30%, rgba(110, 84, 200, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(124, 73, 169, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(94, 114, 235, 0.25) 0%, transparent 60%),
+            radial-gradient(circle at 30% 80%, rgba(168, 85, 247, 0.2) 0%, transparent 40%)
           `
         }} />
-        
-        {/* Mouse-Responsive Glow Orbs */}
-        <div 
-          className="absolute w-[350px] h-[350px] rounded-full blur-[70px] transition-all duration-1000 ease-out"
+
+        {/* Dynamic Mouse-Responsive Glow Orbs */}
+        <div
+          className="absolute w-[400px] h-[400px] rounded-full blur-[80px] transition-all duration-1000 ease-out animate-pulse"
           style={{
-            background: 'rgba(110,84,200,0.2)',
-            top: `${Math.max(10, Math.min(60, (mousePos.y / window.innerHeight) * 100))}%`,
-            left: `${Math.max(10, Math.min(60, (mousePos.x / window.innerWidth) * 100))}%`,
-            transform: `translate(-50%, -50%) scale(${1 + (mousePos.x / window.innerWidth) * 0.2})`
+            background: 'radial-gradient(circle, rgba(110,84,200,0.25) 0%, rgba(110,84,200,0.1) 50%, transparent 100%)',
+            top: `${Math.max(15, Math.min(70, (mousePos.y / window.innerHeight) * 100))}%`,
+            left: `${Math.max(15, Math.min(70, (mousePos.x / window.innerWidth) * 100))}%`,
+            transform: `translate(-50%, -50%) scale(${1 + (mousePos.x / window.innerWidth) * 0.3})`,
+            animationDelay: '0s'
           }}
         />
-        <div 
-          className="absolute w-[450px] h-[450px] rounded-full blur-[70px] transition-all duration-1500 ease-out"
+        <div
+          className="absolute w-[500px] h-[500px] rounded-full blur-[80px] transition-all duration-1500 ease-out animate-pulse"
           style={{
-            background: 'rgba(124,73,169,0.18)',
-            bottom: `${Math.max(10, Math.min(60, ((window.innerHeight - mousePos.y) / window.innerHeight) * 100))}%`,
-            right: `${Math.max(10, Math.min(60, ((window.innerWidth - mousePos.x) / window.innerWidth) * 100))}%`,
-            transform: `scale(${1 + (mousePos.y / window.innerHeight) * 0.15})`
+            background: 'radial-gradient(circle, rgba(124,73,169,0.22) 0%, rgba(124,73,169,0.08) 50%, transparent 100%)',
+            bottom: `${Math.max(15, Math.min(70, ((window.innerHeight - mousePos.y) / window.innerHeight) * 100))}%`,
+            right: `${Math.max(15, Math.min(70, ((window.innerWidth - mousePos.x) / window.innerWidth) * 100))}%`,
+            transform: `scale(${1 + (mousePos.y / window.innerHeight) * 0.25})`,
+            animationDelay: '1s'
+          }}
+        />
+        <div
+          className="absolute w-[300px] h-[300px] rounded-full blur-[60px] transition-all duration-2000 ease-out animate-pulse"
+          style={{
+            background: 'radial-gradient(circle, rgba(168,85,247,0.2) 0%, rgba(168,85,247,0.06) 50%, transparent 100%)',
+            top: `${Math.max(20, Math.min(80, ((mousePos.x + mousePos.y) / (window.innerWidth + window.innerHeight)) * 100))}%`,
+            left: `${Math.max(20, Math.min(80, ((mousePos.x - mousePos.y) / window.innerWidth) * 50 + 50))}%`,
+            animationDelay: '2s'
           }}
         />
 
-        {/* Floating Geometric Shapes */}
-        <div className="absolute top-[15%] left-[8%] w-32 h-32 border border-indigo-400/30 rounded-full animate-pulse"
-             style={{ animationDelay: '0s', animationDuration: '4s' }} />
-        <div className="absolute top-[25%] right-[12%] w-24 h-24 border border-purple-400/25 rounded-lg rotate-45 animate-bounce"
-             style={{ animationDelay: '1s', animationDuration: '6s' }} />
-        <div className="absolute bottom-[20%] left-[15%] w-20 h-20 border border-violet-400/20 rounded-full animate-ping"
-             style={{ animationDelay: '2s', animationDuration: '5s' }} />
-        
-        {/* Animated Grid Pattern */}
-        <div className="absolute inset-0 opacity-[0.03]">
+        {/* Floating Welcome Elements */}
+        <div className="absolute top-[20%] left-[10%] w-16 h-16 border-2 border-indigo-400/40 rounded-full animate-bounce opacity-60"
+             style={{ animationDelay: '0s', animationDuration: '3s' }}>
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+            <span className="text-indigo-300 text-xs">✨</span>
+          </div>
+        </div>
+        <div className="absolute top-[35%] right-[15%] w-12 h-12 border-2 border-purple-400/35 rounded-lg rotate-45 animate-pulse opacity-50"
+             style={{ animationDelay: '1s', animationDuration: '4s' }}>
+          <div className="w-full h-full rounded-lg bg-gradient-to-br from-purple-500/15 to-pink-500/15 flex items-center justify-center">
+            <span className="text-purple-300 text-xs">🚀</span>
+          </div>
+        </div>
+        <div className="absolute bottom-[25%] left-[20%] w-14 h-14 border-2 border-pink-400/30 rounded-full animate-ping opacity-40"
+             style={{ animationDelay: '2s', animationDuration: '5s' }}>
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center">
+            <span className="text-pink-300 text-xs">💫</span>
+          </div>
+        </div>
+        <div className="absolute top-[50%] right-[25%] w-10 h-10 border-2 border-violet-400/25 rounded-lg animate-bounce opacity-45"
+             style={{ animationDelay: '0.5s', animationDuration: '3.5s' }}>
+          <div className="w-full h-full rounded-lg bg-gradient-to-br from-violet-500/15 to-indigo-500/15 flex items-center justify-center">
+            <span className="text-violet-300 text-xs">🌟</span>
+          </div>
+        </div>
+
+        {/* Animated Connection Lines */}
+        <svg className="absolute inset-0 w-full h-full opacity-20">
+          <defs>
+            <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="rgba(110,84,200,0.3)" />
+              <stop offset="50%" stopColor="rgba(168,85,247,0.5)" />
+              <stop offset="100%" stopColor="rgba(124,73,169,0.3)" />
+            </linearGradient>
+          </defs>
+          <path d="M100,200 Q300,100 500,200 T900,200" stroke="url(#lineGradient)" strokeWidth="2" fill="none" className="animate-pulse" />
+          <path d="M200,400 Q400,300 600,400 T1000,400" stroke="url(#lineGradient)" strokeWidth="2" fill="none" className="animate-pulse" style={{ animationDelay: '1s' }} />
+          <path d="M50,600 Q250,500 450,600 T850,600" stroke="url(#lineGradient)" strokeWidth="2" fill="none" className="animate-pulse" style={{ animationDelay: '2s' }} />
+        </svg>
+
+        {/* Enhanced Grid Pattern */}
+        <div className="absolute inset-0 opacity-[0.04]">
           <div className="absolute inset-0" style={{
             backgroundImage: `
-              linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px)
+              linear-gradient(rgba(139, 92, 246, 0.15) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(139, 92, 246, 0.15) 1px, transparent 1px)
             `,
-            backgroundSize: '50px 50px'
+            backgroundSize: '60px 60px'
           }} />
         </div>
 
-        {/* Subtle Particle Effects */}
-        <div className="absolute top-[30%] left-[25%] w-1 h-1 bg-indigo-400 rounded-full animate-pulse opacity-60" />
-        <div className="absolute top-[60%] right-[30%] w-1 h-1 bg-purple-400 rounded-full animate-pulse opacity-40" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-[40%] left-[40%] w-1 h-1 bg-violet-400 rounded-full animate-pulse opacity-50" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-[45%] right-[20%] w-1 h-1 bg-indigo-300 rounded-full animate-pulse opacity-30" style={{ animationDelay: '0.5s' }} />
+        {/* Floating Particles */}
+        <div className="absolute top-[25%] left-[30%] w-2 h-2 bg-indigo-400 rounded-full animate-ping opacity-70" style={{ animationDelay: '0s' }} />
+        <div className="absolute top-[65%] right-[35%] w-1.5 h-1.5 bg-purple-400 rounded-full animate-ping opacity-60" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-[35%] left-[50%] w-2 h-2 bg-pink-400 rounded-full animate-ping opacity-50" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[40%] right-[15%] w-1 h-1 bg-violet-400 rounded-full animate-ping opacity-80" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute bottom-[50%] right-[45%] w-1.5 h-1.5 bg-indigo-300 rounded-full animate-ping opacity-40" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute top-[70%] left-[25%] w-1 h-1 bg-purple-300 rounded-full animate-ping opacity-60" style={{ animationDelay: '2.5s' }} />
       </div>
+
+      {/* Welcome Animation Overlay */}
+      {showWelcome && user && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="text-center animate-bounce-in">
+            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl animate-pulse">
+              <span className="text-3xl">🎉</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 mb-4 animate-slide-up">
+              Welcome Back!
+            </h2>
+            <p className="text-xl md:text-2xl text-indigo-300 mb-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+              {user.name ? `Hello, ${user.name}!` : 'Great to see you again!'}
+            </p>
+            <p className="text-lg text-purple-300 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+              Ready to continue your journey?
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-8 bg-slate-900/80 backdrop-blur-xl border-b border-indigo-500/20">
@@ -700,6 +804,63 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      <style jsx global>{`
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes bounce-in {
+          0% {
+            transform: scale(0.3);
+            opacity: 0;
+          }
+          50% {
+            transform: scale(1.05);
+          }
+          70% {
+            transform: scale(0.9);
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+
+        @keyframes slide-up {
+          from {
+            transform: translateY(30px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out;
+        }
+
+        .animate-bounce-in {
+          animation: bounce-in 0.8s ease-out;
+        }
+
+        .animate-slide-up {
+          animation: slide-up 0.6s ease-out forwards;
+          opacity: 0;
+        }
+
+        .logo-shine {
+          animation: shine 3s ease-in-out infinite;
+        }
+
+        @keyframes shine {
+          0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+          100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -226,7 +226,7 @@ export default function ProfilePage() {
       const js = await res.json();
       if (!res.ok) throw new Error(js.message || 'Verification failed');
       // refresh profile state
-      setProfile(prev => ({ ...prev, settings: { ...(prev?.settings || {}), twoFactorAuth: true } }));
+      setProfile((prev: any) => ({ ...prev, settings: { ...(prev?.settings || {}), twoFactorAuth: true } }));
       setTwoFAMessage('Two-factor authentication enabled');
       setTwoFASecret(null);
       setTwoFAToken('');
