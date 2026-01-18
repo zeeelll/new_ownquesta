@@ -48,7 +48,18 @@ exports.register = async (req, res) => {
 
     console.log("✅ New user registered:", user._id);
 
-    res.status(201).json({ message: "Registered successfully", user });
+    // Automatically log in the user after registration
+    req.logIn(user, (loginErr) => {
+      if (loginErr) {
+        console.error("❌ Auto-login after registration failed:", loginErr);
+        return res.status(500).json({ message: "Registration successful but login failed. Please login manually." });
+      }
+      
+      console.log("✅ User auto-logged in after registration");
+      const userObj = user.toObject();
+      delete userObj.password;
+      res.status(201).json({ message: "Registered successfully", user: userObj });
+    });
   } catch (err) {
     console.error("❌ Registration error:", err);
     res.status(500).json({ message: err.message });
@@ -68,8 +79,20 @@ exports.login = (req, res, next) => {
 };
 
 exports.logout = (req, res) => {
-  req.logout(() => {
-    res.json({ message: "Logged out" });
+  req.logout((err) => {
+    if (err) {
+      console.error("❌ Logout error:", err);
+      return res.status(500).json({ message: "Logout failed" });
+    }
+    req.session.destroy((destroyErr) => {
+      if (destroyErr) {
+        console.error("❌ Session destroy error:", destroyErr);
+        return res.status(500).json({ message: "Session destruction failed" });
+      }
+      res.clearCookie('connect.sid');
+      console.log("✅ User logged out successfully");
+      res.json({ message: "Logged out" });
+    });
   });
 };
 

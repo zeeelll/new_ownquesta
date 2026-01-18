@@ -33,6 +33,7 @@ interface Message {
 
 const OwnquestaProfile: React.FC = () => {
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+  const STORAGE_KEY = 'ownquesta_user_profile';
   const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2300d4ff;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%237c3aed;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23grad)' width='140' height='140'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='56' font-weight='bold' fill='white'%3EU%3C/text%3E%3C/svg%3E";
 
   const [userData, setUserData] = useState<UserProfile>({
@@ -66,7 +67,7 @@ const OwnquestaProfile: React.FC = () => {
 
   const saveProfile = useCallback(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
-  }, [STORAGE_KEY, userData]);
+  }, [userData]);
 
   const loadProfile = useCallback(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -77,7 +78,7 @@ const OwnquestaProfile: React.FC = () => {
     } else {
       saveProfile();
     }
-  }, [STORAGE_KEY, DEFAULT_AVATAR, saveProfile]);
+  }, [DEFAULT_AVATAR, saveProfile]);
 
   const updateMemberDays = useCallback(() => {
     if (!userData.memberSince) return;
@@ -91,14 +92,52 @@ const OwnquestaProfile: React.FC = () => {
 
   // Load profile data on component mount
   useEffect(() => {
-    setIsHydrated(true);
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsedData = JSON.parse(stored);
-      setUserData(parsedData);
-      setCurrentAvatar(parsedData.avatar || DEFAULT_AVATAR);
-    }
-  }, []); // Empty dependency array - only run once on mount
+    const loadInitialData = async () => {
+      setIsHydrated(true);
+      
+      try {
+        // Try to fetch from backend first
+        const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+          credentials: 'include',
+          headers: { Accept: 'application/json' }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.user) {
+            setUserData(prevData => ({
+              ...prevData,
+              name: data.user.name || prevData.name,
+              email: data.user.email || prevData.email,
+              phone: data.user.phone || prevData.phone,
+              dateOfBirth: data.user.dateOfBirth || prevData.dateOfBirth,
+              bio: data.user.bio || prevData.bio,
+              company: data.user.company || prevData.company,
+              jobTitle: data.user.jobTitle || prevData.jobTitle,
+              location: data.user.location || prevData.location,
+              department: data.user.department || prevData.department,
+              website: data.user.website || prevData.website,
+              avatar: data.user.avatar || DEFAULT_AVATAR,
+              memberSince: data.user.createdAt?.split('T')[0] || prevData.memberSince,
+              emailNotif: data.user.settings?.emailNotif ?? prevData.emailNotif,
+              marketingEmails: data.user.settings?.marketingEmails ?? prevData.marketingEmails,
+              publicProfile: data.user.settings?.publicProfile ?? prevData.publicProfile,
+              twoFactorAuth: data.user.settings?.twoFactorAuth ?? prevData.twoFactorAuth,
+              language: data.user.settings?.language || prevData.language,
+              timezone: data.user.settings?.timezone || prevData.timezone
+            }));
+            setCurrentAvatar(data.user.avatar || DEFAULT_AVATAR);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load profile from backend:', error);
+        // Redirect to login if not authenticated
+        router.push('/login');
+      }
+    };
+    
+    loadInitialData();
+  }, [BACKEND_URL, DEFAULT_AVATAR, router]); // Fixed dependency array
 
   useEffect(() => {
     updateMemberDays();

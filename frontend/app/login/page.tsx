@@ -23,31 +23,29 @@ export default function LoginPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [signUpMessage, setSignUpMessage] = useState('');
   const [signUpSuccess, setSignUpSuccess] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ authenticated: boolean; name?: string; avatar?: string } | null>(null);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   useEffect(() => {
-    // Check authentication status and show user panel if logged in
+    // Check authentication status on mount
     fetch(`${BACKEND_URL}/api/auth/me`, {
       credentials: 'include',
       headers: { Accept: 'application/json' }
     })
       .then(async (res) => {
         if (res.ok) {
-<<<<<<< HEAD
-          router.push('/home');
-=======
           const data = await res.json();
-          if (data?.user) setCurrentUser({ authenticated: true, name: data.user.name, avatar: data.user.avatar });
-          else setCurrentUser({ authenticated: false });
+          if (data?.user) {
+            setCurrentUser({ authenticated: true, name: data.user.name, avatar: data.user.avatar });
+          } else {
+            setCurrentUser({ authenticated: false });
+          }
         } else {
           setCurrentUser({ authenticated: false });
->>>>>>> 65333659a66f0d38b4c218413148ceeb44433019
         }
       })
       .catch(() => setCurrentUser({ authenticated: false }));
-  }, [router]);
-
-  const [currentUser, setCurrentUser] = useState<{ authenticated: boolean; name?: string; avatar?: string } | null>(null);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  }, [BACKEND_URL]);
 
   const handleSignIn = async () => {
     setSignInMessage('');
@@ -68,19 +66,14 @@ export default function LoginPage() {
         credentials: 'include'
       });
       
-<<<<<<< HEAD
       if (response.ok) {
+        const data = await response.json();
+        console.log('Login successful:', data);
         // Login successful - redirect to home page
         window.location.href = '/home';
-=======
-      if (response.redirected) {
-        window.location.href = response.url;
-      } else if (response.ok) {
-        router.replace('/');
->>>>>>> 65333659a66f0d38b4c218413148ceeb44433019
       } else {
         const data = await response.json();
-        setSignInMessage(data.error || 'Invalid email or password');
+        setSignInMessage(data.message || data.error || 'Invalid email or password');
         setSignInSuccess(false);
       }
     } catch {
@@ -118,7 +111,7 @@ export default function LoginPage() {
     setLoading(true);
     
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/signup`, {
+      const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -129,19 +122,14 @@ export default function LoginPage() {
         credentials: 'include'
       });
       
-<<<<<<< HEAD
       if (response.ok) {
+        const data = await response.json();
+        console.log('Registration successful:', data);
         // Signup successful - redirect to home page
         window.location.href = '/home';
-=======
-      if (response.redirected) {
-        window.location.href = response.url;
-      } else if (response.ok) {
-        router.replace('/');
->>>>>>> 65333659a66f0d38b4c218413148ceeb44433019
       } else {
-        const errorText = await response.text();
-        setSignUpMessage(errorText || 'Failed to create account');
+        const data = await response.json().catch(() => ({ message: 'Failed to create account' }));
+        setSignUpMessage(data.message || data.error || 'Failed to create account');
         setSignUpSuccess(false);
       }
     } catch {
@@ -161,7 +149,7 @@ export default function LoginPage() {
 
   const handleLogoutFromLogin = () => {
     setLoading(true);
-    setUser({ authenticated: false });
+    setCurrentUser({ authenticated: false });
     
     fetch(`${BACKEND_URL}/api/auth/logout`, {
       method: 'POST',

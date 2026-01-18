@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 type AuthUser = {
   authenticated: boolean;
@@ -16,6 +17,7 @@ export default function HomePage() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const lastScrollY = useRef(0);
+  const router = useRouter();
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
   useEffect(() => {
@@ -88,7 +90,7 @@ export default function HomePage() {
         credentials: 'include'
       });
     } finally {
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   };
 

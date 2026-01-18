@@ -28,11 +28,8 @@ export default function Home() {
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data?.user) {
-          setUser({
-            authenticated: true,
-            name: data.user.name,
-            avatar: data.user.avatar
-          });
+          // User is authenticated, redirect to /home
+          window.location.href = '/home';
         } else {
           setUser({ authenticated: false });
         }
@@ -66,16 +63,21 @@ export default function Home() {
 
     window.addEventListener('scroll', handleScroll);
     
-    // Show scroll indicator after delay
-    const timer = setTimeout(() => setShowScrollIndicator(true), 2000);
-    const hideTimer = setTimeout(() => setShowScrollIndicator(false), 8000);
+    // Show scroll indicator after delay (only for non-authenticated users)
+    let timer: NodeJS.Timeout | undefined;
+    let hideTimer: NodeJS.Timeout | undefined;
+    
+    if (!user?.authenticated) {
+      timer = setTimeout(() => setShowScrollIndicator(true), 2000);
+      hideTimer = setTimeout(() => setShowScrollIndicator(false), 8000);
+    }
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      clearTimeout(timer);
-      clearTimeout(hideTimer);
+      if (timer) clearTimeout(timer);
+      if (hideTimer) clearTimeout(hideTimer);
     };
-  }, [BACKEND_URL]);
+  }, [BACKEND_URL, user]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -96,7 +98,7 @@ export default function Home() {
         credentials: 'include'
       });
     } finally {
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   };
 
