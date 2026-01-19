@@ -6,7 +6,7 @@ import Lenis from 'lenis';
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2300d4ff;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%237c3aed;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23grad)' width='140' height='140'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='56' font-weight='bold' fill='white'%3EU%3C/text%3E%3C/svg%3E";
 
-type TabType = 'personal' | 'work' | 'settings' | 'security';
+type TabType = 'personal' | 'work' | 'security';
 
 export default function ProfilePage() {
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
@@ -69,10 +69,8 @@ export default function ProfilePage() {
           jobTitle: u.jobTitle || '',
           location: u.location || '',
           skills: u.skills || '',
-          settings: {
-            emailNotif: u.settings?.emailNotif ?? true,
-            darkMode: u.settings?.darkMode ?? true
-          }
+          darkMode: u.settings?.darkMode ?? true,
+          twoFactorAuth: u.settings?.twoFactorAuth ?? false
         });
       } catch (err) {
         console.error('Failed to fetch profile', err);
@@ -111,8 +109,21 @@ export default function ProfilePage() {
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => handleChange('avatar', reader.result as string);
+    reader.onload = () => {
+      const avatarData = reader.result as string;
+      handleChange('avatar', avatarData);
+      localStorage.setItem('userAvatar', avatarData);
+      saveAvatar(avatarData); // save in background
+      router.push('/profile/avatar');
+    };
     reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = () => {
+    handleChange('avatar', DEFAULT_AVATAR);
+    localStorage.setItem('userAvatar', DEFAULT_AVATAR);
+    saveAvatar(DEFAULT_AVATAR); // save in background
+    router.push('/profile/avatar');
   };
 
   const save = async () => {
@@ -131,8 +142,7 @@ export default function ProfilePage() {
           company: profile.company,
           jobTitle: profile.jobTitle,
           location: profile.location,
-          skills: profile.skills,
-          settings: profile.settings
+          skills: profile.skills
         })
       });
       const json = await res.json();
@@ -146,16 +156,30 @@ export default function ProfilePage() {
     }
   };
 
-  const saveSettings = async (newSettings: { emailNotif?: boolean; darkMode?: boolean }) => {
-    if (!profile) return;
-    // optimistic update
-    setProfile((prev: any) => ({ ...prev, settings: { ...(prev?.settings || {}), ...newSettings } }));
+  const saveAvatar = async (avatar: string) => {
     try {
       await fetch(`${BACKEND_URL}/api/auth/profile`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings: { ...(profile.settings || {}), ...newSettings } })
+        body: JSON.stringify({ avatar })
+      });
+    } catch (err) {
+      console.error('Failed to save avatar', err);
+      alert('Failed to save avatar. Please try again.');
+    }
+  };
+
+  const saveSettings = async (newDarkMode: boolean) => {
+    if (!profile) return;
+    // optimistic update
+    setProfile((prev: any) => ({ ...prev, darkMode: newDarkMode }));
+    try {
+      await fetch(`${BACKEND_URL}/api/auth/profile`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: { darkMode: newDarkMode } })
       });
     } catch (err) {
       console.error('Failed to save settings', err);
@@ -168,7 +192,7 @@ export default function ProfilePage() {
     } else {
       try { document.documentElement.classList.remove('dark'); } catch {}
     }
-  }, [profile?.settings?.darkMode]);
+  }, [profile?.darkMode]);
 
   const handleChangePassword = async () => {
     setPwdMessage(null);
@@ -226,7 +250,7 @@ export default function ProfilePage() {
       const js = await res.json();
       if (!res.ok) throw new Error(js.message || 'Verification failed');
       // refresh profile state
-      setProfile((prev: any) => ({ ...prev, settings: { ...(prev?.settings || {}), twoFactorAuth: true } }));
+      setProfile((prev: any) => ({ ...prev, twoFactorAuth: true }));
       setTwoFAMessage('Two-factor authentication enabled');
       setTwoFASecret(null);
       setTwoFAToken('');
@@ -243,7 +267,7 @@ export default function ProfilePage() {
       const res = await fetch(`${BACKEND_URL}/api/auth/2fa/disable`, { method: 'POST', credentials: 'include' });
       const js = await res.json();
       if (!res.ok) throw new Error(js.message || 'Disable failed');
-      setProfile((prev: any) => ({ ...prev, settings: { ...(prev?.settings || {}), twoFactorAuth: false } }));
+      setProfile((prev: any) => ({ ...prev, twoFactorAuth: false }));
       setTwoFAMessage('Two-factor disabled');
     } catch (err: any) {
       setTwoFAMessage(err.message || 'Failed to disable 2FA');
@@ -444,20 +468,6 @@ export default function ProfilePage() {
               Work Details
             </button>
             <button
-              onClick={() => setActiveTab('settings')}
-              className={`px-6 py-4 font-medium transition-all whitespace-nowrap flex items-center gap-2 ${
-                activeTab === 'settings'
-                  ? 'text-white border-b-2 border-indigo-500 bg-indigo-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/30'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Settings
-            </button>
-            <button
               onClick={() => setActiveTab('security')}
               className={`px-6 py-4 font-medium transition-all whitespace-nowrap flex items-center gap-2 ${
                 activeTab === 'security'
@@ -515,7 +525,7 @@ export default function ProfilePage() {
                         Change Photo
                       </button>
                       <button 
-                        onClick={() => handleChange('avatar', DEFAULT_AVATAR)} 
+                        onClick={handleRemoveAvatar} 
                         className="px-4 py-2 border-2 border-slate-600 hover:border-slate-500 hover:bg-slate-800/50 rounded-lg transition-all duration-300 flex items-center gap-2"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -659,59 +669,6 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Settings Tab */}
-            {activeTab === 'settings' && (
-              <div className="space-y-6">
-                <div className="p-6 border-2 border-slate-700 rounded-xl bg-slate-900/30">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                      </svg>
-                      <div>
-                        <h3 className="font-semibold text-white">Email Notifications</h3>
-                        <p className="text-sm text-slate-400">Receive updates via email</p>
-                      </div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="sr-only peer"
-                        checked={!!profile?.settings?.emailNotif}
-                        onChange={(e) => saveSettings({ emailNotif: e.target.checked })}
-                      />
-                      <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="p-6 border-2 border-slate-700 rounded-xl bg-slate-900/30">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                      </svg>
-                      <div>
-                        <h3 className="font-semibold text-white">Dark Mode</h3>
-                        <p className="text-sm text-slate-400">Use dark theme</p>
-                      </div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="sr-only peer"
-                        checked={!!profile?.settings?.darkMode}
-                        onChange={(e) => saveSettings({ darkMode: e.target.checked })}
-                      />
-                      <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                    </label>
-                  </div>
-                </div>
-
-                {/* AI Suggestions removed as requested */}
-              </div>
-            )}
-
             {/* Security Tab */}
             {activeTab === 'security' && (
               <div className="space-y-6">
@@ -786,7 +743,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="space-y-4">
-                    {profile?.settings?.twoFactorAuth ? (
+                    {profile?.twoFactorAuth ? (
                       <div className="flex items-center justify-between">
                         <div className="text-slate-300">Two-factor is enabled on your account.</div>
                         <button onClick={disable2FA} className="px-4 py-2 bg-red-600 text-white rounded-lg">Disable 2FA</button>

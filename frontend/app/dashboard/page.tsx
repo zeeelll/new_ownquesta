@@ -56,8 +56,13 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadMe() {
       try {
+        const savedAvatar = localStorage.getItem('userAvatar');
+        if (savedAvatar) {
+          setUser(prev => ({ ...prev, avatar: savedAvatar }));
+        }
         const data = await api("/api/auth/me");
         setUser(data.user);
+        localStorage.setItem('userAvatar', data.user.avatar || '');
         loadDashboardData();
       } catch {
         router.push("/login");

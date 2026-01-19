@@ -43,11 +43,16 @@ const MLPage: React.FC = () => {
   const router = useRouter();
     
     // Fetch user data
+    const savedAvatar = localStorage.getItem('userAvatar');
+    if (savedAvatar) {
+      setUser(prev => ({ ...prev, avatar: savedAvatar }));
+    }
     fetch(`${BACKEND_URL}/api/auth/me`, { credentials: 'include' })
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data?.user) {
           setUser({ name: data.user.name, avatar: data.user.avatar });
+          localStorage.setItem('userAvatar', data.user.avatar || '');
         }
       })
 

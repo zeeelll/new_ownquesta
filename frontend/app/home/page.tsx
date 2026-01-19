@@ -41,6 +41,10 @@ export default function HomePage() {
     }
 
     // Check authentication status
+    const savedAvatar = localStorage.getItem('userAvatar');
+    if (savedAvatar) {
+      setUser(prev => ({ ...prev, avatar: savedAvatar }));
+    }
     fetch(`${BACKEND_URL}/api/auth/me`, {
       credentials: 'include',
       headers: { 'Accept': 'application/json' }
@@ -53,6 +57,7 @@ export default function HomePage() {
             name: data.user.name,
             avatar: data.user.avatar
           });
+          localStorage.setItem('userAvatar', data.user.avatar || '');
         } else {
           // If not authenticated, redirect to login
           window.location.href = '/login';
