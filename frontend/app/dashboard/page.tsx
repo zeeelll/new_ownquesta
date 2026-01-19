@@ -222,20 +222,6 @@ export default function DashboardPage() {
           }}
         />
 
-        {/* Animated Connection Lines */}
-        <svg className="absolute inset-0 w-full h-full opacity-20">
-          <defs>
-            <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="rgba(110,84,200,0.3)" />
-              <stop offset="50%" stopColor="rgba(168,85,247,0.5)" />
-              <stop offset="100%" stopColor="rgba(124,73,169,0.3)" />
-            </linearGradient>
-          </defs>
-          <path d="M100,200 Q300,100 500,200 T900,200" stroke="url(#lineGradient)" strokeWidth="2" fill="none" className="animate-pulse" />
-          <path d="M200,400 Q400,300 600,400 T1000,400" stroke="url(#lineGradient)" strokeWidth="2" fill="none" className="animate-pulse" style={{ animationDelay: '1s' }} />
-          <path d="M50,600 Q250,500 450,600 T850,600" stroke="url(#lineGradient)" strokeWidth="2" fill="none" className="animate-pulse" style={{ animationDelay: '2s' }} />
-        </svg>
-
         {/* Enhanced Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.04]">
           <div className="absolute inset-0" style={{

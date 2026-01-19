@@ -303,33 +303,6 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center relative overflow-hidden">
-        {/* Interactive loading cosmic background */}
-        <div
-          className="absolute w-[1000px] h-[1000px] bg-gradient-to-r from-indigo-600/40 via-purple-600/30 to-pink-600/40 rounded-full blur-[180px] animate-pulse"
-          style={{
-            top: `${-30 + mousePosition.y * 8}%`,
-            left: `${-20 + mousePosition.x * 12}%`,
-            animationDuration: '12s'
-          }}
-        ></div>
-        <div
-          className="absolute w-[800px] h-[800px] bg-gradient-to-l from-purple-600/35 via-blue-600/25 to-indigo-600/40 rounded-full blur-[160px] animate-pulse"
-          style={{
-            bottom: `${-25 - mousePosition.y * 10}%`,
-            right: `${-15 - mousePosition.x * 8}%`,
-            animationDuration: '15s',
-            animationDelay: '2s'
-          }}
-        ></div>
-        <div
-          className="absolute w-[500px] h-[500px] bg-gradient-to-br from-cyan-500/20 via-indigo-500/25 to-purple-500/30 rounded-full blur-[140px] animate-pulse"
-          style={{
-            top: `${20 + mousePosition.y * 6}%`,
-            right: `${10 + mousePosition.x * 10}%`,
-            animationDuration: '18s',
-            animationDelay: '4s'
-          }}
-        ></div>
         <div className="text-center relative z-10">
           <div className="inline-block animate-spin rounded-full h-20 w-20 border-4 border-indigo-500 border-t-transparent shadow-lg shadow-indigo-500/50"></div>
           <p className="mt-8 text-gray-300 text-xl font-medium">Loading your profile...</p>
@@ -347,24 +320,6 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center relative overflow-hidden">
-        {/* Interactive error cosmic background */}
-        <div
-          className="absolute w-[1000px] h-[1000px] bg-gradient-to-r from-red-600/30 via-orange-600/25 to-yellow-600/30 rounded-full blur-[180px] animate-pulse"
-          style={{
-            top: `${-30 + mousePosition.y * 8}%`,
-            left: `${-20 + mousePosition.x * 12}%`,
-            animationDuration: '12s'
-          }}
-        ></div>
-        <div
-          className="absolute w-[800px] h-[800px] bg-gradient-to-l from-orange-600/28 via-red-600/25 to-pink-600/30 rounded-full blur-[160px] animate-pulse"
-          style={{
-            bottom: `${-25 - mousePosition.y * 10}%`,
-            right: `${-15 - mousePosition.x * 8}%`,
-            animationDuration: '15s',
-            animationDelay: '2s'
-          }}
-        ></div>
         <div className="text-center relative z-10">
           <div className="w-24 h-24 mx-auto mb-8 rounded-full bg-gradient-to-r from-red-500/30 to-orange-500/30 flex items-center justify-center shadow-2xl shadow-red-500/20">
             <svg className="w-12 h-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
