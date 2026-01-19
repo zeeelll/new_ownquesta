@@ -207,18 +207,18 @@ export default function LoginPage() {
           className="absolute w-[500px] h-[500px] rounded-full blur-[80px] transition-all duration-1000 ease-out"
           style={{
             background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)',
-            top: `${Math.max(-10, Math.min(40, (mousePos.y / window.innerHeight) * 100))}%`,
-            right: `${Math.max(-10, Math.min(40, (mousePos.x / window.innerWidth) * 100))}%`,
-            transform: `translate(50%, -50%) scale(${1 + (mousePos.x / window.innerWidth) * 0.3})`
+            top: `${Math.max(-10, Math.min(40, (mousePos.y / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 100))}%`,
+            right: `${Math.max(-10, Math.min(40, (mousePos.x / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 100))}%`,
+            transform: `translate(50%, -50%) scale(${1 + (mousePos.x / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 0.3})`
           }}
         />
         <div 
           className="absolute w-[400px] h-[400px] rounded-full blur-[70px] transition-all duration-1500 ease-out"
           style={{
             background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)',
-            bottom: `${Math.max(-5, Math.min(45, ((window.innerHeight - mousePos.y) / window.innerHeight) * 100))}%`,
-            left: `${Math.max(-5, Math.min(45, ((window.innerWidth - mousePos.x) / window.innerWidth) * 100))}%`,
-            transform: `translate(-50%, 50%) scale(${1 + (mousePos.y / window.innerHeight) * 0.2})`
+            bottom: `${Math.max(-5, Math.min(45, (((typeof window !== 'undefined' ? window.innerHeight : 1000) - mousePos.y) / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 100))}%`,
+            left: `${Math.max(-5, Math.min(45, (((typeof window !== 'undefined' ? window.innerWidth : 1000) - mousePos.x) / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 100))}%`,
+            transform: `translate(-50%, 50%) scale(${1 + (mousePos.y / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 0.2})`
           }}
         />
 

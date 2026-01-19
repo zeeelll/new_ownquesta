@@ -34,7 +34,6 @@ export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [showWelcome, setShowWelcome] = useState(true);
   const [stats, setStats] = useState<MLStats>({
     validations: 0,
     datasets: 0,
@@ -82,14 +81,6 @@ export default function DashboardPage() {
       lenis.destroy();
     };
   }, []);
-
-  // Hide welcome animation after 3 seconds
-  useEffect(() => {
-    if (user) {
-      const timer = setTimeout(() => setShowWelcome(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [user]);
 
   // Mouse tracking for interactive background
   useEffect(() => {
@@ -183,20 +174,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 font-sans text-sm relative overflow-hidden">
-      {/* Welcome Background Animation */}
+      {/* Background Animation */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        {/* Welcome Message Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center opacity-10 animate-pulse">
-            <h1 className="text-6xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 mb-4">
-              Welcome Back
-            </h1>
-            <p className="text-xl md:text-2xl text-indigo-300/50">
-              {user?.name ? `Hello, ${user.name}!` : 'Ready to explore?'}
-            </p>
-          </div>
-        </div>
-
         {/* Enhanced Gradient Layers */}
         <div className="absolute inset-0" style={{
           background: `
@@ -212,9 +191,9 @@ export default function DashboardPage() {
           className="absolute w-[400px] h-[400px] rounded-full blur-[80px] transition-all duration-1000 ease-out animate-pulse"
           style={{
             background: 'radial-gradient(circle, rgba(110,84,200,0.25) 0%, rgba(110,84,200,0.1) 50%, transparent 100%)',
-            top: `${Math.max(15, Math.min(70, (mousePos.y / window.innerHeight) * 100))}%`,
-            left: `${Math.max(15, Math.min(70, (mousePos.x / window.innerWidth) * 100))}%`,
-            transform: `translate(-50%, -50%) scale(${1 + (mousePos.x / window.innerWidth) * 0.3})`,
+            top: `${Math.max(15, Math.min(70, (mousePos.y / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 100))}%`,
+            left: `${Math.max(15, Math.min(70, (mousePos.x / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 100))}%`,
+            transform: `translate(-50%, -50%) scale(${1 + (mousePos.x / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 0.3})`,
             animationDelay: '0s'
           }}
         />
@@ -222,9 +201,9 @@ export default function DashboardPage() {
           className="absolute w-[500px] h-[500px] rounded-full blur-[80px] transition-all duration-1500 ease-out animate-pulse"
           style={{
             background: 'radial-gradient(circle, rgba(124,73,169,0.22) 0%, rgba(124,73,169,0.08) 50%, transparent 100%)',
-            bottom: `${Math.max(15, Math.min(70, ((window.innerHeight - mousePos.y) / window.innerHeight) * 100))}%`,
-            right: `${Math.max(15, Math.min(70, ((window.innerWidth - mousePos.x) / window.innerWidth) * 100))}%`,
-            transform: `scale(${1 + (mousePos.y / window.innerHeight) * 0.25})`,
+            bottom: `${Math.max(15, Math.min(70, (((typeof window !== 'undefined' ? window.innerHeight : 1000) - mousePos.y) / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 100))}%`,
+            right: `${Math.max(15, Math.min(70, (((typeof window !== 'undefined' ? window.innerWidth : 1000) - mousePos.x) / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 100))}%`,
+            transform: `scale(${1 + (mousePos.y / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 0.25})`,
             animationDelay: '1s'
           }}
         />
@@ -232,37 +211,11 @@ export default function DashboardPage() {
           className="absolute w-[300px] h-[300px] rounded-full blur-[60px] transition-all duration-2000 ease-out animate-pulse"
           style={{
             background: 'radial-gradient(circle, rgba(168,85,247,0.2) 0%, rgba(168,85,247,0.06) 50%, transparent 100%)',
-            top: `${Math.max(20, Math.min(80, ((mousePos.x + mousePos.y) / (window.innerWidth + window.innerHeight)) * 100))}%`,
-            left: `${Math.max(20, Math.min(80, ((mousePos.x - mousePos.y) / window.innerWidth) * 50 + 50))}%`,
+            top: `${Math.max(20, Math.min(80, ((mousePos.x + mousePos.y) / ((typeof window !== 'undefined' ? window.innerWidth : 1000) + (typeof window !== 'undefined' ? window.innerHeight : 1000))) * 100))}%`,
+            left: `${Math.max(20, Math.min(80, ((mousePos.x - mousePos.y) / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 50 + 50))}%`,
             animationDelay: '2s'
           }}
         />
-
-        {/* Floating Welcome Elements */}
-        <div className="absolute top-[20%] left-[10%] w-16 h-16 border-2 border-indigo-400/40 rounded-full animate-bounce opacity-60"
-             style={{ animationDelay: '0s', animationDuration: '3s' }}>
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
-            <span className="text-indigo-300 text-xs">✨</span>
-          </div>
-        </div>
-        <div className="absolute top-[35%] right-[15%] w-12 h-12 border-2 border-purple-400/35 rounded-lg rotate-45 animate-pulse opacity-50"
-             style={{ animationDelay: '1s', animationDuration: '4s' }}>
-          <div className="w-full h-full rounded-lg bg-gradient-to-br from-purple-500/15 to-pink-500/15 flex items-center justify-center">
-            <span className="text-purple-300 text-xs">🚀</span>
-          </div>
-        </div>
-        <div className="absolute bottom-[25%] left-[20%] w-14 h-14 border-2 border-pink-400/30 rounded-full animate-ping opacity-40"
-             style={{ animationDelay: '2s', animationDuration: '5s' }}>
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center">
-            <span className="text-pink-300 text-xs">💫</span>
-          </div>
-        </div>
-        <div className="absolute top-[50%] right-[25%] w-10 h-10 border-2 border-violet-400/25 rounded-lg animate-bounce opacity-45"
-             style={{ animationDelay: '0.5s', animationDuration: '3.5s' }}>
-          <div className="w-full h-full rounded-lg bg-gradient-to-br from-violet-500/15 to-indigo-500/15 flex items-center justify-center">
-            <span className="text-violet-300 text-xs">🌟</span>
-          </div>
-        </div>
 
         {/* Animated Connection Lines */}
         <svg className="absolute inset-0 w-full h-full opacity-20">
@@ -298,25 +251,7 @@ export default function DashboardPage() {
         <div className="absolute top-[70%] left-[25%] w-1 h-1 bg-purple-300 rounded-full animate-ping opacity-60" style={{ animationDelay: '2.5s' }} />
       </div>
 
-      {/* Welcome Animation Overlay */}
-      {showWelcome && user && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="text-center animate-bounce-in">
-            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl animate-pulse">
-              <span className="text-3xl">🎉</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 mb-4 animate-slide-up">
-              Welcome Back!
-            </h2>
-            <p className="text-xl md:text-2xl text-indigo-300 mb-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              {user.name ? `Hello, ${user.name}!` : 'Great to see you again!'}
-            </p>
-            <p className="text-lg text-purple-300 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-              Ready to continue your journey?
-            </p>
-          </div>
-        </div>
-      )}
+
 
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-8 bg-slate-900/80 backdrop-blur-xl border-b border-indigo-500/20">
@@ -459,7 +394,7 @@ export default function DashboardPage() {
           {/* Hero Section */}
           <div className="mb-10">
             <h1 className="text-3xl font-bold text-white mb-2">
-              Welcome, {user?.name ? user.name.split(' ')[0] : 'Friend'} — let’s build something extraordinary today.
+              Dashboard Overview
             </h1>
             <p className="text-slate-300 text-sm mb-6">
               Manage your AI validation projects with advanced analytics and

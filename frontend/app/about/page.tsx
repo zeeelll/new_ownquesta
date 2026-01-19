@@ -49,18 +49,18 @@ export default function AboutPage() {
           className="absolute w-[400px] h-[400px] rounded-full blur-[60px] transition-all duration-1000 ease-out"
           style={{
             background: 'rgba(110,84,200,0.15)',
-            top: `${Math.max(15, Math.min(50, (mousePos.y / window.innerHeight) * 100))}%`,
-            left: `${Math.max(15, Math.min(50, (mousePos.x / window.innerWidth) * 100))}%`,
-            transform: `translate(-50%, -50%) scale(${1 + (mousePos.x / window.innerWidth) * 0.25})`
+            top: `${Math.max(15, Math.min(50, (mousePos.y / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 100))}%`,
+            left: `${Math.max(15, Math.min(50, (mousePos.x / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 100))}%`,
+            transform: `translate(-50%, -50%) scale(${1 + (mousePos.x / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 0.25})`
           }}
         />
         <div 
           className="absolute w-[350px] h-[350px] rounded-full blur-[70px] transition-all duration-1500 ease-out"
           style={{
             background: 'rgba(124,73,169,0.12)',
-            bottom: `${Math.max(20, Math.min(60, ((window.innerHeight - mousePos.y) / window.innerHeight) * 100))}%`,
-            right: `${Math.max(20, Math.min(60, ((window.innerWidth - mousePos.x) / window.innerWidth) * 100))}%`,
-            transform: `scale(${1 + (mousePos.y / window.innerHeight) * 0.2})`
+            bottom: `${Math.max(20, Math.min(60, (((typeof window !== 'undefined' ? window.innerHeight : 1000) - mousePos.y) / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 100))}%`,
+            right: `${Math.max(20, Math.min(60, (((typeof window !== 'undefined' ? window.innerWidth : 1000) - mousePos.x) / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 100))}%`,
+            transform: `scale(${1 + (mousePos.y / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 0.2})`
           }}
         />
 

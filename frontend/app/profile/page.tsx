@@ -243,7 +243,7 @@ export default function ProfilePage() {
       const res = await fetch(`${BACKEND_URL}/api/auth/2fa/disable`, { method: 'POST', credentials: 'include' });
       const js = await res.json();
       if (!res.ok) throw new Error(js.message || 'Disable failed');
-      setProfile(prev => ({ ...prev, settings: { ...(prev?.settings || {}), twoFactorAuth: false } }));
+      setProfile((prev: any) => ({ ...prev, settings: { ...(prev?.settings || {}), twoFactorAuth: false } }));
       setTwoFAMessage('Two-factor disabled');
     } catch (err: any) {
       setTwoFAMessage(err.message || 'Failed to disable 2FA');
