@@ -34,6 +34,33 @@ export default function LoginPage() {
   const [forgotStep, setForgotStep] = useState<'email' | 'otp' | 'reset'>('email');
   const [forgotMessage, setForgotMessage] = useState('');
   const [forgotSuccess, setForgotSuccess] = useState(false);
+
+  // OTP expiry timer (2 minutes)
+  function OtpExpiryInfo() {
+    const [secondsLeft, setSecondsLeft] = useState(120);
+    useEffect(() => {
+      if (forgotStep !== 'otp') return;
+      setSecondsLeft(120);
+      const interval = setInterval(() => {
+        setSecondsLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }, [forgotStep]);
+
+    const min = Math.floor(secondsLeft / 60);
+    const sec = secondsLeft % 60;
+    return (
+      <div className="text-xs text-[#dc2626] mt-1">
+        ⚠️ OTP expires in <span className="font-bold">{min}:{sec.toString().padStart(2, '0')}</span> minutes
+      </div>
+    );
+  }
   
   const [currentUser, setCurrentUser] = useState<{ authenticated: boolean; name?: string; avatar?: string } | null>(null);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -581,6 +608,7 @@ export default function LoginPage() {
                             onChange={(e) => setOtp(e.target.value)}
                             className="w-full p-3.5 rounded-lg border border-[#1e293b] bg-[rgba(15,23,42,0.5)] text-[#f8fafc] text-[15px] transition-all focus:outline-none focus:border-[#8b5cf6] focus:bg-[rgba(15,23,42,0.8)] focus:shadow-[0_0_0_3px_rgba(139,92,246,0.1)] placeholder:text-[#94a3b8]"
                           />
+                          <OtpExpiryInfo />
                         </div>
 
                         <button 

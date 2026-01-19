@@ -43,22 +43,28 @@ exports.register = async (req, res) => {
         console.error("❌ Auto-login after registration failed:", loginErr);
         return res.status(500).json({ message: "Registration successful but login failed. Please login manually." });
       }
-      // Send welcome email after registration and auto-login
-      try {
-        const result = await sendWelcomeEmail(user.email, user.name);
-        if (result && result.ok) {
-          console.log('✅ Welcome email sent to', user.email);
-        } else {
-          console.error('❌ Failed to send welcome email:', result?.error);
-        }
-      } catch (e) {
-        console.error('❌ Exception sending welcome email:', e);
-      }
+      
       user.firstLogin = false;
       await user.save();
       console.log("✅ User auto-logged in after registration");
       const userObj = user.toObject();
       delete userObj.password;
+      
+      // Send welcome email asynchronously (don't block the response)
+      setImmediate(async () => {
+        try {
+          console.log('📧 Attempting to send welcome email to:', user.email);
+          const result = await sendWelcomeEmail(user.email, user.name);
+          if (result && result.ok) {
+            console.log('✅ Welcome email sent successfully to', user.email);
+          } else {
+            console.error('❌ Failed to send welcome email:', result?.error?.message || result?.error);
+          }
+        } catch (e) {
+          console.error('❌ Exception sending welcome email:', e.message);
+        }
+      });
+      
       res.status(201).json({ message: "Registered successfully", user: userObj });
     });
   } catch (err) {
@@ -76,21 +82,25 @@ exports.login = (req, res, next) => {
       if (err2) return next(err2);
 
       console.log('User firstLogin:', user.firstLogin);
-      // Send welcome email on first login
+      
+      // Send welcome email on first login (asynchronously)
       if (user.firstLogin !== false) {
-        console.log('Sending welcome email to:', user.email);
-        try {
-          const result = await sendWelcomeEmail(user.email, user.name);
-          if (result && result.ok) {
-            console.log('✅ Welcome email sent to', user.email);
-          } else {
-            console.error('❌ Failed to send welcome email:', result?.error);
-          }
-        } catch (e) {
-          console.error('❌ Exception sending welcome email:', e);
-        }
         user.firstLogin = false;
         await user.save();
+        
+        setImmediate(async () => {
+          try {
+            console.log('📧 Attempting to send welcome email to:', user.email);
+            const result = await sendWelcomeEmail(user.email, user.name);
+            if (result && result.ok) {
+              console.log('✅ Welcome email sent successfully to', user.email);
+            } else {
+              console.error('❌ Failed to send welcome email:', result?.error?.message || result?.error);
+            }
+          } catch (e) {
+            console.error('❌ Exception sending welcome email:', e.message);
+          }
+        });
       }
 
       return res.json({ message: "Login success", user });

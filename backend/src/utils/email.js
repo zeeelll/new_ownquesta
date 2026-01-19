@@ -1,21 +1,24 @@
 const nodemailer = require('nodemailer');
 
+// Create transporter with multiple fallback options
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+  service: 'gmail', // Use Gmail service directly instead of manual host
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
   tls: {
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
+    ciphers: 'SSLv3'
   },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
+  connectionTimeout: 30000, // Increased timeout to 30 seconds
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
   debug: true,
-  logger: true
+  logger: true,
+  pool: true, // Use pooled connections
+  maxConnections: 5,
+  maxMessages: 100
 });
 
 const sendWelcomeEmail = async (to, name) => {
