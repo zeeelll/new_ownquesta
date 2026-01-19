@@ -18,7 +18,7 @@ const connectDB = async () => {
     console.log(`📦 Database: ${conn.connection.name}`);
     
     // Log when documents are saved
-    mongoose.set('debug', true);
+    // mongoose.set('debug', true);
     
   } catch (err) {
     console.error("❌ MongoDB connection failed:", err.message);
