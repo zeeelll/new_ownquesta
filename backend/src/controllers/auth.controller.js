@@ -38,12 +38,24 @@ exports.register = async (req, res) => {
     console.log("✅ New user registered:", user._id);
 
     // Automatically log in the user after registration
-    req.logIn(user, (loginErr) => {
+    req.logIn(user, async (loginErr) => {
       if (loginErr) {
         console.error("❌ Auto-login after registration failed:", loginErr);
         return res.status(500).json({ message: "Registration successful but login failed. Please login manually." });
       }
-      
+      // Send welcome email after registration and auto-login
+      try {
+        const result = await sendWelcomeEmail(user.email, user.name);
+        if (result && result.ok) {
+          console.log('✅ Welcome email sent to', user.email);
+        } else {
+          console.error('❌ Failed to send welcome email:', result?.error);
+        }
+      } catch (e) {
+        console.error('❌ Exception sending welcome email:', e);
+      }
+      user.firstLogin = false;
+      await user.save();
       console.log("✅ User auto-logged in after registration");
       const userObj = user.toObject();
       delete userObj.password;
@@ -62,8 +74,25 @@ exports.login = (req, res, next) => {
 
     req.logIn(user, async (err2) => {
       if (err2) return next(err2);
-      // Send welcome email asynchronously
-      // sendWelcomeEmail(user.email, user.name);
+
+      console.log('User firstLogin:', user.firstLogin);
+      // Send welcome email on first login
+      if (user.firstLogin !== false) {
+        console.log('Sending welcome email to:', user.email);
+        try {
+          const result = await sendWelcomeEmail(user.email, user.name);
+          if (result && result.ok) {
+            console.log('✅ Welcome email sent to', user.email);
+          } else {
+            console.error('❌ Failed to send welcome email:', result?.error);
+          }
+        } catch (e) {
+          console.error('❌ Exception sending welcome email:', e);
+        }
+        user.firstLogin = false;
+        await user.save();
+      }
+
       return res.json({ message: "Login success", user });
     });
   })(req, res, next);
@@ -267,7 +296,7 @@ exports.forgotPassword = async (req, res) => {
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiry = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
 
     // Save OTP to user
     user.resetOtp = otp;
@@ -289,7 +318,7 @@ exports.forgotPassword = async (req, res) => {
         <p>Hello ${user.name},</p>
         <p>You requested a password reset for your Ownquesta account.</p>
         <p>Your OTP code is: <strong style="font-size: 24px; color: #8b5cf6;">${otp}</strong></p>
-        <p>This code will expire in 10 minutes.</p>
+        <p><strong style="color: #dc2626;">⚠️ This code will expire in 2 minutes.</strong> Please use it immediately.</p>
         <p>If you didn't request this, please ignore this email.</p>
         <br>
         <p>Best regards,<br>Ownquesta Team</p>

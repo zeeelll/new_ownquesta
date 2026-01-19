@@ -23,7 +23,8 @@ const userSchema = new mongoose.Schema(
     },
     twoFactorSecret: { type: String, default: null },
     resetOtp: { type: String, default: null },
-    resetOtpExpiry: { type: Date, default: null }
+    resetOtpExpiry: { type: Date, default: null },
+    firstLogin: { type: Boolean, default: true }
   },
   { timestamps: true }
 );

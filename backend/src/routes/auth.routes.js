@@ -33,11 +33,22 @@ router.get("/google/callback", (req, res, next) => {
       return res.redirect((process.env.FRONTEND_URL || "http://localhost:3000") + "/login");
     }
 
-    req.logIn(user, (loginErr) => {
+    req.logIn(user, async (loginErr) => {
       if (loginErr) {
         console.error("Login after Google OAuth failed:", loginErr);
         return res.redirect((process.env.FRONTEND_URL || "http://localhost:3000") + "?oauth_error=1");
       }
+
+      console.log('Google user firstLogin:', user.firstLogin);
+      // Send welcome email on first login
+      if (user.firstLogin !== false) {
+        console.log('Sending welcome email to Google user:', user.email);
+        const { sendWelcomeEmail } = require("../utils/email");
+        await sendWelcomeEmail(user.email, user.name);
+        user.firstLogin = false;
+        await user.save();
+      }
+
       return res.redirect(process.env.FRONTEND_URL || "http://localhost:3000");
     });
   })(req, res, next);

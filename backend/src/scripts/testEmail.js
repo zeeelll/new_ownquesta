@@ -40,7 +40,7 @@ async function testEmail() {
           <h2 style="color: #8b5cf6;">Password Reset Request</h2>
           <p>This is a test email.</p>
           <p>Your OTP code is: <strong style="font-size: 24px; color: #8b5cf6;">${testOTP}</strong></p>
-          <p>This code will expire in 10 minutes.</p>
+          <p><strong style="color: #dc2626;">⚠️ This code will expire in 2 minutes.</strong> Please use it immediately.</p>
           <br>
           <p>Best regards,<br>Ownquesta Team</p>
         </div>
