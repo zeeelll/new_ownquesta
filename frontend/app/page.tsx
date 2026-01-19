@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 type AuthUser = {
@@ -29,11 +28,8 @@ export default function Home() {
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data?.user) {
-          setUser({
-            authenticated: true,
-            name: data.user.name,
-            avatar: data.user.avatar
-          });
+          // User is authenticated, redirect to /home
+          window.location.href = '/home';
         } else {
           setUser({ authenticated: false });
         }
@@ -67,16 +63,21 @@ export default function Home() {
 
     window.addEventListener('scroll', handleScroll);
     
-    // Show scroll indicator after delay
-    const timer = setTimeout(() => setShowScrollIndicator(true), 2000);
-    const hideTimer = setTimeout(() => setShowScrollIndicator(false), 8000);
+    // Show scroll indicator after delay (only for non-authenticated users)
+    let timer: NodeJS.Timeout | undefined;
+    let hideTimer: NodeJS.Timeout | undefined;
+    
+    if (!user?.authenticated) {
+      timer = setTimeout(() => setShowScrollIndicator(true), 2000);
+      hideTimer = setTimeout(() => setShowScrollIndicator(false), 8000);
+    }
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      clearTimeout(timer);
-      clearTimeout(hideTimer);
+      if (timer) clearTimeout(timer);
+      if (hideTimer) clearTimeout(hideTimer);
     };
-  }, [BACKEND_URL]);
+  }, [BACKEND_URL, user]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -89,25 +90,16 @@ export default function Home() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const router = useRouter();
-
-  const handleLogout = () => {
-    setUserDropdownOpen(false);
-    
-    // Immediately update UI to show logged out state
-    setUser({ authenticated: false });
-    
-    // Call backend logout
-    fetch(`${BACKEND_URL}/api/auth/logout`, {
-      method: 'POST',
-      credentials: 'include'
-    })
-      .finally(() => {
-        // Force complete reload after a brief moment to ensure backend processed logout
-        setTimeout(() => {
-          window.location.replace('/');
-        }, 100);
+  const handleLogout = async () => {
+    try {
+      setUserDropdownOpen(false);
+      await fetch(`${BACKEND_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
       });
+    } finally {
+      window.location.href = '/';
+    }
   };
 
   return (
@@ -206,19 +198,13 @@ export default function Home() {
               
               {userDropdownOpen && (
                 <div className="absolute top-full right-0 mt-2.5 bg-[rgba(11,18,33,0.95)] backdrop-blur-md rounded-xl shadow-[0_8px_32px_rgba(110,84,200,0.3)] border border-[rgba(255,255,255,0.1)] min-w-[200px]">
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => { setUserDropdownOpen(false); router.push('/profile'); }}
-                    onKeyPress={(e) => { if (e.key === 'Enter') { setUserDropdownOpen(false); router.push('/profile'); } }}
-                    className="flex items-center gap-3 px-5 py-3 border-b border-[rgba(255,255,255,0.05)] transition-all hover:bg-[rgba(110,84,200,0.2)] hover:pl-6 cursor-pointer"
-                  >
+                  <Link href="/profile" className="flex items-center gap-3 px-5 py-3 border-b border-[rgba(255,255,255,0.05)] transition-all hover:bg-[rgba(110,84,200,0.2)] hover:pl-6">
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                       <circle cx="12" cy="7" r="4"/>
                     </svg>
                     <span>Profile</span>
-                  </div>
+                  </Link>
                   <div onClick={handleLogout} className="flex items-center gap-3 px-5 py-3 cursor-pointer transition-all hover:bg-[rgba(110,84,200,0.2)] hover:pl-6">
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -281,7 +267,7 @@ export default function Home() {
                 <rect x="14" y="14" width="7" height="7"/>
                 <rect x="3" y="14" width="7" height="7"/>
               </svg>
-              Go to Dashboard
+              Go to Menu
             </Link>
           )}
         </div>

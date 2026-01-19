@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 export default function AboutPage() {
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,8 +21,75 @@ export default function AboutPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Mouse tracking for interactive background
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#071026] to-[#0b1221] text-[#e6eef8]">
+    <div className="min-h-screen bg-gradient-to-b from-[#071026] to-[#0b1221] text-[#e6eef8] relative overflow-hidden">
+      {/* Enhanced Interactive Background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {/* Base gradient layers */}
+        <div className="absolute inset-0" style={{
+          background: `
+            radial-gradient(circle at 25% 25%, rgba(110, 84, 200, 0.2) 0%, transparent 50%),
+            radial-gradient(circle at 75% 75%, rgba(124, 73, 169, 0.18) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(94, 114, 235, 0.15) 0%, transparent 60%)
+          `
+        }} />
+        
+        {/* Mouse-responsive floating orbs */}
+        <div 
+          className="absolute w-[400px] h-[400px] rounded-full blur-[60px] transition-all duration-1000 ease-out"
+          style={{
+            background: 'rgba(110,84,200,0.15)',
+            top: `${Math.max(15, Math.min(50, (mousePos.y / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 100))}%`,
+            left: `${Math.max(15, Math.min(50, (mousePos.x / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 100))}%`,
+            transform: `translate(-50%, -50%) scale(${1 + (mousePos.x / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 0.25})`
+          }}
+        />
+        <div 
+          className="absolute w-[350px] h-[350px] rounded-full blur-[70px] transition-all duration-1500 ease-out"
+          style={{
+            background: 'rgba(124,73,169,0.12)',
+            bottom: `${Math.max(20, Math.min(60, (((typeof window !== 'undefined' ? window.innerHeight : 1000) - mousePos.y) / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 100))}%`,
+            right: `${Math.max(20, Math.min(60, (((typeof window !== 'undefined' ? window.innerWidth : 1000) - mousePos.x) / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 100))}%`,
+            transform: `scale(${1 + (mousePos.y / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 0.2})`
+          }}
+        />
+
+        {/* Floating geometric shapes */}
+        <div className="absolute top-[25%] left-[12%] w-28 h-28 border border-indigo-400/25 rounded-full animate-pulse"
+             style={{ animationDelay: '0s', animationDuration: '6s' }} />
+        <div className="absolute top-[35%] right-[18%] w-20 h-20 border border-purple-400/20 rounded-lg rotate-45 animate-bounce"
+             style={{ animationDelay: '2s', animationDuration: '8s' }} />
+        <div className="absolute bottom-[30%] left-[25%] w-24 h-24 border border-violet-400/18 rounded-full animate-ping"
+             style={{ animationDelay: '4s', animationDuration: '7s' }} />
+        
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(rgba(139, 92, 246, 0.06) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(139, 92, 246, 0.06) 1px, transparent 1px)
+            `,
+            backgroundSize: '45px 45px'
+          }} />
+        </div>
+
+        {/* Particle effects */}
+        <div className="absolute top-[40%] left-[35%] w-1 h-1 bg-indigo-400 rounded-full animate-pulse opacity-50" />
+        <div className="absolute top-[55%] right-[40%] w-1 h-1 bg-purple-400 rounded-full animate-pulse opacity-35" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute bottom-[35%] left-[45%] w-1 h-1 bg-violet-400 rounded-full animate-pulse opacity-40" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-[30%] right-[25%] w-1 h-1 bg-indigo-300 rounded-full animate-pulse opacity-30" style={{ animationDelay: '0.8s' }} />
+      </div>
+
       <style jsx global>{`
         body {
           overflow-x: hidden;

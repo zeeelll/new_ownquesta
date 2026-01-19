@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "@/services/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -10,7 +10,18 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const router = useRouter();
+
+  // Mouse tracking for interactive background
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -27,7 +38,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(ellipse_at_top,#1e1b4b_0%,#0a0e1a_50%)] relative overflow-hidden">
       <form
         onSubmit={handleRegister}
         className="w-[360px] p-6 border rounded-xl"

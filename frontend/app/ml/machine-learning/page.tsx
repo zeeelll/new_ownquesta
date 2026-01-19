@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface DataFile {
   name: string;
@@ -23,59 +24,6 @@ interface ChatMessage {
   timestamp: string;
 }
 
-const GradualBlur: React.FC<{ position?: 'top' | 'bottom'; height?: string; strength?: number }> = ({ 
-  position = 'bottom', 
-  height = '12rem',
-  strength = 3
-}) => {
-  const divCount = 8;
-  const blurDivs = [];
-  
-  for (let i = 1; i <= divCount; i++) {
-    const progress = i / divCount;
-    const blurValue = Math.pow(progress, 1.5) * strength;
-    const increment = 100 / divCount;
-    const p1 = (increment * i - increment).toFixed(1);
-    const p2 = (increment * i).toFixed(1);
-    
-    const direction = position === 'top' ? 'to top' : 'to bottom';
-    const gradient = `transparent ${p1}%, black ${p2}%`;
-    
-    blurDivs.push(
-      <div
-        key={i}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          maskImage: `linear-gradient(${direction}, ${gradient})`,
-          WebkitMaskImage: `linear-gradient(${direction}, ${gradient})`,
-          backdropFilter: `blur(${blurValue.toFixed(2)}rem)`,
-          WebkitBackdropFilter: `blur(${blurValue.toFixed(2)}rem)`,
-        }}
-      />
-    );
-  }
-  
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        [position]: 0,
-        left: 0,
-        right: 0,
-        height,
-        pointerEvents: 'none',
-        zIndex: 10,
-        isolation: 'isolate',
-      }}
-    >
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-        {blurDivs}
-      </div>
-    </div>
-  );
-};
-
 const MLStudioAdvanced: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'setup' | 'validate' | 'configure'>('setup');
   const [uploadedFile, setUploadedFile] = useState<DataFile | null>(null);
@@ -91,7 +39,9 @@ const MLStudioAdvanced: React.FC = () => {
   const [actualFile, setActualFile] = useState<File | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<any>(null);
+  const [showLastRows, setShowLastRows] = useState(false);
   const [viewMode, setViewMode] = useState<'first' | 'last' | 'all'>('first');
+  const router = useRouter();
   const hasGoal = userQuery.trim().length > 0;
   const hasDataset = Boolean(uploadedFile && actualFile && dataPreview);
   const canProceedFromSetup = hasGoal && hasDataset;
@@ -122,45 +72,39 @@ const MLStudioAdvanced: React.FC = () => {
     setIsValidating(true);
     
     try {
-      // Simulate API call with mock data
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockResult = {
-        status: 'Ready for Configuration',
-        satisfaction_score: 87,
-        agent_answer: 'Based on your dataset, I recommend using a **Classification** model to predict customer churn. The data quality is excellent with minimal missing values.',
-        optional_questions: [
-          'Would you like to include feature engineering steps?',
-          'Should we perform data balancing for the target variable?',
-          'Do you want to use cross-validation?'
-        ],
-        goal_understanding: {
-          interpreted_task: 'Classification',
-          target_column_guess: 'churn',
-          confidence: 0.87
+      const formData = new FormData();
+      const resolvedGoal = userQuery.trim() || 'Auto-detect the most suitable target and task based on the dataset.';
+      formData.append('goal', resolvedGoal);
+      formData.append('file', actualFile);
+
+      const response = await fetch('https://ownquestaagents-production.up.railway.app/ml-validation/validate', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
         },
-        dataset_summary: {
-          rows: dataPreview?.rowCount || 0,
-          columns: dataPreview?.columnCount || 0,
-          file_size_mb: (actualFile.size / (1024 * 1024)).toFixed(2),
-          column_types: dataPreview?.columns.reduce((acc, col) => ({ ...acc, [col]: 'string' }), {}) || {}
-        },
-        user_view_report: '# Validation Report\n\n## Dataset Quality: ✅ Excellent\n\nYour dataset is well-structured and ready for machine learning.\n\n**Key Findings:**\n- No missing values detected\n- Balanced class distribution\n- Sufficient samples for training\n\n## Recommended Next Steps:\n1. Feature engineering\n2. Train-test split\n3. Model selection'
-      };
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      setValidationResult(result);
       
-      setValidationResult(mockResult);
-      
-      if (mockResult.agent_answer) {
+      // Display agent_answer in chat
+      if (result.agent_answer) {
         setChatMessages(prev => [...prev, {
           type: 'ai',
-          text: mockResult.agent_answer,
+          text: result.agent_answer,
           timestamp: new Date().toLocaleTimeString()
         }]);
       }
 
-      if (mockResult.optional_questions && mockResult.optional_questions.length > 0) {
-        const questionsText = "📋 **Optional Questions:**\n" + 
-          mockResult.optional_questions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n');
+      // Display optional_questions if available
+      if (result.optional_questions && result.optional_questions.length > 0) {
+        const questionsText = "**Optional Questions:**\n" + 
+          result.optional_questions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n');
         
         setChatMessages(prev => [...prev, {
           type: 'ai',
@@ -168,11 +112,13 @@ const MLStudioAdvanced: React.FC = () => {
           timestamp: new Date().toLocaleTimeString()
         }]);
       }
+
+      // Keep on validate step; user will proceed manually
     } catch (error) {
       console.error('Validation error:', error);
       setChatMessages(prev => [...prev, {
         type: 'ai',
-        text: `❌ Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        text: `❌ Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
         timestamp: new Date().toLocaleTimeString()
       }]);
     } finally {
@@ -191,7 +137,6 @@ const MLStudioAdvanced: React.FC = () => {
     
     return { columns, allRows };
   };
-
   const updatePreviewRows = (mode: 'first' | 'last' | 'all') => {
     if (!actualFile || !dataPreview) return;
 
@@ -239,6 +184,7 @@ const MLStudioAdvanced: React.FC = () => {
     setIsProcessing(true);
     setActualFile(file);
 
+    // Read and parse CSV file
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
@@ -259,6 +205,7 @@ const MLStudioAdvanced: React.FC = () => {
 
       setUploadedFile(fileData);
 
+      // Get first 5 rows for preview
       const previewRows = allRows.slice(0, 5);
 
       const preview: DataPreview = {
@@ -303,95 +250,45 @@ const MLStudioAdvanced: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{
-      background: 'linear-gradient(135deg, #6968A6 0%, #7C6BA4 25%, #9B7FA8 50%, #CF9893 75%, #E5B8A8 100%)'
-    }}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/20 to-slate-950 text-white relative overflow-hidden">
       <style>{`
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
-        @keyframes glow { 0%, 100% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.2); } 50% { box-shadow: 0 0 50px rgba(255, 255, 255, 0.4); } }
-        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(50px, -50px); } }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); } 50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); } }
+        @keyframes shimmer { from { background-position: -1000px 0; } to { background-position: 1000px 0; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
         .animate-glow { animation: glow 3s ease-in-out infinite; }
-        .animate-slide { animation: slideIn 0.6s ease-out; }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        .glass-card {
-          background: rgba(255, 255, 255, 0.08);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        .glass-card-strong {
-          background: rgba(255, 255, 255, 0.12);
-          backdrop-filter: blur(30px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
-        }
-        .text-gradient {
-          background: linear-gradient(135deg, #ffffff 0%, #f0e7ff 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        .number-badge {
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-        }
+        .animate-slide { animation: slideIn 0.5s ease-out; }
+        .text-gradient { background: linear-gradient(135deg, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .text-gradient-rainbow { background: linear-gradient(135deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
       `}</style>
 
-      {/* Floating orbs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute w-96 h-96 rounded-full opacity-30 animate-float" 
-          style={{ 
-            background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)',
-            top: '10%',
-            left: '10%',
-            animationDelay: '0s'
-          }} 
-        />
-        <div className="absolute w-64 h-64 rounded-full opacity-20 animate-float" 
-          style={{ 
-            background: 'radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%)',
-            top: '60%',
-            right: '15%',
-            animationDelay: '2s'
-          }} 
-        />
-        <div className="absolute w-80 h-80 rounded-full opacity-25 animate-float" 
-          style={{ 
-            background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
-            bottom: '10%',
-            left: '50%',
-            animationDelay: '4s'
-          }} 
-        />
+      {/* Background Orbs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute w-[600px] h-[600px] rounded-full bg-indigo-500/20 blur-[120px] -top-48 -left-48" style={{ animation: 'float 20s ease-in-out infinite' }} />
+        <div className="absolute w-[500px] h-[500px] rounded-full bg-pink-500/20 blur-[120px] -bottom-32 -right-32" style={{ animation: 'float 25s ease-in-out infinite reverse' }} />
+        <div className="absolute w-[400px] h-[400px] rounded-full bg-purple-500/20 blur-[120px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'float 30s ease-in-out infinite' }} />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 glass-card">
-        <GradualBlur position="bottom" height="8rem" strength={2} />
-        <div className="max-w-7xl mx-auto px-6 py-6">
+      <header className="sticky top-0 z-50 backdrop-blur-2xl bg-slate-950/80 border-b border-indigo-500/20 relative">
+        <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between flex-wrap gap-6">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl glass-card-strong flex items-center justify-center animate-glow">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                  <path d="M12 2L2 7L12 12L22 7L12 2Z" />
-                  <path d="M2 17L12 22L22 17V12L12 17L2 12V17Z" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center animate-glow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" /><path d="M2 17L12 22L22 17V12L12 17L2 12V17Z" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight">ML Studio</h1>
-                <p className="text-sm text-white/70 uppercase tracking-widest font-light">AI-Powered Analytics</p>
+                <h1 className="text-2xl font-bold text-gradient">ML Studio</h1>
+                <p className="text-xs text-indigo-300 uppercase tracking-wider">AI-Powered Analytics</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              {[
-                { step: 1, label: 'Setup', key: 'setup' }, 
-                { step: 2, label: 'Validate', key: 'validate' }, 
-                { step: 3, label: 'Configure', key: 'configure' }
-              ].map((item, idx) => (
+            <div className="flex items-center gap-2">
+              {[{ step: 1, label: 'Setup', key: 'setup' }, { step: 2, label: 'Validate', key: 'validate' }, { step: 3, label: 'Configure', key: 'configure' }].map((item, idx) => (
                 <React.Fragment key={item.key}>
                   <button
                     onClick={() => {
@@ -400,215 +297,156 @@ const MLStudioAdvanced: React.FC = () => {
                       }
                     }}
                     disabled={item.key === 'validate' && !uploadedFile || item.key === 'configure' && !dataPreview}
-                    className={`px-5 py-3 rounded-xl transition-all duration-300 ${
+                    className={`px-4 py-2 rounded-lg transition-all duration-300 ${
                       currentStep === item.key
-                        ? 'glass-card-strong shadow-lg'
-                        : 'glass-card opacity-60 hover:opacity-100'
-                    } disabled:opacity-30 disabled:cursor-not-allowed`}
+                        ? 'bg-gradient-to-r from-indigo-500 to-pink-500 shadow-lg shadow-indigo-500/50'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                    } disabled:opacity-40 disabled:cursor-not-allowed`}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold number-badge text-white">
-                        {item.step}
-                      </span>
-                      <span className="text-sm font-medium text-white">{item.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-white/20">{item.step}</span>
+                      <span className="text-sm font-medium">{item.label}</span>
                     </div>
                   </button>
-                  {idx < 2 && (
-                    <div className={`w-10 h-0.5 transition-all ${
-                      (idx === 0 && uploadedFile) || (idx === 1 && dataPreview) 
-                        ? 'bg-white/40' 
-                        : 'bg-white/15'
-                    }`} />
-                  )}
+                  {idx < 2 && <div className={`w-8 h-0.5 transition-all ${(idx === 0 && uploadedFile) || (idx === 1 && dataPreview) ? 'bg-gradient-to-r from-indigo-500 to-pink-500' : 'bg-white/10'}`} />}
                 </React.Fragment>
               ))}
             </div>
           </div>
         </div>
+
+        {/* Back Button in Upper Right Corner */}
+        <button
+          onClick={() => router.back()}
+          className="absolute top-4 right-6 px-4 py-2 rounded-lg text-white font-medium text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all"
+        >
+          Back
+        </button>
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-16">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-12">
         {currentStep === 'setup' && (
-          <div className="animate-slide space-y-12">
-            <div className="text-center space-y-6 mb-16">
-              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full glass-card">
-                <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
-                <span className="text-sm text-white font-medium tracking-wide">AI-Powered Machine Learning</span>
+          <div className="animate-slide space-y-8">
+            <div className="text-center space-y-4 mb-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/30">
+                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                <span className="text-sm text-indigo-300 font-medium">AI-Powered Machine Learning</span>
               </div>
-              <h2 className="text-6xl md:text-7xl font-bold text-white tracking-tight">
-                Build Intelligent Models
-              </h2>
-              <p className="text-xl text-white/80 max-w-2xl mx-auto font-light leading-relaxed">
-                Describe your goal and upload your data. Let AI guide you through the entire pipeline.
-              </p>
+              <h2 className="text-5xl md:text-6xl font-bold text-gradient-rainbow">Build Intelligent Models</h2>
+              <p className="text-xl text-gray-400 max-w-2xl mx-auto">Describe your goal and upload your data. Let AI guide you through the entire pipeline.</p>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-10">
+            <div className="grid lg:grid-cols-2 gap-8">
               {/* Query Section */}
-              <div className="space-y-6 animate-slide" style={{ animationDelay: '0.1s' }}>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl glass-card-strong flex items-center justify-center">
-                    <span className="text-2xl">🎯</span>
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-white">Define Your Goal</h3>
-                    <p className="text-sm text-white/70">What do you want to predict or analyze?</p>
-                  </div>
+                  <div><h3 className="text-xl font-bold">Define Your Goal</h3><p className="text-sm text-gray-400">What do you want to predict or analyze?</p></div>
                 </div>
 
-                <div className="glass-card rounded-2xl p-8 hover:shadow-2xl transition-all duration-300">
+                <div className="group backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6 hover:border-indigo-500/40 transition-all">
                   <textarea 
                     placeholder="Example: I want to predict which customers are likely to churn in the next 3 months..." 
                     value={userQuery} 
                     onChange={(e) => setUserQuery(e.target.value)} 
-                    className="w-full h-56 bg-transparent border-none outline-none text-white placeholder-white/50 resize-none text-base leading-relaxed" 
+                    className="w-full h-48 bg-transparent border-none outline-none text-white placeholder-gray-500 resize-none" 
                   />
-                  <div className="flex flex-wrap gap-2 mt-6">
+                  <div className="flex flex-wrap gap-2 mt-4">
                     {['Predict customer churn', 'Forecast sales', 'Classify transactions'].map((p) => (
-                      <button 
-                        key={p} 
-                        onClick={() => setUserQuery(p)} 
-                        className="px-4 py-2 text-sm rounded-full glass-card hover:glass-card-strong transition-all text-white/90 hover:text-white"
-                      >
-                        {p}
-                      </button>
+                      <button key={p} onClick={() => setUserQuery(p)} className="px-3 py-1.5 text-xs rounded-full bg-white/5 border border-white/10 hover:bg-indigo-500/20 hover:border-indigo-500/50 transition-all">{p}</button>
                     ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-3">
                   {[
-                    { icon: '🎯', title: 'Classification', example: 'Yes/No' }, 
-                    { icon: '📈', title: 'Regression', example: '$100+' }, 
-                    { icon: '🔗', title: 'Clustering', example: 'A, B, C' }
+                    { 
+                      icon: <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>, 
+                      title: 'Classification', 
+                      example: 'Yes/No' 
+                    }, 
+                    { 
+                      icon: <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>, 
+                      title: 'Regression', 
+                      example: '$100+' 
+                    }, 
+                    { 
+                      icon: <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>, 
+                      title: 'Clustering', 
+                      example: 'A, B, C' 
+                    }
                   ].map((item) => (
-                    <div 
-                      key={item.title} 
-                      className="glass-card rounded-xl p-5 hover:glass-card-strong hover:-translate-y-1 transition-all cursor-pointer group"
-                    >
-                      <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">{item.icon}</div>
-                      <h4 className="text-sm font-semibold mb-2 text-white">{item.title}</h4>
-                      <code className="text-xs text-white/70 px-3 py-1 rounded-full glass-card inline-block">
-                        {item.example}
-                      </code>
+                    <div key={item.title} className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-xl p-4 hover:border-indigo-500/40 hover:-translate-y-1 transition-all cursor-pointer group">
+                      <div className="mb-2 group-hover:scale-110 transition-transform">{item.icon}</div>
+                      <h4 className="text-sm font-semibold mb-1">{item.title}</h4>
+                      <code className="text-xs text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">{item.example}</code>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Upload Section */}
-              <div className="space-y-6 animate-slide" style={{ animationDelay: '0.2s' }}>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl glass-card-strong flex items-center justify-center">
-                    <span className="text-2xl">📤</span>
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-white">Upload Dataset</h3>
-                    <p className="text-sm text-white/70">CSV or Excel (Max 50MB)</p>
-                  </div>
+                  <div><h3 className="text-xl font-bold">Upload Dataset</h3><p className="text-sm text-gray-400">CSV or Excel (Max 50MB)</p></div>
                 </div>
 
-                <div 
-                  className={`glass-card rounded-2xl p-16 text-center cursor-pointer transition-all duration-300 ${
-                    dragActive ? 'glass-card-strong scale-105' : 'hover:glass-card-strong'
-                  } ${isProcessing ? 'pointer-events-none' : ''}`} 
-                  onDragEnter={handleDrag} 
-                  onDragLeave={handleDrag} 
-                  onDragOver={handleDrag} 
-                  onDrop={handleDrop} 
-                  onClick={() => !isProcessing && fileInputRef.current?.click()}
-                >
-                  <input 
-                    ref={fileInputRef} 
-                    type="file" 
-                    accept=".csv,.xlsx,.xls" 
-                    onChange={(e) => e.target.files?.[0] && processFile(e.target.files[0])} 
-                    className="hidden" 
-                  />
+                <div className={`backdrop-blur-2xl bg-slate-900/60 border rounded-2xl p-12 text-center cursor-pointer transition-all ${dragActive ? 'border-indigo-500 bg-indigo-500/10 scale-105' : 'border-indigo-500/20 hover:border-indigo-500/40'} ${isProcessing ? 'pointer-events-none' : ''}`} onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} onClick={() => !isProcessing && fileInputRef.current?.click()}>
+                  <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={(e) => e.target.files?.[0] && processFile(e.target.files[0])} className="hidden" />
                   {isProcessing ? (
-                    <div className="space-y-6">
-                      <div className="relative w-24 h-24 mx-auto">
-                        <div className="absolute inset-0 rounded-full border-4 border-white/20" />
-                        <div 
-                          className="absolute inset-0 rounded-full border-4 border-transparent border-t-white" 
-                          style={{ animation: 'spin 1s linear infinite' }} 
-                        />
+                    <div className="space-y-4">
+                      <div className="relative w-20 h-20 mx-auto">
+                        <div className="absolute inset-0 rounded-full border-4 border-indigo-500/30" />
+                        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-500" style={{ animation: 'spin 1s linear infinite' }} />
                       </div>
-                      <p className="text-white/80 font-medium text-lg">Processing...</p>
+                      <p className="text-gray-400 font-medium">Processing...</p>
                     </div>
                   ) : (
                     <>
-                      <div className="relative inline-block mb-8">
-                        <div 
-                          className="absolute inset-0 bg-white rounded-full blur-2xl opacity-30" 
-                          style={{ animation: 'pulse-ring 2s ease-out infinite' }} 
-                        />
-                        <svg className="w-20 h-20 text-white relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
+                      <div className="relative inline-block mb-6">
+                        <div className="absolute inset-0 bg-indigo-500 rounded-full blur-xl opacity-50" style={{ animation: 'pulse-ring 2s ease-out infinite' }} />
+                        <svg className="w-16 h-16 text-indigo-400 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                       </div>
-                      <h4 className="text-xl font-semibold mb-3 text-white">Drop your file here</h4>
-                      <p className="text-sm text-white/60 mb-6">or click to browse</p>
-                      <div className="flex gap-3 justify-center">
-                        {['CSV', 'XLSX', 'XLS'].map((f) => (
-                          <span 
-                            key={f} 
-                            className="px-4 py-2 text-sm rounded-full glass-card text-white font-medium"
-                          >
-                            {f}
-                          </span>
-                        ))}
-                      </div>
+                      <h4 className="text-lg font-semibold mb-2">Drop your file here</h4>
+                      <p className="text-sm text-gray-400 mb-4">or click to browse</p>
+                      <div className="flex gap-2 justify-center">{['CSV', 'XLSX', 'XLS'].map((f) => <span key={f} className="px-3 py-1 text-xs rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-medium">{f}</span>)}</div>
                     </>
                   )}
                 </div>
 
                 {uploadedFile && (
-                  <div className="glass-card-strong rounded-xl p-5 animate-slide">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-xl glass-card-strong flex items-center justify-center">
-                        <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
+                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/50 rounded-xl p-4 animate-slide">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center"><svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate text-white">{uploadedFile.name}</p>
-                        <p className="text-sm text-white/60">
-                          {(uploadedFile.size / 1024).toFixed(2)} KB • {uploadedFile.uploadTime}
-                        </p>
+                        <p className="font-semibold truncate">{uploadedFile.name}</p>
+                        <p className="text-xs text-gray-400">{(uploadedFile.size / 1024).toFixed(2)} KB • {uploadedFile.uploadTime}</p>
                       </div>
-                      <button 
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          setUploadedFile(null); 
-                          setDataPreview(null); 
-                          setChatMessages([]); 
-                          setActualFile(null); 
-                          setValidationResult(null); 
-                        }} 
-                        className="px-5 py-2.5 text-sm rounded-xl glass-card hover:glass-card-strong transition-all text-white"
-                      >
-                        Change
-                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); setUploadedFile(null); setDataPreview(null); setChatMessages([]); setActualFile(null); setValidationResult(null); }} className="px-4 py-2 text-sm rounded-lg bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/50 transition-all">Change</button>
                     </div>
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="glass-card rounded-xl p-5 hover:glass-card-strong hover:-translate-y-1 transition-all">
-                    <svg className="w-6 h-6 text-white/80 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h4 className="text-sm font-semibold mb-1 text-white">Supported</h4>
-                    <p className="text-xs text-white/60">CSV, Excel formats</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-xl p-4 hover:border-indigo-500/40 hover:-translate-y-1 transition-all">
+                    <svg className="w-5 h-5 text-indigo-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <h4 className="text-sm font-semibold mb-1">Supported</h4>
+                    <p className="text-xs text-gray-400">CSV, Excel formats</p>
                   </div>
-                  <div className="glass-card rounded-xl p-5 hover:glass-card-strong hover:-translate-y-1 transition-all">
-                    <svg className="w-6 h-6 text-white/80 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    <h4 className="text-sm font-semibold mb-1 text-white">Secure</h4>
-                    <p className="text-xs text-white/60">Never stored</p>
+                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-xl p-4 hover:border-indigo-500/40 hover:-translate-y-1 transition-all">
+                    <svg className="w-5 h-5 text-pink-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    <h4 className="text-sm font-semibold mb-1">Secure</h4>
+                    <p className="text-xs text-gray-400">Never stored</p>
                   </div>
                 </div>
 
@@ -619,12 +457,10 @@ const MLStudioAdvanced: React.FC = () => {
                     await validateWithAPI();
                   }}
                   disabled={!canProceedFromSetup || isProcessing || isValidating}
-                  className="w-full py-5 rounded-xl glass-card-strong hover:shadow-2xl font-semibold transition-all flex items-center justify-center gap-3 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-1"
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 font-semibold shadow-lg shadow-emerald-500/40 hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <span className="text-lg">Proceed & Validate</span>
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <span>Proceed & Validate</span>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                 </button>
               </div>
             </div>
@@ -632,125 +468,35 @@ const MLStudioAdvanced: React.FC = () => {
         )}
 
         {currentStep === 'validate' && dataPreview && (
-          <div className="animate-slide space-y-10">
-            {/* Header */}
-            <div className="flex justify-between items-start flex-wrap gap-6">
-              <div>
-                <h2 className="text-5xl font-bold text-white mb-3">Dataset Validation</h2>
-                <p className="text-white/70 text-lg">File: {uploadedFile?.name}</p>
-              </div>
-              <button 
-                onClick={() => { 
-                  setCurrentStep('setup'); 
-                  setUploadedFile(null); 
-                  setDataPreview(null); 
-                  setChatMessages([]); 
-                  setUserQuery(''); 
-                  setActualFile(null); 
-                  setValidationResult(null); 
-                }} 
-                className="px-8 py-4 rounded-xl glass-card hover:glass-card-strong text-white font-medium transition-all hover:-translate-y-1"
-              >
-                ↻ Start Over
-              </button>
+          <div className="animate-slide space-y-8">
+            <div className="flex justify-between items-start flex-wrap gap-4">
+              <div><h2 className="text-3xl font-bold text-gradient mb-2">Dataset Preview</h2><p className="text-gray-400">File: {uploadedFile?.name}</p></div>
+              <button onClick={() => { setCurrentStep('setup'); setUploadedFile(null); setDataPreview(null); setChatMessages([]); setUserQuery(''); setActualFile(null); setValidationResult(null); }} className="px-6 py-3 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 text-red-400 font-medium transition-all hover:-translate-y-1">↻ Start Over</button>
             </div>
 
-            {/* Status & Score Card */}
-            {validationResult && (
-              <div className="glass-card-strong rounded-3xl p-10">
-                <div className="grid md:grid-cols-2 gap-10">
-                  {/* Status Section */}
-                  <div className="flex flex-col items-center justify-center space-y-6 p-8 rounded-2xl glass-card">
-                    <div className="relative w-40 h-40">
-                      <svg className="w-full h-full transform -rotate-90">
-                        <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="10" />
-                        <circle 
-                          cx="80" 
-                          cy="80" 
-                          r="70" 
-                          fill="none" 
-                          stroke="white" 
-                          strokeWidth="10"
-                          strokeDasharray={`${(validationResult.satisfaction_score / 100) * 439.82} 439.82`}
-                          style={{ 
-                            transition: 'stroke-dasharray 1.5s ease-out',
-                            filter: 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.6))'
-                          }}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-5xl font-bold text-white">{validationResult.satisfaction_score}</span>
-                        <span className="text-sm text-white/60 uppercase tracking-wider">Quality</span>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full glass-card">
-                        <span className="text-2xl">✓</span>
-                        <span className="text-white font-semibold text-lg">{validationResult.status}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Goal Understanding */}
-                  <div className="space-y-5 p-8 rounded-2xl glass-card">
-                    <h3 className="text-2xl font-bold text-white flex items-center gap-3">
-                      <span className="text-3xl">🎯</span> Goal Understanding
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center p-4 rounded-xl glass-card">
-                        <span className="text-sm text-white/70">Interpreted Task</span>
-                        <span className="font-semibold text-white">{validationResult.goal_understanding?.interpreted_task || 'Not yet identified'}</span>
-                      </div>
-                      <div className="flex justify-between items-center p-4 rounded-xl glass-card">
-                        <span className="text-sm text-white/70">Target Column</span>
-                        <span className="font-semibold text-white">{validationResult.goal_understanding?.target_column_guess || 'Pending'}</span>
-                      </div>
-                      <div className="flex justify-between items-center p-4 rounded-xl glass-card">
-                        <span className="text-sm text-white/70">Confidence</span>
-                        <div className="flex items-center gap-3">
-                          <div className="w-32 h-3 bg-white/20 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-white" 
-                              style={{ 
-                                width: `${(validationResult.goal_understanding?.confidence || 0) * 100}%`, 
-                                transition: 'width 1s ease-out',
-                                boxShadow: '0 0 10px rgba(255,255,255,0.5)'
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm font-bold text-white">{Math.round((validationResult.goal_understanding?.confidence || 0) * 100)}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Dataset Summary Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 {
-                  icon: '📊',
+                  icon: <svg className="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
                   label: 'Rows',
                   value: validationResult?.dataset_summary?.rows?.toLocaleString() || dataPreview.rowCount.toLocaleString(),
                 },
                 {
-                  icon: '📋',
+                  icon: <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
                   label: 'Columns',
                   value: validationResult?.dataset_summary?.columns || dataPreview.columnCount,
                 },
                 {
-                  icon: '💾',
+                  icon: <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>,
                   label: 'Size',
                   value: validationResult?.dataset_summary?.file_size_mb ? `${validationResult.dataset_summary.file_size_mb} MB` : dataPreview.fileSize,
                 },
                 {
-                  icon: '✓',
+                  icon: <svg className="w-8 h-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
                   label: 'Quality',
                   value: isValidating ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       <span className="text-sm">Analyzing...</span>
                     </div>
                   ) : (
@@ -760,268 +506,167 @@ const MLStudioAdvanced: React.FC = () => {
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className="glass-card rounded-2xl p-8 hover:glass-card-strong hover:-translate-y-2 transition-all group"
+                  className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6 hover:border-indigo-500/40 hover:-translate-y-1 transition-all group"
                 >
-                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{stat.icon}</div>
-                  <p className="text-sm text-white/60 mb-2 uppercase tracking-wider font-light">{stat.label}</p>
-                  <div className="text-3xl font-bold text-white">
-                    {typeof stat.value === 'string' || typeof stat.value === 'number' ? stat.value : stat.value}
+                  <div className="mb-2">{stat.icon}</div>
+                  <p className="text-sm text-gray-400 mb-1">{stat.label}</p>
+                  <div className="text-2xl font-bold">
+                    {typeof stat.value === 'string' || typeof stat.value === 'number' ? (
+                      stat.value
+                    ) : (
+                      stat.value
+                    )}
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Column Types Explorer */}
-            {validationResult?.dataset_summary?.column_types && (
-              <div className="glass-card rounded-3xl p-8">
-                <h3 className="text-2xl font-bold mb-6 flex items-center gap-3 text-white">
-                  <span className="text-3xl">🔬</span> Column Analysis
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {Object.entries(validationResult.dataset_summary.column_types).map(([col, type]: [string, any]) => (
-                    <div 
-                      key={col} 
-                      className="group p-5 rounded-xl glass-card hover:glass-card-strong transition-all hover:-translate-y-1 cursor-pointer"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <span className="font-semibold text-white truncate group-hover:text-white transition-colors">{col}</span>
-                        <span className="text-xs px-3 py-1 rounded-full glass-card text-white/80 whitespace-nowrap ml-2">
-                          {type}
-                        </span>
-                      </div>
-                      <div className="text-xs text-white/60">
-                        {type === 'string' && '📝 Text data'}
-                        {type === 'int' && '🔢 Integer'}
-                        {type === 'float' && '📊 Decimal'}
-                        {type === 'category' && '🏷️ Category'}
-                      </div>
-                    </div>
-                  ))}
+            <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold">Data Sample</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setViewMode('first')}
+                    className={`px-4 py-2 rounded-lg text-sm transition-all ${
+                      viewMode === 'first'
+                        ? 'bg-indigo-500 text-white'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                    }`}
+                  >
+                    First 5
+                  </button>
+                  <button
+                    onClick={() => setViewMode('last')}
+                    className={`px-4 py-2 rounded-lg text-sm transition-all ${
+                      viewMode === 'last'
+                        ? 'bg-indigo-500 text-white'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                    }`}
+                  >
+                    Last 5
+                  </button>
+                  <button
+                    onClick={() => setViewMode('all')}
+                    className={`px-4 py-2 rounded-lg text-sm transition-all ${
+                      viewMode === 'all'
+                        ? 'bg-indigo-500 text-white'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                    }`}
+                  >
+                    View All
+                  </button>
                 </div>
               </div>
-            )}
-
-            {/* Data Sample with View Modes */}
-            <div className="glass-card rounded-3xl p-8">
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-3xl font-bold flex items-center gap-3 text-white">
-                  <span className="text-3xl">📊</span> Data Sample Preview
-                </h3>
-                <div className="flex gap-3">
-                  {['first', 'last', 'all'].map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => setViewMode(mode as any)}
-                      className={`px-5 py-3 rounded-xl text-sm font-medium transition-all ${
-                        viewMode === mode
-                          ? 'glass-card-strong text-white shadow-lg'
-                          : 'glass-card text-white/70 hover:text-white'
-                      }`}
-                    >
-                      {mode === 'first' && 'First 5'}
-                      {mode === 'last' && 'Last 5'}
-                      {mode === 'all' && 'View All'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className={`overflow-x-auto rounded-2xl ${viewMode === 'all' ? 'max-h-96 overflow-y-auto' : ''}`}>
+              <div className={`overflow-x-auto ${viewMode === 'all' ? 'max-h-[500px] overflow-y-auto' : ''}`}>
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 glass-card-strong backdrop-blur-xl z-10">
-                    <tr className="border-b border-white/20">
-                      {dataPreview.columns.map((col, i) => (
-                        <th key={i} className="text-left p-5 font-bold text-white whitespace-nowrap">{col}</th>
-                      ))}
-                    </tr>
-                  </thead>
+                  <thead className="sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10"><tr className="border-b border-white/10">{dataPreview.columns.map((col, i) => <th key={i} className="text-left p-3 font-semibold text-indigo-300">{col}</th>)}</tr></thead>
                   <tbody>
                     {dataPreview.rows.map((row, i) => (
-                      <tr key={i} className="border-b border-white/10 hover:bg-white/5 transition-colors group">
-                        {row.map((cell, j) => (
-                          <td key={j} className="p-5 text-white/80 group-hover:text-white transition-colors whitespace-nowrap">{cell}</td>
-                        ))}
+                      <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                        {row.map((cell, j) => <td key={j} className="p-3 text-gray-300">{cell}</td>)}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="text-sm text-white/50 mt-6 flex items-center gap-2">
-                <span>📌</span>
+              <p className="text-xs text-gray-500 mt-4">
                 Showing {viewMode === 'all' ? 'all' : viewMode === 'last' ? 'last' : 'first'} {viewMode === 'all' ? dataPreview.rowCount.toLocaleString() : Math.min(5, dataPreview.rowCount)} of {dataPreview.rowCount.toLocaleString()} rows
               </p>
             </div>
 
-            {/* ML Agent Assistant */}
-            <div className="glass-card-strong rounded-3xl p-10">
-              <h3 className="text-3xl font-bold mb-8 flex items-center gap-4 text-white">
-                <span className="text-4xl animate-bounce">🤖</span>
-                <span>ML Agent Assistant</span>
+            <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                ML Agent Assistant
               </h3>
-              
-              {/* Chat Messages */}
-              <div className="space-y-5 mb-8 max-h-96 overflow-y-auto p-6 rounded-2xl glass-card">
-                {chatMessages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="text-6xl mb-6 animate-pulse">💬</div>
-                    <p className="text-white/60 text-lg">Agent insights will appear here...</p>
-                  </div>
-                ) : (
-                  chatMessages.map((msg, i) => (
-                    <div key={i} className={`flex gap-4 ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      {msg.type === 'ai' && (
-                        <div className="flex-shrink-0">
-                          <div className="w-10 h-10 rounded-full glass-card-strong flex items-center justify-center">
-                            <span className="text-lg">🤖</span>
-                          </div>
-                        </div>
-                      )}
-                      <div className={`max-w-xs lg:max-w-md px-6 py-4 rounded-2xl animate-slide ${
-                        msg.type === 'user'
-                          ? 'glass-card-strong text-white rounded-br-none'
-                          : 'glass-card text-white rounded-bl-none'
-                      }`}>
-                        {msg.type === 'ai' ? renderMessage(msg.text) : msg.text}
-                        <div className={`text-xs mt-3 ${msg.type === 'user' ? 'text-white/60' : 'text-white/50'}`}>
-                          {msg.timestamp}
-                        </div>
-                      </div>
-                      {msg.type === 'user' && (
-                        <div className="flex-shrink-0">
-                          <div className="w-10 h-10 rounded-full glass-card-strong flex items-center justify-center">
-                            <span className="text-lg">👤</span>
-                          </div>
-                        </div>
-                      )}
+              <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex gap-3 ${msg.type === 'user' ? 'justify-end' : ''}`}>
+                    {msg.type === 'ai' && <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>}
+                    <div className={`max-w-2xl p-4 rounded-xl ${msg.type === 'user' ? 'bg-indigo-500/20 border border-indigo-500/30' : 'bg-white/5 border border-white/10'}`}>
+                      <p className="text-sm leading-relaxed">{renderMessage(msg.text)}</p>
+                      <p className="text-xs text-gray-500 mt-1">{msg.timestamp}</p>
                     </div>
-                  ))
-                )}
+                    {msg.type === 'user' && <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>}
+                  </div>
+                ))}
                 <div ref={chatEndRef} />
               </div>
-
-              {/* Input Section */}
-              <div className="flex gap-4">
-                <input 
-                  type="text" 
-                  placeholder="Ask: What would you like to predict?" 
-                  value={userQuery} 
-                  onChange={(e) => setUserQuery(e.target.value)} 
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} 
-                  className="flex-1 px-6 py-4 rounded-xl glass-card text-white placeholder-white/50 outline-none transition-all focus:glass-card-strong" 
-                />
-                <button 
-                  onClick={handleSendMessage} 
-                  disabled={!userQuery.trim()} 
-                  className="px-8 py-4 rounded-xl glass-card-strong hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all font-medium text-white"
-                >
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
+              <div className="flex gap-2">
+                <input type="text" placeholder="Ask: What would you like to predict?" value={userQuery} onChange={(e) => setUserQuery(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-500/50 outline-none transition-all" />
+                <button onClick={handleSendMessage} disabled={!userQuery.trim()} className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 disabled:opacity-40 transition-all">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                 </button>
               </div>
             </div>
 
-            {/* Validation Results */}
-            {validationResult && (
-              <div className="space-y-8">
-                {/* Clarification Questions */}
-                {validationResult.clarification_questions && validationResult.clarification_questions.length > 0 && (
-                  <div className="glass-card rounded-3xl p-10">
-                    <h3 className="text-3xl font-bold mb-8 flex items-center gap-3 text-white">
-                      <span className="text-4xl">❓</span> Clarification Questions
-                    </h3>
-                    <div className="space-y-4">
-                      {validationResult.clarification_questions.map((q: string, i: number) => (
-                        <div key={i} className="p-6 rounded-xl glass-card hover:glass-card-strong transition-all cursor-pointer hover:-translate-y-1">
-                          <div className="flex gap-4">
-                            <span className="text-2xl font-bold text-white min-w-fit">{i + 1}.</span>
-                            <p className="text-white text-lg">{q}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Optional Questions */}
-                {validationResult.optional_questions && validationResult.optional_questions.length > 0 && (
-                  <div className="glass-card rounded-3xl p-10">
-                    <h3 className="text-3xl font-bold mb-8 flex items-center gap-3 text-white">
-                      <span className="text-4xl">💡</span> Optional Questions
-                    </h3>
-                    <div className="space-y-4">
-                      {validationResult.optional_questions.map((q: string, i: number) => (
-                        <div key={i} className="p-6 rounded-xl glass-card hover:glass-card-strong transition-all cursor-pointer hover:-translate-y-1">
-                          <div className="flex gap-4">
-                            <span className="text-2xl font-bold text-white min-w-fit">{i + 1}.</span>
-                            <p className="text-white text-lg">{q}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Full API Response */}
-                <details className="glass-card rounded-3xl p-10 group cursor-pointer">
-                  <summary className="text-2xl font-bold flex items-center gap-3 transition-colors text-white hover:text-white/80">
-                    <span className="text-3xl">📊</span> 
-                    <span>Full API Response</span>
-                    <svg className="w-7 h-7 ml-auto transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                  </summary>
-                  <div className="mt-8 p-8 rounded-2xl glass-card">
-                    <div className="font-mono text-sm text-white/80 overflow-x-auto max-h-96 overflow-y-auto">
-                      <pre className="whitespace-pre-wrap break-words">{JSON.stringify(validationResult, null, 2)}</pre>
-                    </div>
-                  </div>
-                </details>
-              </div>
-            )}
-
-            {/* Configure Button */}
+            {/* Show configure button only after validation completes */}
             {validationResult && (
               <button 
                 onClick={() => setCurrentStep('configure')} 
-                className="w-full py-5 px-6 rounded-xl glass-card-strong hover:shadow-2xl font-semibold transition-all flex items-center justify-center gap-3 text-white text-lg hover:-translate-y-1"
+                className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 font-semibold shadow-lg shadow-indigo-500/50 hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
               >
-                <span>✨ Next: Configure Model</span>
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
+                <span>Next: Configure Model</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
               </button>
+            )}
+
+            {/* Validation Results */}
+            {validationResult && (
+              <div className="backdrop-blur-2xl bg-slate-900/60 border border-green-500/30 rounded-2xl p-6 animate-slide">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <span className="text-2xl">✅</span>
+                  Validation Results
+                </h3>
+                <div className="bg-slate-800/50 rounded-xl p-4 font-mono text-sm overflow-x-auto">
+                  <pre className="text-green-300">{JSON.stringify(validationResult, null, 2)}</pre>
+                </div>
+              </div>
             )}
           </div>
         )}
 
         {currentStep === 'configure' && (
-          <div className="animate-slide space-y-10">
-            <div className="text-center space-y-6">
-              <h2 className="text-5xl font-bold text-white">Model Configuration</h2>
-              <p className="text-white/70 text-xl">Your model is being configured based on the validation results</p>
+          <div className="animate-slide space-y-8">
+            <div className="text-center space-y-4">
+              <h2 className="text-4xl font-bold text-gradient">Model Configuration</h2>
+              <p className="text-gray-400">Your model is being configured based on the validation results</p>
             </div>
             
             {validationResult && (
-              <div className="space-y-8">
-                {/* User View Report */}
+              <div className="space-y-6">
+                {/* User View Report - Markdown Display */}
                 {validationResult.user_view_report && (
-                  <div className="glass-card rounded-3xl p-10">
+                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8">
                     <div className="prose prose-invert max-w-none">
-                      <div className="whitespace-pre-wrap text-base leading-relaxed">
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed">
                         {validationResult.user_view_report.split('\n').map((line: string, i: number) => {
                           if (line.startsWith('# ')) {
-                            return <h1 key={i} className="text-4xl font-bold text-white mb-6">{line.substring(2)}</h1>;
+                            return <h1 key={i} className="text-3xl font-bold text-gradient mb-4">{line.substring(2)}</h1>;
                           } else if (line.startsWith('## ')) {
-                            return <h2 key={i} className="text-3xl font-bold text-white mt-8 mb-4">{line.substring(3)}</h2>;
+                            return <h2 key={i} className="text-2xl font-bold text-indigo-300 mt-6 mb-3">{line.substring(3)}</h2>;
                           } else if (line.startsWith('- ')) {
-                            return <li key={i} className="ml-6 text-white/80 text-lg">{line.substring(2)}</li>;
+                            return <li key={i} className="ml-4 text-gray-300">{line.substring(2)}</li>;
                           } else if (line.match(/^\d+\./)) {
-                            return <li key={i} className="ml-6 text-white/80 text-lg">{line}</li>;
+                            return <li key={i} className="ml-4 text-gray-300">{line}</li>;
+                          } else if (line.includes('**') && line.includes('✅')) {
+                            const formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-green-400">$1</strong>');
+                            return <p key={i} className="text-gray-200 mb-2" dangerouslySetInnerHTML={{ __html: formatted }} />;
                           } else if (line.includes('**')) {
                             const formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>');
-                            return <p key={i} className="text-white/80 mb-3 text-lg" dangerouslySetInnerHTML={{ __html: formatted }} />;
+                            return <p key={i} className="text-gray-300 mb-2" dangerouslySetInnerHTML={{ __html: formatted }} />;
                           } else if (line.trim()) {
-                            return <p key={i} className="text-white/70 mb-3 text-lg">{line}</p>;
+                            return <p key={i} className="text-gray-400 mb-2">{line}</p>;
                           } else {
                             return <br key={i} />;
                           }
@@ -1031,26 +676,31 @@ const MLStudioAdvanced: React.FC = () => {
                   </div>
                 )}
 
-                {/* Dataset Summary */}
+                {/* Dataset Summary Card */}
                 {validationResult.dataset_summary && (
-                  <div className="glass-card rounded-3xl p-8">
-                    <h3 className="text-3xl font-bold mb-6 text-white">📊 Dataset Summary</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                      <div className="glass-card rounded-2xl p-6">
-                        <p className="text-sm text-white/60 mb-2">Rows</p>
-                        <p className="text-3xl font-bold text-white">{validationResult.dataset_summary.rows?.toLocaleString()}</p>
+                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
+                    <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                      <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      Dataset Summary
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-slate-800/50 rounded-xl p-4">
+                        <p className="text-sm text-gray-400 mb-1">Rows</p>
+                        <p className="text-2xl font-bold text-indigo-300">{validationResult.dataset_summary.rows?.toLocaleString()}</p>
                       </div>
-                      <div className="glass-card rounded-2xl p-6">
-                        <p className="text-sm text-white/60 mb-2">Columns</p>
-                        <p className="text-3xl font-bold text-white">{validationResult.dataset_summary.columns}</p>
+                      <div className="bg-slate-800/50 rounded-xl p-4">
+                        <p className="text-sm text-gray-400 mb-1">Columns</p>
+                        <p className="text-2xl font-bold text-pink-300">{validationResult.dataset_summary.columns}</p>
                       </div>
-                      <div className="glass-card rounded-2xl p-6">
-                        <p className="text-sm text-white/60 mb-2">File Size</p>
-                        <p className="text-3xl font-bold text-white">{validationResult.dataset_summary.file_size_mb} MB</p>
+                      <div className="bg-slate-800/50 rounded-xl p-4">
+                        <p className="text-sm text-gray-400 mb-1">File Size</p>
+                        <p className="text-2xl font-bold text-cyan-300">{validationResult.dataset_summary.file_size_mb} MB</p>
                       </div>
-                      <div className="glass-card rounded-2xl p-6">
-                        <p className="text-sm text-white/60 mb-2">Score</p>
-                        <p className="text-3xl font-bold text-white">{validationResult.satisfaction_score}/100</p>
+                      <div className="bg-slate-800/50 rounded-xl p-4">
+                        <p className="text-sm text-gray-400 mb-1">Score</p>
+                        <p className="text-2xl font-bold text-green-300">{validationResult.satisfaction_score}/100</p>
                       </div>
                     </div>
                   </div>
@@ -1058,34 +708,40 @@ const MLStudioAdvanced: React.FC = () => {
 
                 {/* Goal Understanding */}
                 {validationResult.goal_understanding && (
-                  <div className="glass-card rounded-3xl p-8">
-                    <h3 className="text-3xl font-bold mb-6 flex items-center gap-3 text-white">
-                      <span>🎯</span> Goal Understanding
+                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-green-500/30 rounded-2xl p-6">
+                    <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                      <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Goal Understanding
                     </h3>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-white/70 text-lg">Task Type:</span>
-                        <span className="font-semibold text-white text-lg">{validationResult.goal_understanding.interpreted_task}</span>
+                        <span className="text-gray-400">Task Type:</span>
+                        <span className="font-semibold text-indigo-300">{validationResult.goal_understanding.interpreted_task}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-white/70 text-lg">Target Column:</span>
-                        <span className="font-semibold text-white text-lg">{validationResult.goal_understanding.target_column_guess}</span>
+                        <span className="text-gray-400">Target Column:</span>
+                        <span className="font-semibold text-pink-300">{validationResult.goal_understanding.target_column_guess}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-white/70 text-lg">Confidence:</span>
-                        <span className="font-semibold text-white text-lg">{(validationResult.goal_understanding.confidence * 100).toFixed(0)}%</span>
+                        <span className="text-gray-400">Confidence:</span>
+                        <span className="font-semibold text-green-300">{(validationResult.goal_understanding.confidence * 100).toFixed(0)}%</span>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Full JSON Response */}
-                <details className="glass-card rounded-3xl p-8">
-                  <summary className="text-2xl font-bold cursor-pointer text-white hover:text-white/80 transition-colors">
-                    🔍 View Full API Response
+                {/* Full JSON Response (Collapsible) */}
+                <details className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
+                  <summary className="text-xl font-bold cursor-pointer hover:text-indigo-300 transition-colors flex items-center gap-2">
+                    <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    View Full API Response
                   </summary>
-                  <div className="mt-6 glass-card rounded-2xl p-6 font-mono text-sm overflow-x-auto">
-                    <pre className="text-white/80">{JSON.stringify(validationResult, null, 2)}</pre>
+                  <div className="mt-4 bg-slate-800/50 rounded-xl p-4 font-mono text-xs overflow-x-auto">
+                    <pre className="text-green-300">{JSON.stringify(validationResult, null, 2)}</pre>
                   </div>
                 </details>
               </div>
@@ -1094,10 +750,7 @@ const MLStudioAdvanced: React.FC = () => {
         )}
       </main>
 
-      <footer className="relative z-10 text-center py-8 text-white/60 text-sm">
-        <GradualBlur position="top" height="8rem" strength={2} />
-        💡 Pro Tip: The more details you provide, the better the AI can assist you!
-      </footer>
+      <footer className="relative z-10 text-center py-6 text-gray-400 text-sm">💡 Pro Tip: The more details you provide, the better the AI can assist you!</footer>
     </div>
   );
 };
