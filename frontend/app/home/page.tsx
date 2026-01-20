@@ -43,7 +43,7 @@ export default function HomePage() {
     // Check authentication status
     const savedAvatar = localStorage.getItem('userAvatar');
     if (savedAvatar) {
-      setUser(prev => ({ ...prev, avatar: savedAvatar }));
+      setUser(prev => prev ? { ...prev, avatar: savedAvatar } : { authenticated: false, avatar: savedAvatar });
     }
     fetch(`${BACKEND_URL}/api/auth/me`, {
       credentials: 'include',
@@ -139,10 +139,8 @@ export default function HomePage() {
         }
 
         .gradient-text {
-          background: linear-gradient(180deg, #ffffff 0%, #b8a3ff 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          color: #ffffff;
+          font-weight: 900;
         }
       `}</style>
 
@@ -153,7 +151,7 @@ export default function HomePage() {
       />
 
       {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none z-[1]">
+      {/* <div className="fixed inset-0 pointer-events-none z-[1]">
         <div className="absolute inset-0" style={{
           background: `
             radial-gradient(circle at 20% 30%, rgba(110, 84, 200, 0.15) 0%, transparent 50%),
@@ -161,13 +159,11 @@ export default function HomePage() {
             radial-gradient(circle at 50% 50%, rgba(94, 114, 235, 0.1) 0%, transparent 60%)
           `
         }} />
-      </div>
+      </div> */}
 
       {/* Navigation Bar */}
       <nav 
-        className={`fixed top-0 left-0 right-0 px-10 py-4 flex justify-between items-center backdrop-blur-md bg-[rgba(11,18,33,0.8)] border-b border-[rgba(255,255,255,0.05)] z-[100] transition-all duration-500 ${
-          isScrolled ? 'bg-[rgba(11,18,33,0.95)] shadow-[0_4px_24px_rgba(0,0,0,0.3)]' : ''
-        } ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}
+        className={`fixed top-0 left-0 right-0 px-10 py-4 flex justify-between items-center backdrop-blur-md bg-[rgba(11,18,33,0.9)] z-[100] transition-all duration-500 ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}
       >
         <Link href="/home" className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] rounded-xl flex items-center justify-center font-bold text-white relative overflow-hidden shadow-[0_4px_12px_rgba(110,84,200,0.4)]">
@@ -220,7 +216,7 @@ export default function HomePage() {
             Hey {user.name?.split(' ')[0]}, Welcome to Ownquesta!
           </h1>
           
-          <p className="text-lg text-[#9fb3d9] leading-relaxed max-w-[700px] mx-auto mb-20">
+          <p className="text-lg text-white leading-relaxed max-w-[700px] mx-auto mb-20">
             Start your journey with Ownquesta and transform data into powerful AI models—no coding required. Your next breakthrough is just one click away.
           </p>
 
