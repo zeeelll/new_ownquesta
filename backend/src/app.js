@@ -35,12 +35,18 @@ app.use(
     resave: false,
     saveUninitialized: false,
     store: (typeof MongoStore.create === "function")
-      ? MongoStore.create({ mongoUrl: process.env.MONGODB_URI })
-      : new MongoStore({ mongoUrl: process.env.MONGODB_URI }),
+      ? MongoStore.create({ 
+          mongoUrl: process.env.MONGODB_URI,
+          touchAfter: 24 * 3600
+        })
+      : new MongoStore({ 
+          mongoUrl: process.env.MONGODB_URI,
+          touchAfter: 24 * 3600
+        }),
     cookie: {
       httpOnly: true,
       secure: false,
-      maxAge: 1000 * 60 * 60 * 24
+      maxAge: 1000 * 60 * 60 * 24 * 7
     }
   })
 );
