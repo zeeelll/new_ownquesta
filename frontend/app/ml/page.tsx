@@ -42,19 +42,25 @@ const MLPage: React.FC = () => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const router = useRouter();
     
+  useEffect(() => {
     // Fetch user data
-    const savedAvatar = localStorage.getItem('userAvatar');
-    if (savedAvatar) {
-      setUser(prev => ({ ...prev, avatar: savedAvatar }));
+    if (typeof window !== 'undefined') {
+      const savedAvatar = localStorage.getItem('userAvatar');
+      if (savedAvatar) {
+        setUser(prev => ({ ...prev, avatar: savedAvatar }));
+      }
     }
     fetch(`${BACKEND_URL}/api/auth/me`, { credentials: 'include' })
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data?.user) {
           setUser({ name: data.user.name, avatar: data.user.avatar });
-          localStorage.setItem('userAvatar', data.user.avatar || '');
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('userAvatar', data.user.avatar || '');
+          }
         }
       })
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

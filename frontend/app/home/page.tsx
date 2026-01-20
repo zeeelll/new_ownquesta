@@ -43,7 +43,7 @@ export default function HomePage() {
     // Check authentication status
     const savedAvatar = localStorage.getItem('userAvatar');
     if (savedAvatar) {
-      setUser(prev => ({ ...prev, avatar: savedAvatar }));
+      setUser(prev => prev ? { ...prev, avatar: savedAvatar } : { authenticated: false, avatar: savedAvatar });
     }
     fetch(`${BACKEND_URL}/api/auth/me`, {
       credentials: 'include',
