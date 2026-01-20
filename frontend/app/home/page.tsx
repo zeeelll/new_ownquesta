@@ -124,7 +124,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="relative bg-[#0a0e1a] text-[#e6eef8] overflow-x-hidden min-h-screen">
+    <div className="relative text-[#e6eef8] overflow-x-hidden min-h-screen">
       {/* 3D Animated Background */}
       <ThreeBackground />
       
@@ -163,7 +163,7 @@ export default function HomePage() {
 
       {/* Navigation Bar */}
       <nav 
-        className={`fixed top-0 left-0 right-0 px-10 py-4 flex justify-between items-center backdrop-blur-md bg-[rgba(11,18,33,0.9)] z-[100] transition-all duration-500 ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}
+        className={`fixed top-0 left-0 right-0 px-10 py-4 flex justify-between items-center bg-transparent z-[100] transition-all duration-500 ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}
       >
         <Link href="/home" className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] rounded-xl flex items-center justify-center font-bold text-white relative overflow-hidden shadow-[0_4px_12px_rgba(110,84,200,0.4)]">

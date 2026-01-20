@@ -17,6 +17,9 @@ export default function Home() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const lastScrollY = useRef(0);
+  const orb1Ref = useRef<HTMLDivElement | null>(null);
+  const orb2Ref = useRef<HTMLDivElement | null>(null);
+  const orb3Ref = useRef<HTMLDivElement | null>(null);
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
   useEffect(() => {
@@ -79,6 +82,41 @@ export default function Home() {
     };
   }, [BACKEND_URL, user]);
 
+  // Lenis-driven parallax for background orbs
+  useEffect(() => {
+    let lenis: any;
+    let rafId: number;
+
+    if (typeof window === 'undefined') return;
+
+    import('lenis').then(({ default: Lenis }) => {
+      lenis = new Lenis({
+        duration: 1.2,
+        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+      });
+
+      function raf(time: number) {
+        lenis.raf(time);
+        const scroll = (lenis && lenis.scroll) || window.scrollY || 0;
+        const t = performance.now() / 1000;
+
+        if (orb1Ref.current) orb1Ref.current.style.transform = `translate3d(${Math.sin(t * 0.9) * 8}px, ${-scroll * 0.03 + Math.cos(t * 0.7) * 6}px, 0)`;
+        if (orb2Ref.current) orb2Ref.current.style.transform = `translate3d(${Math.cos(t * 0.8) * 10}px, ${scroll * 0.02 + Math.sin(t * 0.6) * 8}px, 0)`;
+        if (orb3Ref.current) orb3Ref.current.style.transform = `translate3d(${Math.sin(t * 0.6) * 6}px, ${scroll * 0.01 + Math.sin(t * 0.9) * 5}px, 0)`;
+
+        rafId = requestAnimationFrame(raf);
+      }
+
+      rafId = requestAnimationFrame(raf);
+    }).catch(() => {});
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (lenis && typeof lenis.destroy === 'function') lenis.destroy();
+    };
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -137,29 +175,27 @@ export default function Home() {
         style={{ transform: `scaleX(${scrollProgress})`, transformOrigin: 'left' }}
       />
 
-      {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0" style={{
+      {/* Background Effects (Lenis parallax + orbs) */}
+      <div className="fixed inset-0 pointer-events-none z-0" ref={(el) => { /* bg container */ }}>
+        <div className="absolute inset-0" ref={null} style={{
           background: `
-            radial-gradient(circle at 20% 30%, rgba(110, 84, 200, 0.25) 0%, transparent 50%),
-            radial-gradient(circle at 80% 70%, rgba(124, 73, 169, 0.25) 0%, transparent 50%),
-            radial-gradient(circle at 50% 50%, rgba(94, 114, 235, 0.18) 0%, transparent 60%),
-            radial-gradient(circle at 10% 80%, rgba(184, 103, 255, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 90% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 50%)
-          `
+              radial-gradient(circle at 20% 30%, rgba(98, 0, 238, 0.22) 0%, transparent 55%),
+              radial-gradient(circle at 80% 70%, rgba(0, 202, 255, 0.18) 0%, transparent 55%),
+              radial-gradient(circle at 50% 50%, rgba(255, 84, 201, 0.14) 0%, transparent 60%),
+              radial-gradient(circle at 10% 80%, rgba(124, 73, 169, 0.12) 0%, transparent 55%),
+              radial-gradient(circle at 90% 20%, rgba(79, 70, 229, 0.12) 0%, transparent 55%)
+            `
         }} />
         
-        {/* Glow Orbs */}
-        <div className="absolute w-[350px] h-[350px] rounded-full blur-[70px] bg-[rgba(110,84,200,0.2)] top-[10%] left-[10%]" />
-        <div className="absolute w-[450px] h-[450px] rounded-full blur-[70px] bg-[rgba(124,73,169,0.18)] bottom-[10%] right-[10%]" />
-        <div className="absolute w-[300px] h-[300px] rounded-full blur-[70px] bg-[rgba(94,114,235,0.15)] top-[50%] left-[50%]" />
+        {/* Glow Orbs (refs used for parallax) */}
+        <div ref={orb1Ref} className="absolute w-[350px] h-[350px] rounded-full blur-[70px] bg-[rgba(98,0,238,0.22)] top-[10%] left-[10%] will-change-transform" />
+        <div ref={orb2Ref} className="absolute w-[450px] h-[450px] rounded-full blur-[70px] bg-[rgba(0,202,255,0.18)] bottom-[10%] right-[10%] will-change-transform" />
+        <div ref={orb3Ref} className="absolute w-[300px] h-[300px] rounded-full blur-[70px] bg-[rgba(255,84,201,0.14)] top-[50%] left-[50%] will-change-transform" />
       </div>
 
       {/* Navigation Bar */}
       <nav 
-        className={`fixed top-0 left-0 right-0 px-10 py-4 flex justify-between items-center backdrop-blur-md bg-[rgba(11,18,33,0.8)] border-b border-[rgba(255,255,255,0.05)] z-[100] transition-all duration-500 ${
-          isScrolled ? 'bg-[rgba(11,18,33,0.95)] shadow-[0_4px_24px_rgba(0,0,0,0.3)]' : ''
-        } ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}
+        className={`fixed top-0 left-0 right-0 px-10 py-4 flex justify-between items-center bg-transparent z-[100] transition-all duration-500 ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] rounded-xl flex items-center justify-center font-bold text-white relative overflow-hidden shadow-[0_4px_12px_rgba(110,84,200,0.4)]">

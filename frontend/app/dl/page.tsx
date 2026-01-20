@@ -223,7 +223,7 @@ const DeepLearningPlatform: React.FC = () => {
       `}</style>
 
       {/* Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 h-16 bg-slate-900/80 backdrop-blur-xl border-b border-indigo-500/20 z-50 flex items-center justify-between px-8">
+      <nav className="fixed top-0 left-0 right-0 h-16 bg-transparent z-50 flex items-center justify-between px-8">
         <div className="flex items-center gap-3">
           <a href="/home" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] rounded-xl flex items-center justify-center font-bold text-white relative overflow-hidden shadow-[0_4px_12px_rgba(110,84,200,0.4)]">

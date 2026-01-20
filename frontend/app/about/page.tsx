@@ -117,7 +117,7 @@ export default function AboutPage() {
       />
 
       {/* Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 px-10 py-5 flex justify-between items-center backdrop-blur-md bg-[rgba(11,18,33,0.95)] border-b border-[rgba(255,255,255,0.05)] z-[100] shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+      <nav className="fixed top-0 left-0 right-0 px-10 py-5 flex justify-between items-center bg-transparent z-[100]">
         <Link href="/" className="flex items-center gap-3 text-lg font-semibold tracking-wide transition-transform hover:-translate-y-0.5">
           <div className="w-10 h-10 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] rounded-xl flex items-center justify-center shadow-[0_4px_12px_rgba(110,84,200,0.4)]">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
