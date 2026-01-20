@@ -418,42 +418,44 @@ export default function LoginPage() {
           {/* Sign In View */}
           {!isSignUp && (
             <div>
-              {/* If user already authenticated, show user name + dropdown instead of sign-in form */}
+              {/* If user already authenticated, show user info and dashboard button */}
               {currentUser?.authenticated ? (
-                <div id="login-user-dropdown" className="relative">
-                  <div
-                    className="flex items-center gap-3.5 cursor-pointer px-4 py-3 rounded-lg transition-all hover:bg-[rgba(110,84,200,0.05)]"
-                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  >
-                    <img src={currentUser.avatar || 'https://via.placeholder.com/36'} alt="User" className="w-9 h-9 rounded-full border-2 border-[rgba(110,84,200,0.6)]" />
-                    <span className="text-lg font-medium text-white">{currentUser.name}</span>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M8 11L3 6h10l-5 5z" />
-                    </svg>
-                  </div>
-
-                  {userDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2.5 bg-[rgba(11,18,33,0.95)] backdrop-blur-md rounded-xl shadow-[0_8px_32px_rgba(110,84,200,0.3)] border border-[rgba(255,255,255,0.05)] min-w-[200px]">
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => { setUserDropdownOpen(false); router.push('/profile'); }}
-                        onKeyPress={(e) => { if (e.key === 'Enter') { setUserDropdownOpen(false); router.push('/profile'); } }}
-                        className="flex items-center gap-3 px-5 py-3 border-b border-[rgba(255,255,255,0.03)] transition-all hover:bg-[rgba(110,84,200,0.05)] hover:pl-6 cursor-pointer"
-                      >
-                        <span>Profile</span>
-                      </div>
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => { setUserDropdownOpen(false); handleLogoutFromLogin(); }}
-                        onKeyPress={(e) => { if (e.key === 'Enter') { setUserDropdownOpen(false); handleLogoutFromLogin(); } }}
-                        className="flex items-center gap-3 px-5 py-3 cursor-pointer transition-all hover:bg-[rgba(110,84,200,0.05)] hover:pl-6"
-                      >
-                        <span>Logout</span>
+                <div className="space-y-6">
+                  <div className="bg-[rgba(139,92,246,0.1)] border border-[rgba(139,92,246,0.3)] rounded-xl p-6 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <img 
+                        src={currentUser.avatar || 'https://via.placeholder.com/80'} 
+                        alt="User" 
+                        className="w-20 h-20 rounded-full border-4 border-[rgba(139,92,246,0.6)]" 
+                      />
+                      <div>
+                        <h3 className="text-xl font-bold text-white mb-1">Welcome back!</h3>
+                        <p className="text-[#94a3b8]">{currentUser.name}</p>
                       </div>
                     </div>
-                  )}
+                  </div>
+
+                  <button 
+                    onClick={() => router.push('/home')}
+                    className="w-full p-[15px] rounded-lg border-none text-base font-semibold cursor-pointer transition-all flex items-center justify-center gap-2 bg-gradient-to-br from-[#8b5cf6] to-[#7c3aed] text-white shadow-[0_4px_12px_rgba(139,92,246,0.3)] hover:translate-y-[-2px] hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)]"
+                  >
+                    Go to Dashboard
+                  </button>
+
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => router.push('/profile')}
+                      className="flex-1 p-[12px] rounded-lg border border-[#1e293b] text-[#94a3b8] hover:text-[#f8fafc] hover:border-[#8b5cf6] transition-all text-sm"
+                    >
+                      Profile
+                    </button>
+                    <button 
+                      onClick={handleLogoutFromLogin}
+                      className="flex-1 p-[12px] rounded-lg border border-[#1e293b] text-[#94a3b8] hover:text-[#f8fafc] hover:border-[#8b5cf6] transition-all text-sm"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div>

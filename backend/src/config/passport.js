@@ -10,7 +10,8 @@ const User = require("../models/User");
 passport.use(
   new LocalStrategy({ usernameField: "email" }, async (email, password, done) => {
     try {
-      const user = await User.findOne({ email, provider: "local" });
+      // Allow login if provider is "local" or "both"
+      const user = await User.findOne({ email, provider: { $in: ["local", "both"] } });
       if (!user) return done(null, false, { message: "User not found" });
 
       const ok = await bcrypt.compare(password, user.password);
@@ -44,13 +45,30 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        const googleEmail = profile.emails?.[0]?.value || "";
+        
+        // First, try to find user by googleId
         let user = await User.findOne({ googleId: profile.id });
 
+        if (!user && googleEmail) {
+          // If not found by googleId, check if user exists with same email (local account)
+          user = await User.findOne({ email: googleEmail });
+          
+          if (user) {
+            // Link Google account to existing local account
+            user.googleId = profile.id;
+            user.avatar = user.avatar || profile.photos?.[0]?.value || "";
+            user.provider = "both"; // User can now login with both methods
+            console.log("✅ Linked Google account to existing user:", user._id);
+          }
+        }
+
         if (!user) {
+          // Create new user if doesn't exist
           user = await User.create({
             googleId: profile.id,
             name: profile.displayName,
-            email: profile.emails?.[0]?.value || "",
+            email: googleEmail,
             avatar: profile.photos?.[0]?.value || "",
             provider: "google",
             phone: "",
