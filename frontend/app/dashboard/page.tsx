@@ -46,23 +46,29 @@ export default function DashboardPage() {
 
   const loadDashboardData = () => {
     // Load from localStorage or API
-    const mlData = localStorage.getItem("mlValidationStats");
-    if (mlData) {
-      const parsedStats = JSON.parse(mlData);
-      setStats(parsedStats);
+    if (typeof window !== 'undefined') {
+      const mlData = localStorage.getItem("mlValidationStats");
+      if (mlData) {
+        const parsedStats = JSON.parse(mlData);
+        setStats(parsedStats);
+      }
     }
   };
 
   useEffect(() => {
     async function loadMe() {
       try {
-        const savedAvatar = localStorage.getItem('userAvatar');
-        if (savedAvatar) {
-          setUser(prev => ({ ...prev, avatar: savedAvatar }));
+        if (typeof window !== 'undefined') {
+          const savedAvatar = localStorage.getItem('userAvatar');
+          if (savedAvatar) {
+            setUser(prev => ({ ...prev, avatar: savedAvatar }));
+          }
         }
         const data = await api("/api/auth/me");
         setUser(data.user);
-        localStorage.setItem('userAvatar', data.user.avatar || '');
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('userAvatar', data.user.avatar || '');
+        }
         loadDashboardData();
       } catch {
         router.push("/login");

@@ -41,9 +41,11 @@ export default function HomePage() {
     }
 
     // Check authentication status
-    const savedAvatar = localStorage.getItem('userAvatar');
-    if (savedAvatar) {
-      setUser(prev => prev ? { ...prev, avatar: savedAvatar } : { authenticated: false, avatar: savedAvatar });
+    if (typeof window !== 'undefined') {
+      const savedAvatar = localStorage.getItem('userAvatar');
+      if (savedAvatar) {
+        setUser(prev => prev ? { ...prev, avatar: savedAvatar } : { authenticated: false, avatar: savedAvatar });
+      }
     }
     fetch(`${BACKEND_URL}/api/auth/me`, {
       credentials: 'include',
@@ -57,7 +59,9 @@ export default function HomePage() {
             name: data.user.name,
             avatar: data.user.avatar
           });
-          localStorage.setItem('userAvatar', data.user.avatar || '');
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('userAvatar', data.user.avatar || '');
+          }
         } else {
           // If not authenticated, redirect to login
           window.location.href = '/login';
