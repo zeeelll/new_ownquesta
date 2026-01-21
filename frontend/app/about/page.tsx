@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import ThreeBackground from '../home/ThreeBackground';
 
 export default function AboutPage() {
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,74 +21,29 @@ export default function AboutPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Mouse tracking for interactive background
+  // Initialize Lenis smooth scrolling
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    };
+    let lenis: any;
+    if (typeof window !== 'undefined') {
+      import('lenis').then(({ default: Lenis }) => {
+        lenis = new Lenis({
+          duration: 1.2,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          smoothWheel: true,
+        });
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+        function raf(time: number) {
+          lenis.raf(time);
+          requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+      });
+    }
   }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#071026] to-[#0b1221] text-[#e6eef8] relative overflow-hidden">
-      {/* Enhanced Interactive Background */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        {/* Base gradient layers */}
-        <div className="absolute inset-0" style={{
-          background: `
-            radial-gradient(circle at 25% 25%, rgba(110, 84, 200, 0.2) 0%, transparent 50%),
-            radial-gradient(circle at 75% 75%, rgba(124, 73, 169, 0.18) 0%, transparent 50%),
-            radial-gradient(circle at 50% 50%, rgba(94, 114, 235, 0.15) 0%, transparent 60%)
-          `
-        }} />
-        
-        {/* Mouse-responsive floating orbs */}
-        <div 
-          className="absolute w-[400px] h-[400px] rounded-full blur-[60px] transition-all duration-1000 ease-out"
-          style={{
-            background: 'rgba(110,84,200,0.15)',
-            top: `${Math.max(15, Math.min(50, (mousePos.y / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 100))}%`,
-            left: `${Math.max(15, Math.min(50, (mousePos.x / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 100))}%`,
-            transform: `translate(-50%, -50%) scale(${1 + (mousePos.x / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 0.25})`
-          }}
-        />
-        <div 
-          className="absolute w-[350px] h-[350px] rounded-full blur-[70px] transition-all duration-1500 ease-out"
-          style={{
-            background: 'rgba(124,73,169,0.12)',
-            bottom: `${Math.max(20, Math.min(60, (((typeof window !== 'undefined' ? window.innerHeight : 1000) - mousePos.y) / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 100))}%`,
-            right: `${Math.max(20, Math.min(60, (((typeof window !== 'undefined' ? window.innerWidth : 1000) - mousePos.x) / (typeof window !== 'undefined' ? window.innerWidth : 1000)) * 100))}%`,
-            transform: `scale(${1 + (mousePos.y / (typeof window !== 'undefined' ? window.innerHeight : 1000)) * 0.2})`
-          }}
-        />
-
-        {/* Floating geometric shapes */}
-        <div className="absolute top-[25%] left-[12%] w-28 h-28 border border-indigo-400/25 rounded-full animate-pulse"
-             style={{ animationDelay: '0s', animationDuration: '6s' }} />
-        <div className="absolute top-[35%] right-[18%] w-20 h-20 border border-purple-400/20 rounded-lg rotate-45 animate-bounce"
-             style={{ animationDelay: '2s', animationDuration: '8s' }} />
-        <div className="absolute bottom-[30%] left-[25%] w-24 h-24 border border-violet-400/18 rounded-full animate-ping"
-             style={{ animationDelay: '4s', animationDuration: '7s' }} />
-        
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
-              linear-gradient(rgba(139, 92, 246, 0.06) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(139, 92, 246, 0.06) 1px, transparent 1px)
-            `,
-            backgroundSize: '45px 45px'
-          }} />
-        </div>
-
-        {/* Particle effects */}
-        <div className="absolute top-[40%] left-[35%] w-1 h-1 bg-indigo-400 rounded-full animate-pulse opacity-50" />
-        <div className="absolute top-[55%] right-[40%] w-1 h-1 bg-purple-400 rounded-full animate-pulse opacity-35" style={{ animationDelay: '1.5s' }} />
-        <div className="absolute bottom-[35%] left-[45%] w-1 h-1 bg-violet-400 rounded-full animate-pulse opacity-40" style={{ animationDelay: '3s' }} />
-        <div className="absolute top-[30%] right-[25%] w-1 h-1 bg-indigo-300 rounded-full animate-pulse opacity-30" style={{ animationDelay: '0.8s' }} />
-      </div>
+      <ThreeBackground />
 
       <style jsx global>{`
         body {
@@ -142,13 +97,13 @@ export default function AboutPage() {
         {/* Hero Section */}
         <div className="text-center mb-20 py-[60px]">
           <h1 className="text-4xl md:text-5xl font-bold mb-5 gradient-text">
-            Democratizing Machine Learning
+            Making AI Easy for Everyone
           </h1>
           <p className="text-xl text-[#9fb3d9] max-w-[700px] mx-auto mb-8 leading-relaxed">
-            Empowering everyone to build intelligent models without barriers
+            Giving Smart Tools to All Creators
           </p>
           <p className="text-base text-[#c5d4ed] max-w-[800px] mx-auto leading-loose">
-            Ownquesta is an advanced AutoML platform that transforms the complex world of machine learning into an accessible, intuitive experience. We believe that powerful predictive analytics shouldn't require a PhD in data science—it should be available to anyone with data and curiosity.
+            Ownquesta is a simple tool for machine learning. It helps people use AI without needing to be experts. Our app lets anyone, from beginners to business owners, make smart predictions from their data easily.
           </p>
         </div>
 
@@ -158,7 +113,7 @@ export default function AboutPage() {
             What We Do
           </h2>
           <p className="text-[17px] text-[#9fb3d9] mb-10 leading-relaxed">
-            Ownquesta automates the entire machine learning pipeline, from data preprocessing to model deployment, making sophisticated AI accessible to students, professionals, researchers, and businesses of all sizes.
+            Ownquesta handles all parts of machine learning, from cleaning data to using models. It makes advanced AI simple for people in any field, no matter their skill level.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
@@ -166,32 +121,32 @@ export default function AboutPage() {
               {
                 icon: <path d="M13 10V3L4 14h7v7l9-11h-7z"/>,
                 title: 'Instant Model Building',
-                desc: 'Upload your dataset and watch as our intelligent system automatically cleans, processes, and engineers features to create optimal machine learning models in minutes, not months.'
+                desc: 'Upload your data and our AI will clean it, improve it, and build a good model quickly. No need for long development time.'
               },
               {
                 icon: <><path d="M12 2L2 7L12 12L22 7L12 2Z"/><path d="M2 17L12 22L22 17V12L12 17L2 12V17Z"/></>,
                 title: 'Smart Algorithm Selection',
-                desc: 'Our platform intelligently tests multiple algorithms—from decision trees to neural networks—and automatically selects the best-performing model for your specific dataset and use case.'
+                desc: 'Our tool tests many algorithms and picks the best one for your data and goals.'
               },
               {
                 icon: <><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></>,
                 title: 'Deep Insights & Visualization',
-                desc: 'Get comprehensive performance metrics, interactive visualizations, and detailed explanations that help you understand not just what your model predicts, but why it makes those predictions.'
+                desc: 'See detailed reports, charts, and easy explanations of how your model works and why it makes predictions.'
               },
               {
                 icon: <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
                 title: 'Enterprise-Grade Security',
-                desc: 'Your data is encrypted end-to-end and never shared. We prioritize privacy and security, ensuring your sensitive information remains completely protected throughout the modeling process.'
+                desc: 'Your data is safe with strong encryption and security that protects it at every step.'
               },
               {
                 icon: <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
                 title: 'Real-Time Processing',
-                desc: 'Leverage our optimized infrastructure to process datasets and train models at incredible speeds, delivering results when you need them—not days or weeks later.'
+                desc: 'Use our fast cloud system to process data and train models quickly.'
               },
               {
                 icon: <><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></>,
                 title: 'Educational Transparency',
-                desc: 'Every step of the ML pipeline is explained and visualized, making Ownquesta an invaluable learning tool for understanding how professional data scientists build production models.'
+                desc: 'Every step is shown and explained, making it a great way to learn machine learning.'
               }
             ].map((card, i) => (
               <div 
@@ -216,7 +171,7 @@ export default function AboutPage() {
             Key Features
           </h2>
           <p className="text-[17px] text-[#9fb3d9] mb-10 leading-relaxed">
-            Our platform provides a comprehensive suite of tools designed for real-world machine learning workflows.
+            See our full set of tools made for real-world machine learning and new discoveries.
           </p>
 
           <ul className="list-none mt-8 space-y-4">
@@ -224,42 +179,42 @@ export default function AboutPage() {
               {
                 icon: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,
                 title: 'Multi-Format Data Support',
-                desc: 'Upload datasets in CSV, Excel, JSON, or connect directly to databases. Our intelligent parser handles various data formats and automatically detects column types, missing values, and data quality issues.'
+                desc: 'Upload data in many formats like CSV, Excel, JSON, or connect to databases. Our AI checks the data and fixes problems for better models.'
               },
               {
                 icon: <><path d="M3 6l9 4 9-4"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M3 14l9 4 9-4"/><line x1="3" y1="18" x2="21" y2="18"/></>,
                 title: 'Automated Data Preprocessing',
-                desc: 'Advanced data cleaning handles missing values, outliers, duplicate records, and inconsistent formatting. Our system applies industry-standard techniques like imputation, normalization, and encoding automatically.'
+                desc: 'Our tool fixes data issues like missing values, outliers, and duplicates using smart methods.'
               },
               {
                 icon: <><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></>,
                 title: 'Intelligent Feature Engineering',
-                desc: 'Automatically create powerful new features through polynomial features, interaction terms, date-time decomposition, and custom transformations that significantly improve model accuracy.'
+                desc: 'Automatically create new features from your data to make predictions better and more accurate.'
               },
               {
                 icon: <path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/>,
                 title: 'Multiple Algorithm Training',
-                desc: 'Train and evaluate dozens of algorithms simultaneously including Random Forests, Gradient Boosting, Neural Networks, SVM, Logistic Regression, and more. Get comprehensive comparison metrics to understand each model\'s strengths.'
+                desc: 'Train many algorithms at once, like Random Forests and Neural Networks, and compare their results.'
               },
               {
                 icon: <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>,
                 title: 'Advanced Model Evaluation',
-                desc: 'Access detailed performance metrics including accuracy, precision, recall, F1-score, AUC-ROC curves, confusion matrices, and custom business metrics. Understand model performance from every angle.'
+                desc: 'Check model performance with metrics like accuracy, precision, and charts to see how well it works.'
               },
               {
                 icon: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>,
                 title: 'Explainable AI (XAI)',
-                desc: 'Feature importance analysis, SHAP values, and decision path visualization help you understand exactly which features drive predictions, ensuring transparency and building trust in model decisions.'
+                desc: 'See why the model makes predictions, with tools that show which features matter most.'
               },
               {
                 icon: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
                 title: 'Hyperparameter Optimization',
-                desc: 'Our platform automatically tunes model parameters using advanced techniques like Bayesian optimization and grid search, ensuring you get the best possible performance without manual tweaking.'
+                desc: 'Automatically adjust model settings to get the best results without manual work.'
               },
               {
                 icon: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
                 title: 'Model Export & Deployment',
-                desc: 'Download trained models in standard formats (pickle, ONNX, TensorFlow) for integration into your applications, or deploy directly through our API for instant predictions at scale.'
+                desc: 'Download models or use our API to make predictions in your apps right away.'
               }
             ].map((feature, i) => (
               <li 
@@ -286,7 +241,7 @@ export default function AboutPage() {
             Who Uses Ownquesta
           </h2>
           <p className="text-[17px] text-[#9fb3d9] mb-10 leading-relaxed">
-            Our platform serves a diverse community of users across industries and expertise levels.
+            Our app helps many types of users from different fields and skill levels.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
@@ -294,32 +249,32 @@ export default function AboutPage() {
               {
                 icon: <><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></>,
                 title: 'Students & Educators',
-                desc: 'Learn ML concepts through hands-on practice. Professors use Ownquesta to teach data science courses with real-world projects and immediate feedback.'
+                desc: 'Learn ML by doing projects. Teachers use it for classes with real examples and quick feedback.'
               },
               {
                 icon: <><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></>,
                 title: 'Business Analysts',
-                desc: 'Create predictive models for sales forecasting, customer churn analysis, and business intelligence without relying on data science teams.'
+                desc: 'Make models for sales predictions, customer behavior, and business reports without needing data experts.'
               },
               {
                 icon: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
                 title: 'Researchers',
-                desc: 'Rapidly prototype ML models for academic research, validate hypotheses, and publish reproducible results with our transparent methodology.'
+                desc: 'Quickly build models for studies, test ideas, and share clear results.'
               },
               {
                 icon: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
                 title: 'SMBs & Startups',
-                desc: 'Access enterprise-level ML capabilities without hiring expensive data science teams. Build customer segmentation, demand forecasting, and fraud detection models.'
+                desc: 'Get big company AI tools without hiring experts. Build models for customers, sales, and fraud detection.'
               },
               {
                 icon: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
                 title: 'Data Scientists',
-                desc: 'Accelerate your workflow with automated baseline models, freeing time to focus on complex feature engineering and custom algorithm development.'
+                desc: 'Speed up work with auto models, so you can focus on hard tasks and custom ideas.'
               },
               {
                 icon: <><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></>,
                 title: 'Healthcare & Finance',
-                desc: 'Build compliant, explainable models for medical diagnosis support, risk assessment, and fraud detection with full audit trails.'
+                desc: 'Make clear, rule-following models for health checks, risk checks, and fraud spotting with full records.'
               }
             ].map((card, i) => (
               <div 
@@ -361,10 +316,10 @@ export default function AboutPage() {
           <div className="bg-gradient-to-br from-[rgba(110,84,200,0.15)] to-[rgba(124,73,169,0.15)] border border-[rgba(110,84,200,0.3)] rounded-xl p-8 mt-10">
             <h3 className="text-2xl font-bold mb-4 text-white">Our Mission</h3>
             <p className="text-base text-[#dfeeff] leading-relaxed mb-4">
-              At Ownquesta, we're on a mission to democratize artificial intelligence and make machine learning accessible to everyone. We believe that the power of predictive analytics shouldn't be limited to large corporations with massive data science teams. Whether you're a student learning the fundamentals, a small business owner seeking insights, or a researcher pushing the boundaries of knowledge, Ownquesta provides the tools and transparency you need to succeed.
+              At Ownquesta, we want everyone to use AI easily. We break down the walls that kept machine learning only for big companies. We dream of a world where smart predictions are for everyone—from students learning basics to business owners finding new ideas and scientists exploring new knowledge.
             </p>
             <p className="text-base text-[#dfeeff] leading-relaxed">
-              We're committed to maintaining the highest standards of data privacy, algorithmic transparency, and educational value. Every feature we build is designed with our users' success in mind—helping you understand not just what the data says, but why it matters and how to act on those insights.
+              We care about keeping your data safe, making things clear, and teaching well. Everything we build helps you succeed—showing not just the results, but how and why, so you can turn data into smart choices.
             </p>
           </div>
         </section>
