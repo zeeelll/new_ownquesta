@@ -21,7 +21,7 @@ export default function ThreeBackground() {
         filter: 'brightness(0.75) contrast(1.25) saturate(1.6)'
       }}
     >
-      <source src="https://cdn.pixabay.com/video/2022/06/16/120525-721287020_large.mp4" type="video/mp4" />
+      <source src="/videos/background.mp4" type="video/mp4" />
     </video>
   );
 }
