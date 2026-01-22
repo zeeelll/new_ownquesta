@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import ThreeBackground from '../home/ThreeBackground';
 
 export default function AboutPage() {
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -43,7 +42,6 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#071026] to-[#0b1221] text-[#e6eef8] relative overflow-hidden">
-      <ThreeBackground />
 
       <style jsx global>{`
         body {

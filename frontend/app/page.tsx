@@ -20,6 +20,7 @@ export default function Home() {
   const orb1Ref = useRef<HTMLDivElement | null>(null);
   const orb2Ref = useRef<HTMLDivElement | null>(null);
   const orb3Ref = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
   useEffect(() => {
@@ -141,7 +142,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative bg-[#0a0e1a] text-[#e6eef8] overflow-x-hidden">
+    <div className="relative text-[#e6eef8] overflow-x-hidden min-h-screen">
       <style jsx global>{`
         @keyframes logoShine {
           0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
@@ -169,29 +170,24 @@ export default function Home() {
         }
       `}</style>
 
+      {/* Background Video */}
+      <video 
+        className="fixed top-0 left-0 w-full h-full object-cover" 
+        autoPlay 
+        muted 
+        loop 
+        playsInline
+        preload="auto"
+        style={{ zIndex: -10, position: 'fixed' }}
+      >
+        <source src="/videos/background.mp4" type="video/mp4" />
+      </video>
+
       {/* Scroll Progress Bar */}
       <div 
         className="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-[#6e54c8] to-[#7c49a9] z-[1000] transition-transform duration-100"
         style={{ transform: `scaleX(${scrollProgress})`, transformOrigin: 'left' }}
       />
-
-      {/* Background Effects (Lenis parallax + orbs) */}
-      <div className="fixed inset-0 pointer-events-none z-0" ref={(el) => { /* bg container */ }}>
-        <div className="absolute inset-0" ref={null} style={{
-          background: `
-              radial-gradient(circle at 20% 30%, rgba(98, 0, 238, 0.22) 0%, transparent 55%),
-              radial-gradient(circle at 80% 70%, rgba(0, 202, 255, 0.18) 0%, transparent 55%),
-              radial-gradient(circle at 50% 50%, rgba(255, 84, 201, 0.14) 0%, transparent 60%),
-              radial-gradient(circle at 10% 80%, rgba(124, 73, 169, 0.12) 0%, transparent 55%),
-              radial-gradient(circle at 90% 20%, rgba(79, 70, 229, 0.12) 0%, transparent 55%)
-            `
-        }} />
-        
-        {/* Glow Orbs (refs used for parallax) */}
-        <div ref={orb1Ref} className="absolute w-[350px] h-[350px] rounded-full blur-[70px] bg-[rgba(98,0,238,0.22)] top-[10%] left-[10%] will-change-transform" />
-        <div ref={orb2Ref} className="absolute w-[450px] h-[450px] rounded-full blur-[70px] bg-[rgba(0,202,255,0.18)] bottom-[10%] right-[10%] will-change-transform" />
-        <div ref={orb3Ref} className="absolute w-[300px] h-[300px] rounded-full blur-[70px] bg-[rgba(255,84,201,0.14)] top-[50%] left-[50%] will-change-transform" />
-      </div>
 
       {/* Navigation Bar */}
       <nav 

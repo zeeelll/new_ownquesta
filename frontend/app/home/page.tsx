@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import ThreeBackground from './ThreeBackground';
 
 type AuthUser = {
   authenticated: boolean;
@@ -17,29 +15,10 @@ export default function HomePage() {
   const [navHidden, setNavHidden] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
-  const lastScrollY = useRef(0);
-  const router = useRouter();
+  const videoRef = useRef<HTMLVideoElement>(null);
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
   useEffect(() => {
-    // Initialize Lenis smooth scrolling
-    let lenis: any;
-    if (typeof window !== 'undefined') {
-      import('lenis').then(({ default: Lenis }) => {
-        lenis = new Lenis({
-          duration: 1.2,
-          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-          smoothWheel: true,
-        });
-
-        function raf(time: number) {
-          lenis.raf(time);
-          requestAnimationFrame(raf);
-        }
-        requestAnimationFrame(raf);
-      });
-    }
-
     // Check authentication status
     if (typeof window !== 'undefined') {
       const savedAvatar = localStorage.getItem('userAvatar');
@@ -96,7 +75,6 @@ export default function HomePage() {
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      lenis?.destroy();
     };
   }, [BACKEND_URL]);
 
@@ -129,9 +107,6 @@ export default function HomePage() {
 
   return (
     <div className="relative text-[#e6eef8] overflow-x-hidden min-h-screen">
-      {/* 3D Animated Background */}
-      <ThreeBackground />
-      
       <style jsx global>{`
         @keyframes logoShine {
           0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
@@ -154,23 +129,12 @@ export default function HomePage() {
         style={{ transform: `scaleX(${scrollProgress})`, transformOrigin: 'left' }}
       />
 
-      {/* Background Effects */}
-      {/* <div className="fixed inset-0 pointer-events-none z-[1]">
-        <div className="absolute inset-0" style={{
-          background: `
-            radial-gradient(circle at 20% 30%, rgba(110, 84, 200, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 80% 70%, rgba(124, 73, 169, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 50% 50%, rgba(94, 114, 235, 0.1) 0%, transparent 60%)
-          `
-        }} />
-      </div> */}
-
       {/* Navigation Bar */}
       <nav 
         className={`fixed top-0 left-0 right-0 px-10 py-4 flex justify-between items-center bg-transparent z-[100] transition-all duration-500 ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}
       >
         <Link href="/home" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] rounded-xl flex items-center justify-center font-bold text-white relative overflow-hidden shadow-[0_4px_12px_rgba(110,84,200,0.4)]">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white relative overflow-hidden shadow-[0_4px_12px_rgba(110,84,200,0.4)]">
             <div className="absolute inset-0 w-[150%] h-[150%] bg-gradient-to-br from-transparent via-[rgba(255,255,255,0.3)] to-transparent logo-shine" />
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" opacity="0.9"/>
