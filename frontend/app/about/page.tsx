@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Logo from '../components/Logo';
 
 export default function AboutPage() {
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -71,16 +72,7 @@ export default function AboutPage() {
 
       {/* Navigation Bar */}
       <nav className="fixed top-0 left-0 right-0 px-10 py-5 flex justify-between items-center bg-transparent z-[100]">
-        <Link href="/" className="flex items-center gap-3 text-lg font-semibold tracking-wide transition-transform hover:-translate-y-0.5">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] rounded-xl flex items-center justify-center shadow-[0_4px_12px_rgba(110,84,200,0.4)]">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" opacity="0.9"/>
-              <path d="M2 17L12 22L22 17V12L12 17L2 12V17Z" fill="white" opacity="0.7"/>
-              <path d="M12 12L2 7V12L12 17L22 12V7L12 12Z" fill="white" opacity="0.5"/>
-            </svg>
-          </div>
-          <span>Ownquesta</span>
-        </Link>
+        <Logo href="/home" size="md" />
         
         <Link 
           href="/"

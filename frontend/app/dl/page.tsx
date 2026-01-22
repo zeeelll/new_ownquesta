@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Logo from '../components/Logo';
 
 interface Node {
   x: number;
@@ -229,17 +230,7 @@ const DeepLearningPlatform: React.FC = () => {
       {/* Navigation Bar */}
       <nav className="fixed top-0 left-0 right-0 h-16 bg-transparent z-50 flex items-center justify-between px-8">
         <div className="flex items-center gap-3">
-          <a href="/home" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] rounded-xl flex items-center justify-center font-bold text-white relative overflow-hidden shadow-[0_4px_12px_rgba(110,84,200,0.4)]">
-              <div className="absolute inset-0 w-[150%] h-[150%] bg-gradient-to-br from-transparent via-[rgba(255,255,255,0.3)] to-transparent logo-shine" />
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" opacity="0.9"/>
-                <path d="M2 17L12 22L22 17V12L12 17L2 12V17Z" fill="white" opacity="0.7"/>
-                <path d="M12 12L2 7V12L12 17L22 12V7L12 12Z" fill="white" opacity="0.5"/>
-              </svg>
-            </div>
-            <span className="text-lg font-bold text-white">Ownquesta</span>
-          </a>
+          <Logo href="/home" size="md" />
           <span className="text-sm text-slate-400 ml-4">Deep Learning Platform</span>
         </div>
         <div className="flex items-center gap-3">
