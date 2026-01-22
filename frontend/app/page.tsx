@@ -208,10 +208,10 @@ export default function Home() {
         <div className="flex items-center gap-3">
           {!user?.authenticated ? (
             <>
-              <Link href="/login" className="px-6 py-2.5 bg-[rgba(110,84,200,0.15)] border border-[rgba(110,84,200,0.4)] rounded-lg text-sm font-semibold transition-all hover:bg-[rgba(110,84,200,0.3)] hover:border-[rgba(110,84,200,0.6)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(110,84,200,0.3)]">
+              <Link href="/login" className="px-6 py-2.5 bg-gradient-to-r from-[#667eea] via-[#764ba2] to-[#f093fb] border border-[rgba(246,147,251,0.6)] rounded-lg text-sm font-semibold transition-all hover:from-[#764ba2] hover:via-[#f093fb] hover:to-[#667eea] hover:border-[rgba(246,147,251,0.9)] hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(246,147,251,0.6)] hover:scale-105">
                 Log In
               </Link>
-              <Link href="/about" className="px-6 py-2.5 bg-[rgba(110,84,200,0.15)] border border-[rgba(110,84,200,0.4)] rounded-lg text-sm font-semibold transition-all hover:bg-[rgba(110,84,200,0.3)] hover:border-[rgba(110,84,200,0.6)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(110,84,200,0.3)]">
+              <Link href="/about" className="px-6 py-2.5 bg-gradient-to-r from-[#667eea] via-[#764ba2] to-[#f093fb] border border-[rgba(246,147,251,0.6)] rounded-lg text-sm font-semibold transition-all hover:from-[#764ba2] hover:via-[#f093fb] hover:to-[#667eea] hover:border-[rgba(246,147,251,0.9)] hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(246,147,251,0.6)] hover:scale-105">
                 About
               </Link>
             </>

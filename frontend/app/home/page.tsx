@@ -16,6 +16,7 @@ export default function HomePage() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const lastScrollY = useRef(0);
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
   useEffect(() => {
@@ -107,6 +108,22 @@ export default function HomePage() {
 
   return (
     <div className="relative text-[#e6eef8] overflow-x-hidden min-h-screen">
+      {/* Video Background */}
+      <div className="fixed top-0 left-0 w-full h-full z-0 overflow-hidden bg-[#1a1a2e]">
+        <video 
+          ref={videoRef}
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          className="absolute min-w-full min-h-full w-auto h-auto top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-cover"
+          src="/videos/background.mp4"
+        />
+      </div>
+      
+      {/* Dark overlay for better text readability */}
+      <div className="fixed top-0 left-0 w-full h-full bg-black/50 z-[1]" />
+
       <style jsx global>{`
         @keyframes logoShine {
           0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
