@@ -44,12 +44,124 @@ const MLPage: React.FC = () => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const router = useRouter();
 
+  const saveProjectToLocalStorage = (fileData: DataFile) => {
+    if (typeof window === 'undefined') return;
+    
+    // Create project data for dashboard
+    const projectData = {
+      id: Date.now().toString(),
+      name: fileData.name.replace(/\.[^/.]+$/, ""), // Remove extension
+      dataset: fileData.name,
+      taskType: selectedTask || 'classification',
+      status: 'processing',
+      confidence: Math.floor(Math.random() * 15) + 85, // 85-99%
+      createdDate: new Date().toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      }),
+      filePath: fileData.name, // Store for opening
+      fileData: {
+        name: fileData.name,
+        size: fileData.size,
+        type: fileData.type,
+        uploadTime: fileData.uploadTime
+      }
+    };
+
+    // Get existing projects and add new one
+    const existingProjects = JSON.parse(localStorage.getItem('userProjects') || '[]');
+    const updatedProjects = [projectData, ...existingProjects];
+    localStorage.setItem('userProjects', JSON.stringify(updatedProjects));
+
+    // Also save ML validation stats for dashboard
+    const mlStats = {
+      totalDatasets: updatedProjects.length,
+      successfulValidations: updatedProjects.filter(p => p.status === 'completed').length,
+      averageAccuracy: Math.floor(Math.random() * 10) + 90, // 90-99%
+      lastUpdated: new Date().toISOString()
+    };
+    localStorage.setItem('mlValidationStats', JSON.stringify(mlStats));
+
+    // Add activity to dashboard
+    const activityData = {
+      id: Date.now().toString(),
+      action: `Uploaded dataset ${fileData.name} for analysis`,
+      timestamp: new Date().toLocaleTimeString(),
+      type: 'upload'
+    };
+    
+    const existingActivities = JSON.parse(localStorage.getItem('userActivities') || '[]');
+    const updatedActivities = [activityData, ...existingActivities];
+    localStorage.setItem('userActivities', JSON.stringify(updatedActivities));
+  };
+
+  // Save current ML session to localStorage
+  const saveCurrentSession = () => {
+    if (typeof window !== 'undefined' && uploadedFile) {
+      const sessionData = {
+        uploadedFile,
+        dataPreview,
+        selectedTask,
+        currentStep,
+        chatMessages,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('currentMLSession', JSON.stringify(sessionData));
+    }
+  };
+
+  // Clear all ML data
+  const clearAllData = () => {
+    if (typeof window !== 'undefined') {
+      // Clear current session
+      localStorage.removeItem('currentMLSession');
+      
+      // Reset component state
+      setUploadedFile(null);
+      setDataPreview(null);
+      setSelectedTask('');
+      setCurrentStep('upload');
+      setChatMessages([]);
+      setUserQuery('');
+      
+      // Add activity for clearing data
+      const activityData = {
+        id: Date.now().toString(),
+        action: 'Cleared ML workspace data',
+        timestamp: new Date().toLocaleTimeString(),
+        type: 'action'
+      };
+      
+      const existingActivities = JSON.parse(localStorage.getItem('userActivities') || '[]');
+      const updatedActivities = [activityData, ...existingActivities];
+      localStorage.setItem('userActivities', JSON.stringify(updatedActivities));
+    }
+  };
+
   useEffect(() => {
-    // Fetch user data
+    // Fetch user data and load previous session
     if (typeof window !== 'undefined') {
       const savedAvatar = localStorage.getItem('userAvatar');
       if (savedAvatar) {
         setUser(prev => ({ ...prev, avatar: savedAvatar }));
+      }
+      
+      // Load previous ML session if exists
+      const currentSession = localStorage.getItem('currentMLSession');
+      if (currentSession) {
+        try {
+          const session = JSON.parse(currentSession);
+          if (session.uploadedFile) {
+            setUploadedFile(session.uploadedFile);
+            setDataPreview(session.dataPreview);
+            setSelectedTask(session.selectedTask || '');
+            setCurrentStep(session.currentStep || 'validate');
+            setChatMessages(session.chatMessages || []);
+          }
+        } catch (error) {
+          console.log('No previous session found');
+        }
       }
     }
     fetch(`${BACKEND_URL}/api/auth/me`, { credentials: 'include' })
@@ -162,6 +274,12 @@ const MLPage: React.FC = () => {
       };
 
       setUploadedFile(fileData);
+
+      // Save project to localStorage for dashboard integration  
+      setTimeout(() => {
+        saveProjectToLocalStorage(fileData);
+        saveCurrentSession();
+      }, 100);
 
       // Generate mock preview data
       const mockPreview: DataPreview = {
@@ -326,6 +444,18 @@ const MLPage: React.FC = () => {
                 <span className="format-badge">XLSX</span>
                 <span className="format-badge">XLS</span>
               </div>
+              
+              {(uploadedFile || (typeof window !== 'undefined' && localStorage.getItem('currentMLSession'))) && (
+                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                  <button
+                    onClick={clearAllData}
+                    className="px-4 py-2 rounded-lg text-red-400 border border-red-400/30 hover:bg-red-500/10 transition-all"
+                    style={{ fontSize: '14px' }}
+                  >
+                    🗑️ Clear All Data
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="upload-info">
@@ -484,7 +614,10 @@ const MLPage: React.FC = () => {
                     <button
                       key={task.id}
                       className={`task-btn ${selectedTask === task.id ? 'selected' : ''}`}
-                      onClick={() => setSelectedTask(task.id)}
+                      onClick={() => {
+                        setSelectedTask(task.id);
+                        saveCurrentSession();
+                      }}
                     >
                       <div className="task-label">
                         {task.icon}
@@ -533,6 +666,53 @@ const MLPage: React.FC = () => {
                     <span className="check-text">Some columns may need normalization</span>
                   </div>
                 </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="validation-actions" style={{ marginTop: '2rem', display: 'flex', gap: '1rem', flexDirection: 'column' }}>
+                <Button
+                  onClick={() => {
+                    // Update project status to completed
+                    if (typeof window !== 'undefined' && uploadedFile) {
+                      const projects = JSON.parse(localStorage.getItem('userProjects') || '[]');
+                      const updatedProjects = projects.map((p: any) => 
+                        p.dataset === uploadedFile.name 
+                          ? { ...p, status: 'completed', taskType: selectedTask || p.taskType }
+                          : p
+                      );
+                      localStorage.setItem('userProjects', JSON.stringify(updatedProjects));
+                      
+                      // Add completion activity
+                      const activityData = {
+                        id: Date.now().toString(),
+                        action: `Completed ML analysis for ${uploadedFile.name}`,
+                        timestamp: new Date().toLocaleTimeString(),
+                        type: 'completion'
+                      };
+                      
+                      const activities = JSON.parse(localStorage.getItem('userActivities') || '[]');
+                      const updatedActivities = [activityData, ...activities];
+                      localStorage.setItem('userActivities', JSON.stringify(updatedActivities));
+                    }
+                    
+                    setCurrentStep('configure');
+                  }}
+                  disabled={!selectedTask}
+                  variant="primary"
+                  style={{ width: '100%', padding: '0.75rem' }}
+                >
+                  Continue to Model Configuration →
+                </Button>
+                
+                <Button
+                  onClick={() => {
+                    clearAllData();
+                  }}
+                  variant="secondary"
+                  style={{ width: '100%', marginTop: '0.75rem', padding: '0.75rem', backgroundColor: 'rgb(239 68 68 / 0.1)', borderColor: 'rgb(239 68 68 / 0.3)', color: 'rgb(248 113 113)' }}
+                >
+                  Clear All Data
+                </Button>
               </div>
             </div>
           </div>
