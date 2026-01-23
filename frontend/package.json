@@ -12,7 +12,10 @@
     "lenis": "^1.3.17",
     "next": "16.1.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "react-tsparticles": "^2.12.2",
+    "tsparticles": "^3.9.1",
+    "tsparticles-slim": "^2.12.0"
   },
   "devDependencies": {
     "@types/node": "^20",

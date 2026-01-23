@@ -81,7 +81,7 @@ export default function DashboardPage() {
         const parsedStats = JSON.parse(mlData);
         setStats(parsedStats);
       }
-      
+
       // Load projects from both dashboard and ML page
       const savedProjects = localStorage.getItem("userProjects");
       const uploadedFiles = localStorage.getItem("uploadedFiles");

@@ -172,6 +172,9 @@ const MLPage: React.FC = () => {
           if (typeof window !== 'undefined') {
             localStorage.setItem('userAvatar', data.user.avatar || '');
           }
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('userAvatar', data.user.avatar || '');
+          }
         }
       })
   }, [BACKEND_URL]);
@@ -348,7 +351,12 @@ const MLPage: React.FC = () => {
   if (!isHydrated) return null;
 
   return (
-    <>
+    <div style={{
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+      minHeight: '100vh',
+      width: '100%',
+      position: 'relative'
+    }}>
       {/* Navigation Bar */}
       <nav className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-8 bg-transparent">
         <div className="flex items-center gap-3">
@@ -818,8 +826,7 @@ const MLPage: React.FC = () => {
         <p>💡 Pro Tip: The more details you provide, the better the AI can assist you in building your model!</p>
       </div>
     </div>
-  </>
-);
+  );
 };
 
 export default MLPage;
