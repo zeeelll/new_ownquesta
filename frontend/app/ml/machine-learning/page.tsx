@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Button from '../../components/Button';
+import Logo from '../../components/Logo';
 
 interface DataFile {
   name: string;
@@ -276,11 +278,7 @@ const MLStudioAdvanced: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between flex-wrap gap-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center animate-glow">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <path d="M12 2L2 7L12 12L22 7L12 2Z" /><path d="M2 17L12 22L22 17V12L12 17L2 12V17Z" />
-                </svg>
-              </div>
+              <Logo href="/home" size="md" showText={false} />
               <div>
                 <h1 className="text-2xl font-bold text-gradient">ML Studio</h1>
                 <p className="text-xs text-indigo-300 uppercase tracking-wider">AI-Powered Analytics</p>
@@ -432,7 +430,13 @@ const MLStudioAdvanced: React.FC = () => {
                         <p className="font-semibold truncate">{uploadedFile.name}</p>
                         <p className="text-xs text-gray-400">{(uploadedFile.size / 1024).toFixed(2)} KB • {uploadedFile.uploadTime}</p>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); setUploadedFile(null); setDataPreview(null); setChatMessages([]); setActualFile(null); setValidationResult(null); }} className="px-4 py-2 text-sm rounded-lg bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/50 transition-all">Change</button>
+                      <Button 
+                        onClick={(e) => { e.stopPropagation(); setUploadedFile(null); setDataPreview(null); setChatMessages([]); setActualFile(null); setValidationResult(null); }} 
+                        variant="outline" 
+                        size="sm"
+                      >
+                        Change
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -450,18 +454,24 @@ const MLStudioAdvanced: React.FC = () => {
                   </div>
                 </div>
 
-                <button
+                <Button
                   onClick={async () => {
                     if (!canProceedFromSetup || isProcessing || isValidating) return;
                     setCurrentStep('validate');
                     await validateWithAPI();
                   }}
                   disabled={!canProceedFromSetup || isProcessing || isValidating}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 font-semibold shadow-lg shadow-emerald-500/40 hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                  variant="secondary"
+                  size="lg"
+                  className="w-full"
+                  icon={
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  }
                 >
-                  <span>Proceed & Validate</span>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                </button>
+                  Proceed & Validate
+                </Button>
               </div>
             </div>
           </div>
@@ -471,7 +481,14 @@ const MLStudioAdvanced: React.FC = () => {
           <div className="animate-slide space-y-8">
             <div className="flex justify-between items-start flex-wrap gap-4">
               <div><h2 className="text-3xl font-bold text-gradient mb-2">Dataset Preview</h2><p className="text-gray-400">File: {uploadedFile?.name}</p></div>
-              <button onClick={() => { setCurrentStep('setup'); setUploadedFile(null); setDataPreview(null); setChatMessages([]); setUserQuery(''); setActualFile(null); setValidationResult(null); }} className="px-6 py-3 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 text-red-400 font-medium transition-all hover:-translate-y-1">↻ Start Over</button>
+              <Button 
+                onClick={() => { setCurrentStep('setup'); setUploadedFile(null); setDataPreview(null); setChatMessages([]); setUserQuery(''); setActualFile(null); setValidationResult(null); }} 
+                variant="danger" 
+                size="md"
+                icon={<span>↻</span>}
+              >
+                Start Over
+              </Button>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

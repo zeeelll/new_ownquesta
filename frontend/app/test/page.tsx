@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { testHelloAPI } from "@/services/api";
+import Button from '../components/Button';
+import Logo from '../components/Logo';
 
 export default function TestAPIPage() {
   const [response, setResponse] = useState<Record<string, unknown> | null>(null);
@@ -24,15 +26,18 @@ export default function TestAPIPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+        <div className="text-center mb-6">
+          <Logo href="/" size="md" />
+        </div>
         <h1 className="text-2xl font-bold mb-6 text-gray-800">API Test</h1>
         
-        <button
+        <Button
           onClick={handleTest}
           disabled={loading}
-          className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded mb-4"
+          className="w-full mb-4"
         >
           {loading ? "Loading..." : "Test API"}
-        </button>
+        </Button>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">

@@ -5,6 +5,7 @@ import { api } from "@/services/api";
 import { useRouter } from "next/navigation";
 import Lenis from 'lenis';
 import Logo from '../components/Logo';
+import Button from '../components/Button';
 
 interface Project {
   id: string;
@@ -320,12 +321,14 @@ export default function DashboardPage() {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } overflow-y-auto`}
       >
-        <button
+        <Button
           onClick={() => setSidebarOpen(false)}
-          className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center bg-slate-700/50 rounded-full text-slate-400 hover:bg-red-500/20 hover:text-red-400 transition-all"
+          variant="outline"
+          size="sm"
+          className="absolute top-4 right-4 w-9 h-9 p-0 flex items-center justify-center"
         >
           ✕
-        </button>
+        </Button>
 
         <div className="p-6 border-b border-slate-700/50">
           <h2 className="text-white text-xl font-bold mb-2">Select Platform</h2>
@@ -390,27 +393,39 @@ export default function DashboardPage() {
             </p>
 
             <div className="flex flex-wrap gap-3">
-              <button
+              <Button
                 onClick={() => setSidebarOpen(true)}
-                className="px-6 py-2.5 rounded-xl text-white font-semibold text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                size="sm"
+                icon={
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                }
               >
-                <svg className="w-4 h-4 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
                 Start New Validation
-              </button>
-              <button className="px-6 py-2.5 rounded-xl text-white font-semibold text-sm bg-slate-700/50 border border-slate-600/20 hover:bg-slate-700/80 transition-all">
-                <svg className="w-4 h-4 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                icon={
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                }
+              >
                 View Projects
-              </button>
-              <button className="px-6 py-2.5 rounded-xl text-white font-semibold text-sm bg-slate-700/50 border border-slate-600/20 hover:bg-slate-700/80 transition-all">
-                <svg className="w-4 h-4 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 11H15m-3 7.5A9.5 9.5 0 1121.5 12 9.5 9.5 0 0112 2.5z" />
-                </svg>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                icon={
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 11H15m-3 7.5A9.5 9.5 0 1121.5 12 9.5 9.5 0 0112 2.5z" />
+                  </svg>
+                }
+              >
                 Continue Session
-              </button>
+              </Button>
             </div>
           </div>
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Lenis from 'lenis';
 import Logo from '../components/Logo';
+import Button from '../components/Button';
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2300d4ff;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%237c3aed;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23grad)' width='140' height='140'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='56' font-weight='bold' fill='white'%3EU%3C/text%3E%3C/svg%3E";
 
@@ -690,7 +691,7 @@ export default function ProfilePage() {
                     {profile?.twoFactorAuth ? (
                       <div className="flex items-center justify-between">
                         <div className="text-slate-300">Two-factor is enabled on your account.</div>
-                        <button onClick={disable2FA} className="px-4 py-2 bg-red-600 text-white rounded-lg">Disable 2FA</button>
+                        <Button onClick={disable2FA} variant="danger" size="sm">Disable 2FA</Button>
                       </div>
                     ) : (
                       <div>
@@ -713,8 +714,8 @@ export default function ProfilePage() {
                               />
                               {twoFAMessage && <div className="text-sm text-yellow-300">{twoFAMessage}</div>}
                               <div className="flex gap-3">
-                                <button onClick={verify2FA} className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg">Verify & Enable</button>
-                                <button onClick={() => { setTwoFAMode('idle'); setTwoFASecret(null); setTwoFAUri(null); setTwoFAToken(''); setTwoFAMessage(null); }} className="px-4 py-2 border border-slate-600 rounded-lg text-slate-300">Cancel</button>
+                                <Button onClick={verify2FA} size="sm">Verify & Enable</Button>
+                                <Button onClick={() => { setTwoFAMode('idle'); setTwoFASecret(null); setTwoFAUri(null); setTwoFAToken(''); setTwoFAMessage(null); }} variant="outline" size="sm">Cancel</Button>
                               </div>
                             </div>
                           </div>
@@ -722,7 +723,7 @@ export default function ProfilePage() {
                           <div className="flex items-center justify-between">
                             <div className="text-slate-300">Two-factor is not enabled.</div>
                             <div className="flex gap-3">
-                              <button onClick={start2FA} className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg">Enable 2FA</button>
+                              <Button onClick={start2FA} size="sm">Enable 2FA</Button>
                             </div>
                           </div>
                         )}
@@ -749,8 +750,8 @@ export default function ProfilePage() {
                     />
                     {deleteMessage && <div className="text-sm text-yellow-300">{deleteMessage}</div>}
                     <div className="flex gap-3">
-                      <button onClick={handleDeleteAccount} disabled={deleting} className="px-4 py-2 bg-red-600 text-white rounded-lg">{deleting ? 'Deleting...' : 'Delete Account'}</button>
-                      <button onClick={() => { setDeletePassword(''); setDeleteMessage(null); }} className="px-4 py-2 border border-slate-600 rounded-lg text-slate-300">Cancel</button>
+                      <Button onClick={handleDeleteAccount} disabled={deleting} variant="danger" size="sm">{deleting ? 'Deleting...' : 'Delete Account'}</Button>
+                      <Button onClick={() => { setDeletePassword(''); setDeleteMessage(null); }} variant="outline" size="sm">Cancel</Button>
                     </div>
                   </div>
                 </div>

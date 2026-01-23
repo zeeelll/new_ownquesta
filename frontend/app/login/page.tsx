@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Logo from '../components/Logo';
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -376,15 +377,8 @@ export default function LoginPage() {
             }}
           />
           
-          <div className="flex items-center gap-3.5 mb-[60px] relative z-10">
-            <div className="w-[52px] h-[52px] bg-[rgba(255,255,255,0.2)] rounded-xl flex items-center justify-center backdrop-blur-[10px] shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" opacity="0.9"/>
-                <path d="M2 17L12 22L22 17V12L12 17L2 12V17Z" fill="white" opacity="0.7"/>
-                <path d="M12 12L2 7V12L12 17L22 12V7L12 12Z" fill="white" opacity="0.5"/>
-              </svg>
-            </div>
-            <div className="text-[26px] font-bold text-white tracking-tight">Ownquesta</div>
+          <div className="mb-[60px] relative z-10">
+            <Logo href="/" size="lg" showText={true} variant="light" />
           </div>
 
           <div className="relative z-10">

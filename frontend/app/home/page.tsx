@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Logo from '../components/Logo';
+import Button from '../components/Button';
 
 type AuthUser = {
   authenticated: boolean;
@@ -196,18 +197,20 @@ export default function HomePage() {
             Start your journey with Ownquesta and transform data into powerful AI models—no coding required. Your next breakthrough is just one click away.
           </p>
 
-          <Link 
+          <Button 
             href="/dashboard"
-            className="inline-flex items-center justify-center gap-3 px-10 py-4 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] text-white rounded-xl text-[17px] font-semibold shadow-[0_8px_24px_rgba(110,84,200,0.3)] transition-all duration-400 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_16px_40px_rgba(110,84,200,0.5)]"
+            size="lg"
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+            }
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
-            </svg>
             Go to Dashboard
-          </Link>
+          </Button>
         </div>
       </section>
     </div>

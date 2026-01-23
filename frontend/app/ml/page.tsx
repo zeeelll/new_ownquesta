@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import './ml.css';
 import Logo from '../components/Logo';
+import Button from '../components/Button';
 
 interface DataFile {
   name: string;
@@ -377,14 +378,19 @@ const MLPage: React.FC = () => {
                 </h2>
                 <p>File: {uploadedFile?.name}</p>
               </div>
-              <button className="btn-reset" onClick={() => {
-                setCurrentStep('upload');
-                setUploadedFile(null);
-                setDataPreview(null);
-                setChatMessages([]);
-              }}>
-                ↻ Upload Different File
-              </button>
+              <Button 
+                onClick={() => {
+                  setCurrentStep('upload');
+                  setUploadedFile(null);
+                  setDataPreview(null);
+                  setChatMessages([]);
+                }}
+                variant="secondary"
+                size="sm"
+                icon={<span>↻</span>}
+              >
+                Upload Different File
+              </Button>
             </div>
 
             <div className="validate-grid">
@@ -578,16 +584,18 @@ const MLPage: React.FC = () => {
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                     className="chat-input"
                   />
-                  <button
+                  <Button
                     onClick={handleSendMessage}
                     disabled={!userQuery.trim()}
-                    className="chat-send-btn"
+                    variant="primary"
+                    size="sm"
+                    className="rounded-lg"
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <line x1="22" y1="2" x2="11" y2="13"></line>
                       <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                     </svg>
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="quick-prompts">
