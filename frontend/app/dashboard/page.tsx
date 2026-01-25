@@ -902,6 +902,17 @@ export default function DashboardPage() {
                   </svg>
                   <span className="text-white">Profile</span>
                 </button>
+                {user?.role === 'admin' && (
+                  <button 
+                    onClick={() => router.push('/admin')} 
+                    className="w-full flex items-center gap-3 px-5 py-3 border-b border-slate-700/50 transition-all hover:bg-red-500/20 text-left"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 1l3 6 6 3-6 3-3 6-3-6-6-3 6-3z"/>
+                    </svg>
+                    <span className="text-white">Admin Panel</span>
+                  </button>
+                )}
                 <button 
                   onClick={handleLogout} 
                   className="w-full flex items-center gap-3 px-5 py-3 cursor-pointer transition-all hover:bg-red-500/20 text-left"

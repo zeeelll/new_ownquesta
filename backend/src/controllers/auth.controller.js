@@ -5,13 +5,26 @@ const passport = require("passport");
 const User = require("../models/User");
 const speakeasy = require('speakeasy');
 const { sendNotificationEmail, sendWelcomeEmail } = require("../utils/email");
+const ActivityService = require("../services/activity.service");
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, isAdmin } = req.body;
 
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ message: "Email already used" });
+
+    // Check if there are any admin users
+    const adminCount = await User.countDocuments({ role: 'admin' });
+    const isFirstAdmin = adminCount === 0;
+
+    // Allow admin creation if explicitly requested by an admin user, or if it's the first user
+    let userRole = 'user';
+    if (isFirstAdmin) {
+      userRole = 'admin';
+    } else if (isAdmin && req.user && req.user.role === 'admin') {
+      userRole = 'admin';
+    }
 
     const hash = await bcrypt.hash(password, 10);
 
@@ -19,6 +32,7 @@ exports.register = async (req, res) => {
       name,
       email,
       password: hash,
+      role: userRole,
       provider: "local",
       avatar: "",
       phone: "",
@@ -35,7 +49,18 @@ exports.register = async (req, res) => {
       twoFactorSecret: null
     });
 
-    console.log("✅ New user registered:", user._id);
+    console.log(`✅ New user registered: ${user._id} (${userRole})`);
+
+    // Log the registration activity
+    await ActivityService.logActivity(
+      user._id,
+      user.email,
+      user.name,
+      'registration',
+      `New user registered with role: ${userRole}`,
+      req,
+      { registrationMethod: 'local', assignedRole: userRole }
+    );
 
     // Automatically log in the user after registration
     req.logIn(user, async (loginErr) => {
@@ -82,6 +107,17 @@ exports.login = (req, res, next) => {
       if (err2) return next(err2);
 
       console.log('User firstLogin:', user.firstLogin);
+
+      // Log the login activity
+      await ActivityService.logActivity(
+        user._id,
+        user.email,
+        user.name,
+        'login',
+        `User logged in`,
+        req,
+        { loginMethod: 'local' }
+      );
       
       // Send welcome email on first login (asynchronously)
       if (user.firstLogin !== false) {
@@ -167,6 +203,20 @@ exports.updateProfile = async (req, res) => {
     await user.save();
 
     console.log("✅ Profile updated successfully");
+
+    // Log the profile update activity
+    await ActivityService.logActivity(
+      user._id,
+      user.email,
+      user.name,
+      'update_profile',
+      `Profile information updated`,
+      req,
+      {
+        updatedFields: fields.filter(field => req.body[field] !== undefined),
+        hasSettingsUpdate: !!req.body.settings
+      }
+    );
 
     // Send notification email if email notifications are enabled
     if (user.settings.emailNotif) {
@@ -419,6 +469,60 @@ exports.resetPassword = async (req, res) => {
     res.json({ message: 'Password reset successfully' });
   } catch (err) {
     console.error('❌ Reset password error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Admin registration endpoint - allows admins to create other admin accounts
+exports.registerAdmin = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Only allow if the requester is an admin
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins can create admin accounts' });
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ message: "Email already used" });
+
+    const hash = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name,
+      email,
+      password: hash,
+      role: 'admin', // Always create as admin
+      provider: "local",
+      avatar: "",
+      phone: "",
+      bio: "",
+      company: "",
+      jobTitle: "",
+      location: "",
+      skills: "",
+      settings: {
+        emailNotif: true,
+        darkMode: true,
+        twoFactorAuth: false
+      },
+      twoFactorSecret: null
+    });
+
+    console.log(`✅ Admin user created: ${user._id} (${user.name})`);
+
+    res.json({
+      message: 'Admin user created successfully',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (err) {
+    console.error('❌ Admin registration error:', err);
     res.status(500).json({ message: err.message });
   }
 };

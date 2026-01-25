@@ -49,7 +49,7 @@ router.get("/google/callback", (req, res, next) => {
         await user.save();
       }
 
-      return res.redirect((process.env.FRONTEND_URL || "http://localhost:3000") + "/home");
+      return res.redirect((process.env.FRONTEND_URL || "http://localhost:3000") + (user.role === 'admin' ? "/admin" : "/home"));
     });
   })(req, res, next);
 });

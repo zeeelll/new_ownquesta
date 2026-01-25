@@ -119,8 +119,12 @@ export default function LoginPage() {
       if (response.ok) {
         const data = await response.json();
         console.log('Login successful:', data);
-        // Login successful - redirect to home page
-        window.location.href = '/home';
+        // Login successful - redirect based on user role
+        if (data.user && data.user.role === 'admin') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = '/home';
+        }
       } else {
         const data = await response.json();
         setSignInMessage(data.message || data.error || 'Invalid email or password');
