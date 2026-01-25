@@ -1170,7 +1170,7 @@ export default function DashboardPage() {
                 {stats.validations}
               </div>
               <div className="text-slate-400 font-medium text-xs">
-                ML Validations
+                ML Verify Dataset
               </div>
             </div>
             <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
@@ -1248,7 +1248,7 @@ export default function DashboardPage() {
                   )}
                 </button>
                 <div className="text-white font-semibold text-sm mt-3">
-                  Validation
+                  Verify Dataset
                 </div>
                 <div className="text-slate-300 text-xs mt-1 font-medium">
                   {workflowProgress.validation.completed > 0 
