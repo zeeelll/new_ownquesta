@@ -7,6 +7,25 @@ const speakeasy = require('speakeasy');
 const { sendNotificationEmail, sendWelcomeEmail } = require("../utils/email");
 const ActivityService = require("../services/activity.service");
 
+// Function to generate unique user ID in format 'ownq_XXXXX'
+async function generateUniqueUserId() {
+  let userId;
+  let isUnique = false;
+  
+  while (!isUnique) {
+    const randomNum = Math.floor(10000 + Math.random() * 90000); // 5-digit number
+    userId = `ownq_${randomNum}`;
+    
+    // Check if this userId already exists
+    const existingUser = await User.findOne({ userId });
+    if (!existingUser) {
+      isUnique = true;
+    }
+  }
+  
+  return userId;
+}
+
 exports.register = async (req, res) => {
   try {
     const { name, email, password, isAdmin } = req.body;
@@ -27,11 +46,13 @@ exports.register = async (req, res) => {
     }
 
     const hash = await bcrypt.hash(password, 10);
+    const userId = await generateUniqueUserId();
 
     const user = await User.create({
       name,
       email,
       password: hash,
+      userId,
       role: userRole,
       provider: "local",
       avatar: "",
@@ -49,7 +70,7 @@ exports.register = async (req, res) => {
       twoFactorSecret: null
     });
 
-    console.log(`✅ New user registered: ${user._id} (${userRole})`);
+    console.log(`✅ New user registered: ${user._id} (${userRole}) - User ID: ${userId}`);
 
     // Log the registration activity
     await ActivityService.logActivity(
@@ -107,6 +128,13 @@ exports.login = (req, res, next) => {
       if (err2) return next(err2);
 
       console.log('User firstLogin:', user.firstLogin);
+
+      // Generate userId if it doesn't exist (for existing users without userId)
+      if (!user.userId) {
+        user.userId = await generateUniqueUserId();
+        await user.save();
+        console.log(`📍 Generated new user ID for user: ${user.userId}`);
+      }
 
       // Log the login activity
       await ActivityService.logActivity(
@@ -487,11 +515,13 @@ exports.registerAdmin = async (req, res) => {
     if (existing) return res.status(400).json({ message: "Email already used" });
 
     const hash = await bcrypt.hash(password, 10);
+    const userId = await generateUniqueUserId();
 
     const user = await User.create({
       name,
       email,
       password: hash,
+      userId,
       role: 'admin', // Always create as admin
       provider: "local",
       avatar: "",
@@ -509,7 +539,7 @@ exports.registerAdmin = async (req, res) => {
       twoFactorSecret: null
     });
 
-    console.log(`✅ Admin user created: ${user._id} (${user.name})`);
+    console.log(`✅ Admin user created: ${user._id} (${user.name}) - User ID: ${userId}`);
 
     res.json({
       message: 'Admin user created successfully',
@@ -518,6 +548,7 @@ exports.registerAdmin = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        userId: user.userId,
         createdAt: user.createdAt
       }
     });

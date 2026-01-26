@@ -4,6 +4,26 @@ const router = require("express").Router();
 const passport = require("passport");
 const authController = require("../controllers/auth.controller");
 
+// Helper function to generate unique user ID
+async function generateUniqueUserId() {
+  const User = require("../models/User");
+  let userId;
+  let isUnique = false;
+  
+  while (!isUnique) {
+    const randomNum = Math.floor(10000 + Math.random() * 90000); // 5-digit number
+    userId = `ownq_${randomNum}`;
+    
+    // Check if this userId already exists
+    const existingUser = await User.findOne({ userId });
+    if (!existingUser) {
+      isUnique = true;
+    }
+  }
+  
+  return userId;
+}
+
 router.post("/register", authController.register);
 router.post("/login", authController.login);
 router.post("/logout", authController.logout);
@@ -37,6 +57,13 @@ router.get("/google/callback", (req, res, next) => {
       if (loginErr) {
         console.error("Login after Google OAuth failed:", loginErr);
         return res.redirect((process.env.FRONTEND_URL || "http://localhost:3000") + "?oauth_error=1");
+      }
+
+      // Generate userId if it doesn't exist
+      if (!user.userId) {
+        user.userId = await generateUniqueUserId();
+        await user.save();
+        console.log(`📍 Generated new user ID for Google user: ${user.userId}`);
       }
 
       console.log('Google user firstLogin:', user.firstLogin);

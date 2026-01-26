@@ -64,6 +64,7 @@ export default function ProfilePage() {
         setProfile({
           name: u.name || '',
           email: u.email || '',
+          userId: u.userId || '',
           phone: u.phone || '',
           bio: u.bio || '',
           avatar: u.avatar || DEFAULT_AVATAR,
@@ -510,6 +511,20 @@ export default function ProfilePage() {
                       value={profile.email} 
                       readOnly 
                       className="w-full p-4 border-2 border-slate-700/50 rounded-xl bg-slate-900/30 text-slate-400 cursor-not-allowed" 
+                    />
+                  </label>
+
+                  <label className="group">
+                    <div className="flex items-center gap-2 text-sm font-medium mb-2 text-slate-300">
+                      <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v10a2 2 0 002 2h5m10-10V7a2 2 0 00-2-2h-5m0 0V5a2 2 0 00-2 2v4m0 0V5m0 4h5m0 0v7a2 2 0 01-2 2h-5a2 2 0 01-2-2v-4m6-4h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      User ID <span className="text-xs text-slate-500 ml-1">(readonly)</span>
+                    </div>
+                    <input 
+                      value={profile.userId} 
+                      readOnly 
+                      className="w-full p-4 border-2 border-slate-700/50 rounded-xl bg-slate-900/30 text-slate-300 cursor-not-allowed font-semibold tracking-wide" 
                     />
                   </label>
 
