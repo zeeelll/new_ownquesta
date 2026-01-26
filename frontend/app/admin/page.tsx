@@ -474,11 +474,11 @@ export default function AdminPage() {
                   <span>View Activities</span>
                 </Button>
                 <Button
-                  onClick={() => setShowCreateAdmin(true)}
+                  onClick={() => setShowCreateUser(true)}
                   className="bg-green-600 hover:bg-green-700 flex items-center justify-center space-x-2 h-12"
                 >
                   <Plus className="h-4 w-4" />
-                  <span>Create Admin</span>
+                  <span>Add User</span>
                 </Button>
                 <Button
                   onClick={() => setActiveTab('settings')}
@@ -520,7 +520,7 @@ export default function AdminPage() {
                 className="bg-green-600 hover:bg-green-700 flex items-center space-x-2"
               >
                 <Plus className="h-4 w-4" />
-                <span>Create User</span>
+                <span>Add User</span>
               </Button>
             </div>
 
@@ -872,10 +872,10 @@ export default function AdminPage() {
                     className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center space-x-2"
                   >
                     <Plus className="h-4 w-4" />
-                    <span>Create New Admin</span>
+                    <span>Add New Admin</span>
                   </Button>
                   <p className="text-sm text-gray-400">
-                    Create new administrator accounts with full system access
+                    Add new administrator accounts with full system access
                   </p>
                 </div>
               </div>
@@ -1088,7 +1088,7 @@ export default function AdminPage() {
             <div className="bg-gray-800 rounded-2xl p-8 w-full max-w-md border border-gray-700 shadow-2xl">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-                  👑 Create Admin User
+                  👑 Add Admin User
                 </h2>
                 <button
                   onClick={() => {
@@ -1150,7 +1150,7 @@ export default function AdminPage() {
                     className="bg-green-600 hover:bg-green-700 flex-1"
                     disabled={actionLoading === 'create-admin'}
                   >
-                    {actionLoading === 'create-admin' ? '⏳ Creating...' : '✅ Create Admin'}
+                    {actionLoading === 'create-admin' ? '⏳ Adding...' : '✅ Add Admin'}
                   </Button>
                   <Button
                     onClick={() => {
@@ -1174,7 +1174,7 @@ export default function AdminPage() {
             <div className="bg-gray-800 rounded-2xl p-8 w-full max-w-md border border-gray-700 shadow-2xl">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-                  👤 Create New User
+                  👤 Add New User
                 </h2>
                 <button
                   onClick={() => {
@@ -1236,7 +1236,7 @@ export default function AdminPage() {
                     className="bg-green-600 hover:bg-green-700 flex-1"
                     disabled={actionLoading === 'create-user'}
                   >
-                    {actionLoading === 'create-user' ? '⏳ Creating...' : '✅ Create User'}
+                    {actionLoading === 'create-user' ? '⏳ Adding...' : '✅ Add User'}
                   </Button>
                   <Button
                     onClick={() => {
