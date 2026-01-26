@@ -23,7 +23,16 @@ import {
   BarChart3,
   Monitor,
   Wrench,
-  Trash
+  Trash,
+  Filter,
+  Calendar,
+  Clock,
+  Globe,
+  Smartphone,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Info
 } from 'lucide-react';
 
 interface User {
@@ -64,11 +73,13 @@ export default function AdminPage() {
   const [allActivities, setAllActivities] = useState<any[]>([]);
   const [showActivities, setShowActivities] = useState(false);
   const [activityView, setActivityView] = useState<'user' | 'all'>('all');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'activities' | 'settings'>('dashboard');
   const [searchTerm, setSearchTerm] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [systemStatus, setSystemStatus] = useState('online');
+  const [activityFilter, setActivityFilter] = useState<string>('all');
+  const [activitySearch, setActivitySearch] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'activities' | 'settings'>('dashboard');
   const router = useRouter();
 
   useEffect(() => {
@@ -617,9 +628,12 @@ export default function AdminPage() {
           <div className="space-y-6">
             {/* Activity Controls */}
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <h3 className="text-lg font-semibold">Activity Log</h3>
-                <div className="flex gap-3">
+              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Activity Log</h3>
+                  <p className="text-gray-400 text-sm">Monitor all user activities and system events</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                   <Button
                     onClick={() => handleViewAllActivities()}
                     className="bg-blue-600 hover:bg-blue-700 flex items-center space-x-2"
@@ -630,36 +644,194 @@ export default function AdminPage() {
                   </Button>
                 </div>
               </div>
+
+              {/* Filters and Search */}
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search activities..."
+                    value={activitySearch}
+                    onChange={(e) => setActivitySearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
+                  />
+                </div>
+                <select
+                  value={activityFilter}
+                  onChange={(e) => setActivityFilter(e.target.value)}
+                  className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
+                >
+                  <option value="all">All Actions</option>
+                  <option value="login">Login</option>
+                  <option value="registration">Registration</option>
+                  <option value="admin">Admin Actions</option>
+                  <option value="profile">Profile Updates</option>
+                  <option value="upload">File Uploads</option>
+                  <option value="delete">Deletions</option>
+                </select>
+                <div className="flex items-center space-x-2">
+                  <Filter className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm text-gray-400">Filter by type</span>
+                </div>
+              </div>
             </div>
 
             {/* Activity Display */}
             {allActivities.length > 0 && (
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 max-h-96 overflow-y-auto">
-                <div className="space-y-4">
-                  {allActivities.map((activity: any) => (
-                    <div key={activity._id} className="bg-gray-700/50 rounded-xl p-4 border border-gray-600">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-semibold text-white">{activity.userName}</span>
-                          <span className="text-gray-400">({activity.userEmail})</span>
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
+                <div className="max-h-96 overflow-y-auto">
+                  <div className="divide-y divide-gray-700">
+                    {allActivities
+                      .filter(activity => {
+                        const matchesSearch = activitySearch === '' ||
+                          activity.userName.toLowerCase().includes(activitySearch.toLowerCase()) ||
+                          activity.userEmail.toLowerCase().includes(activitySearch.toLowerCase()) ||
+                          activity.description.toLowerCase().includes(activitySearch.toLowerCase()) ||
+                          activity.action.toLowerCase().includes(activitySearch.toLowerCase());
+
+                        const matchesFilter = activityFilter === 'all' ||
+                          (activityFilter === 'login' && activity.action === 'login') ||
+                          (activityFilter === 'registration' && activity.action === 'registration') ||
+                          (activityFilter === 'admin' && activity.action.includes('admin')) ||
+                          (activityFilter === 'profile' && activity.action.includes('profile')) ||
+                          (activityFilter === 'upload' && activity.action.includes('upload')) ||
+                          (activityFilter === 'delete' && activity.action.includes('delete'));
+
+                        return matchesSearch && matchesFilter;
+                      })
+                      .map((activity: any) => (
+                        <div key={activity._id} className="p-6 hover:bg-gray-700/30 transition-colors">
+                          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                            <div className="flex-1">
+                              {/* User Info */}
+                              <div className="flex items-center space-x-3 mb-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                  <User className="h-5 w-5 text-white" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-semibold text-white">{activity.userName}</span>
+                                    <span className="text-gray-400">({activity.userEmail})</span>
+                                    {activity.adminChangedBy && (
+                                      <span className="px-2 py-1 bg-red-600 text-xs rounded-full font-medium">
+                                        ADMIN ACTION
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center space-x-4 text-sm text-gray-400 mt-1">
+                                    <div className="flex items-center space-x-1">
+                                      <Clock className="h-3 w-3" />
+                                      <span>{new Date(activity.timestamp).toLocaleString()}</span>
+                                    </div>
+                                    {activity.ipAddress && (
+                                      <div className="flex items-center space-x-1">
+                                        <Globe className="h-3 w-3" />
+                                        <span>{activity.ipAddress}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action and Description */}
+                              <div className="mb-3">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  {activity.action === 'login' && <CheckCircle className="h-4 w-4 text-green-400" />}
+                                  {activity.action === 'registration' && <Plus className="h-4 w-4 text-blue-400" />}
+                                  {activity.action.includes('admin') && <Shield className="h-4 w-4 text-red-400" />}
+                                  {activity.action.includes('delete') && <Trash2 className="h-4 w-4 text-red-400" />}
+                                  {activity.action.includes('update') && <Edit className="h-4 w-4 text-yellow-400" />}
+                                  {activity.action.includes('upload') && <Plus className="h-4 w-4 text-purple-400" />}
+                                  {!['login', 'registration'].includes(activity.action) &&
+                                   !activity.action.includes('admin') &&
+                                   !activity.action.includes('delete') &&
+                                   !activity.action.includes('update') &&
+                                   !activity.action.includes('upload') && <Info className="h-4 w-4 text-gray-400" />}
+
+                                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                    activity.action === 'login' ? 'bg-green-600 text-green-100' :
+                                    activity.action === 'registration' ? 'bg-blue-600 text-blue-100' :
+                                    activity.action.includes('admin') ? 'bg-red-600 text-red-100' :
+                                    activity.action.includes('delete') ? 'bg-red-500 text-red-100' :
+                                    activity.action.includes('update') ? 'bg-yellow-600 text-yellow-100' :
+                                    activity.action.includes('upload') ? 'bg-purple-600 text-purple-100' :
+                                    'bg-gray-600 text-gray-100'
+                                  }`}>
+                                    {activity.action.replace(/_/g, ' ').toUpperCase()}
+                                  </span>
+                                </div>
+                                <p className="text-gray-300 leading-relaxed">{activity.description}</p>
+                              </div>
+
+                              {/* Metadata */}
+                              {activity.metadata && Object.keys(activity.metadata).length > 0 && (
+                                <div className="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
+                                  <h5 className="text-sm font-medium text-gray-300 mb-2">Additional Details:</h5>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                    {Object.entries(activity.metadata).map(([key, value]: [string, any]) => (
+                                      <div key={key} className="flex justify-between">
+                                        <span className="text-gray-400 capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
+                                        <span className="text-gray-200 font-mono text-xs">
+                                          {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Admin Info */}
+                              {activity.adminChangedBy && (
+                                <div className="mt-3 flex items-center space-x-2 text-sm text-red-400">
+                                  <AlertTriangle className="h-4 w-4" />
+                                  <span>Action performed by admin: {activity.adminEmail}</span>
+                                </div>
+                              )}
+
+                              {/* User Agent */}
+                              {activity.userAgent && (
+                                <div className="mt-2 flex items-center space-x-2 text-xs text-gray-500">
+                                  <Smartphone className="h-3 w-3" />
+                                  <span className="truncate">{activity.userAgent}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <span className="text-sm text-gray-400">
-                          {new Date(activity.timestamp).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="mb-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          activity.action.includes('admin') ? 'bg-red-600' :
-                          activity.action === 'login' ? 'bg-green-600' :
-                          activity.action === 'registration' ? 'bg-blue-600' :
-                          'bg-gray-600'
-                        }`}>
-                          {activity.action.replace(/_/g, ' ').toUpperCase()}
-                        </span>
-                      </div>
-                      <p className="text-gray-300">{activity.description}</p>
-                    </div>
-                  ))}
+                      ))}
+                  </div>
+                </div>
+
+                {/* Activity Count */}
+                <div className="px-6 py-3 bg-gray-700/30 border-t border-gray-600">
+                  <div className="flex items-center justify-between text-sm text-gray-400">
+                    <span>Showing {allActivities.filter(activity => {
+                      const matchesSearch = activitySearch === '' ||
+                        activity.userName.toLowerCase().includes(activitySearch.toLowerCase()) ||
+                        activity.userEmail.toLowerCase().includes(activitySearch.toLowerCase()) ||
+                        activity.description.toLowerCase().includes(activitySearch.toLowerCase()) ||
+                        activity.action.toLowerCase().includes(activitySearch.toLowerCase());
+
+                      const matchesFilter = activityFilter === 'all' ||
+                        (activityFilter === 'login' && activity.action === 'login') ||
+                        (activityFilter === 'registration' && activity.action === 'registration') ||
+                        (activityFilter === 'admin' && activity.action.includes('admin')) ||
+                        (activityFilter === 'profile' && activity.action.includes('profile')) ||
+                        (activityFilter === 'upload' && activity.action.includes('upload')) ||
+                        (activityFilter === 'delete' && activity.action.includes('delete'));
+
+                      return matchesSearch && matchesFilter;
+                    }).length} of {allActivities.length} activities</span>
+                    <Button
+                      onClick={() => handleViewAllActivities()}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                    >
+                      Refresh
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
@@ -748,7 +920,7 @@ export default function AdminPage() {
                 </Button>
                 <Button
                   onClick={handleToggleMaintenanceMode}
-                  variant={maintenanceMode ? "destructive" : "outline"}
+                  variant={maintenanceMode ? "danger" : "outline"}
                   className="flex items-center justify-center space-x-2"
                   disabled={actionLoading === 'maintenance-mode'}
                 >
