@@ -70,6 +70,14 @@ export async function registerAdmin(adminData: { name: string; email: string; pa
   });
 }
 
+// User registration (for admins to create regular users)
+export async function registerUser(userData: { name: string; email: string; password: string }) {
+  return api("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify(userData)
+  });
+}
+
 // Activity tracking
 export async function getUserActivities(userId: string) {
   return api(`/api/admin/users/${userId}/activities`);

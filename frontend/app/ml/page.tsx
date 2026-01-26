@@ -726,7 +726,7 @@ const MLPage: React.FC = () => {
           </div>
         )}
 
-        {currentStep === 'validate' && (
+        {/* {currentStep === 'validate' && (
           <div className="ml-section chat-section">
             <div className="section-title">
               <h2>
@@ -818,7 +818,7 @@ const MLPage: React.FC = () => {
               </div>
             </div>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Footer */}
