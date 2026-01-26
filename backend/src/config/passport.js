@@ -45,25 +45,31 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        console.log('Google OAuth profile:', profile);
         const googleEmail = profile.emails?.[0]?.value || "";
+        console.log('Google email:', googleEmail);
         
         // First, try to find user by googleId
         let user = await User.findOne({ googleId: profile.id });
+        console.log('User found by googleId:', user ? user._id : 'none');
 
         if (!user && googleEmail) {
           // If not found by googleId, check if user exists with same email (local account)
           user = await User.findOne({ email: googleEmail });
+          console.log('User found by email:', user ? user._id : 'none');
           
           if (user) {
             // Link Google account to existing local account
             user.googleId = profile.id;
             user.avatar = user.avatar || profile.photos?.[0]?.value || "";
             user.provider = "both"; // User can now login with both methods
+            await user.save();
             console.log("✅ Linked Google account to existing user:", user._id);
           }
         }
 
         if (!user) {
+          console.log('Creating new Google user');
           // Create new user if doesn't exist
           user = await User.create({
             googleId: profile.id,
@@ -72,36 +78,21 @@ passport.use(
             avatar: profile.photos?.[0]?.value || "",
             provider: "google",
             phone: "",
-            dateOfBirth: "",
             bio: "",
             company: "",
             jobTitle: "",
             location: "",
-            department: "",
-            website: "",
-            emailNotif: true,
-            marketingEmails: false,
-            publicProfile: true,
-            twoFactorAuth: false,
-            language: "en",
-            timezone: "UTC",
-            isActive: true,
-            role: "user",
-            subscription: "free",
+            skills: "",
             settings: {
               emailNotif: true,
-              marketingEmails: false,
-              publicProfile: true,
-              twoFactorAuth: false,
-              language: "en",
-              timezone: "UTC"
-            }
+              darkMode: true,
+              twoFactorAuth: false
+            },
+            twoFactorSecret: null,
+            firstLogin: true
           });
           console.log("✅ New Google user created:", user._id);
         }
-
-        user.lastLogin = new Date();
-        await user.save();
 
         return done(null, user);
       } catch (err) {
