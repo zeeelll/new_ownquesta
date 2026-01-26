@@ -4,11 +4,13 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Logo from '../components/Logo';
 import Button from '../components/Button';
+import Chatbot from '../components/Chatbot';
 
 type AuthUser = {
   authenticated: boolean;
   name?: string;
   avatar?: string;
+  userId?: string;
 };
 
 export default function HomePage() {
@@ -39,10 +41,12 @@ export default function HomePage() {
           setUser({
             authenticated: true,
             name: data.user.name,
-            avatar: data.user.avatar
+            avatar: data.user.avatar,
+            userId: data.user.userId
           });
           if (typeof window !== 'undefined') {
             localStorage.setItem('userAvatar', data.user.avatar || '');
+            localStorage.setItem('userId', data.user.userId || '');
           }
         } else {
           // If not authenticated, redirect to login
@@ -213,6 +217,9 @@ export default function HomePage() {
           </Button>
         </div>
       </section>
+
+      {/* Chatbot Widget */}
+      {user?.userId && <Chatbot userId={user.userId} />}
     </div>
   );
 }
