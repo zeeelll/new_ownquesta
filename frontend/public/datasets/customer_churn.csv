@@ -1,0 +1,11 @@
+customer_id,age,gender,tenure,monthly_charges,total_charges,contract_type,internet_service,phone_service,churn
+1,34,Male,12,56.95,683.4,Month-to-month,DSL,Yes,No
+2,45,Female,24,75.20,1804.8,One year,Fiber optic,Yes,Yes
+3,29,Male,6,45.30,271.8,Month-to-month,DSL,No,No
+4,52,Female,36,89.90,3232.4,Two year,Fiber optic,Yes,No
+5,38,Male,18,62.45,1124.1,Month-to-month,DSL,Yes,Yes
+6,41,Female,30,78.65,2359.5,One year,Fiber optic,Yes,No
+7,33,Male,9,51.75,465.75,Month-to-month,DSL,Yes,No
+8,48,Female,42,94.20,3956.4,Two year,Fiber optic,Yes,Yes
+9,27,Male,3,39.95,119.85,Month-to-month,No,No,No
+10,55,Female,48,102.50,4920,Two year,Fiber optic,Yes,No

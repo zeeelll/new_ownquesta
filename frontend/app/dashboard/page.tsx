@@ -35,7 +35,7 @@ interface MLStats {
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<{ name?: string; email?: string; avatar?: string } | null>(null);
+  const [user, setUser] = useState<{ name?: string; email?: string; avatar?: string; role?: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -51,6 +51,12 @@ export default function DashboardPage() {
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllActivities, setShowAllActivities] = useState(false);
+  const [datasetViewer, setDatasetViewer] = useState<{ isOpen: boolean; data: string[][]; headers: string[]; fileName: string }>({
+    isOpen: false,
+    data: [],
+    headers: [],
+    fileName: ''
+  });
   const [workflowProgress, setWorkflowProgress] = useState({
     validation: { completed: 0, unlocked: true },
     featureEngineering: { completed: 0, unlocked: false },
@@ -230,8 +236,38 @@ export default function DashboardPage() {
 
   const openDatasetFile = async (project: Project) => {
     try {
-      if (project.fileUrl) {
-        // If we have a file URL, open it
+      if (project.fileUrl && project.fileType === 'csv') {
+        // Fetch and parse CSV data for display
+        const response = await fetch(project.fileUrl);
+        if (!response.ok) {
+          throw new Error('Failed to load file');
+        }
+        
+        const csvText = await response.text();
+        const lines = csvText.split('\n').filter(line => line.trim());
+        
+        if (lines.length === 0) {
+          showNotification('File is empty', 'error');
+          return;
+        }
+        
+        // Parse CSV
+        const headers = lines[0].split(',').map(h => h.trim());
+        const data = lines.slice(1).map(line => 
+          line.split(',').map(cell => cell.trim())
+        );
+        
+        // Show dataset viewer
+        setDatasetViewer({
+          isOpen: true,
+          data: data,
+          headers: headers,
+          fileName: project.dataset
+        });
+        
+        showNotification(`Opening ${project.dataset}...`, 'success');
+      } else if (project.fileUrl) {
+        // For non-CSV files, download
         const link = document.createElement('a');
         link.href = project.fileUrl;
         link.target = '_blank';
@@ -356,7 +392,8 @@ export default function DashboardPage() {
     const status = getWorkflowStepStatus(step);
     
     if (status === 'locked') {
-      const requirements = {
+      const requirements: { [key: string]: string } = {
+        validation: 'Upload your first dataset to get started',
         featureEngineering: 'Complete 2+ validations with 75%+ avg confidence',
         modelStudio: 'Complete 3+ validations with 80%+ avg confidence', 
         deploy: 'Complete 5+ validations with 85%+ avg confidence'
@@ -542,16 +579,45 @@ export default function DashboardPage() {
   const loadDemoDataset = async (datasetName: string) => {
     setIsLoading(true);
     try {
-      // Create a sample project for the demo
+      // Map dataset names to file paths
+      const datasetFiles: { [key: string]: string } = {
+        'Customer Churn': '/datasets/customer_churn.csv',
+        'House Price': '/datasets/house_price.csv',
+        'Loan Default': '/datasets/loan_default.csv',
+        'Sales Forecast': '/datasets/sales_forecast.csv'
+      };
+
+      const filePath = datasetFiles[datasetName];
+      if (!filePath) {
+        showNotification('Dataset not found', 'error');
+        return;
+      }
+
+      // Fetch the CSV file
+      const response = await fetch(filePath);
+      if (!response.ok) {
+        throw new Error('Failed to load dataset');
+      }
+      
+      const csvText = await response.text();
+      
+      // Parse CSV to get row count
+      const rows = csvText.split('\n').filter(row => row.trim());
+      const rowCount = rows.length - 1; // Subtract header row
+      
+      // Create a real project with the actual data
       const newProject: Project = {
         id: Date.now().toString(),
-        name: `${datasetName} Demo`,
-        dataset: datasetName.toLowerCase().replace(/\s+/g, '_'),
-        taskType: datasetName.includes('Churn') ? 'classification' : 
+        name: `${datasetName} Dataset`,
+        dataset: datasetName.toLowerCase().replace(/\s+/g, '_') + '.csv',
+        taskType: datasetName.includes('Churn') || datasetName.includes('Default') ? 'classification' : 
                  datasetName.includes('Price') || datasetName.includes('Forecast') ? 'regression' : 'classification',
         status: 'validated',
         confidence: Math.floor(Math.random() * 20) + 80, // Random between 80-99
-        createdDate: new Date().toLocaleDateString()
+        createdDate: new Date().toLocaleDateString(),
+        fileUrl: filePath,
+        filePath: filePath,
+        fileType: 'csv'
       };
       
       const updatedProjects = [...projects, newProject];
@@ -563,12 +629,7 @@ export default function DashboardPage() {
         validations: stats.validations + 1,
         datasets: stats.datasets + 1,
         avgConfidence: Math.round((stats.avgConfidence * stats.validations + newProject.confidence) / (stats.validations + 1)),
-        totalRows: stats.totalRows + parseInt({
-          'Customer Churn': '10000',
-          'House Price': '15000', 
-          'Loan Default': '50000',
-          'Sales Forecast': '5000'
-        }[datasetName] || '1000')
+        totalRows: stats.totalRows + rowCount
       };
       setStats(newStats);
       saveToLocalStorage('mlValidationStats', newStats);
@@ -576,7 +637,7 @@ export default function DashboardPage() {
       // Add activity
       const newActivity: Activity = {
         id: Date.now().toString(),
-        action: `Loaded ${datasetName} demo dataset`,
+        action: `Loaded ${datasetName} dataset (${rowCount} rows)`,
         timestamp: new Date().toLocaleTimeString(),
         type: 'upload'
       };
@@ -587,9 +648,10 @@ export default function DashboardPage() {
       // Update workflow progress
       setTimeout(updateWorkflowProgress, 100);
       
-      showNotification(`${datasetName} demo dataset loaded successfully!`, 'success');
+      showNotification(`${datasetName} dataset loaded successfully! (${rowCount} rows)`, 'success');
     } catch (error) {
-      showNotification('Failed to load demo dataset', 'error');
+      console.error('Error loading dataset:', error);
+      showNotification('Failed to load dataset', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -1763,7 +1825,7 @@ export default function DashboardPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   ), 
-                  rows: "10,000" 
+                  rows: "10" 
                 },
                 { 
                   name: "House Price", 
@@ -1772,7 +1834,7 @@ export default function DashboardPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
                   ), 
-                  rows: "15,000" 
+                  rows: "10" 
                 },
                 { 
                   name: "Loan Default", 
@@ -1781,7 +1843,7 @@ export default function DashboardPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   ), 
-                  rows: "50,000" 
+                  rows: "10" 
                 },
                 { 
                   name: "Sales Forecast", 
@@ -1790,7 +1852,7 @@ export default function DashboardPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   ), 
-                  rows: "5,000" 
+                  rows: "10" 
                 },
               ].map((demo) => (
                 <button
@@ -1810,6 +1872,63 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* Dataset Viewer Modal */}
+      {datasetViewer.isOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 rounded-xl border border-slate-700 shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-slate-700">
+              <h3 className="text-xl font-bold text-white">
+                📊 {datasetViewer.fileName}
+              </h3>
+              <button
+                onClick={() => setDatasetViewer({ isOpen: false, data: [], headers: [], fileName: '' })}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 overflow-auto max-h-[70vh]">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700">
+                      {datasetViewer.headers.map((header, index) => (
+                        <th key={index} className="text-left py-3 px-4 text-slate-300 font-semibold bg-slate-800/50">
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {datasetViewer.data.slice(0, 50).map((row, rowIndex) => (
+                      <tr key={rowIndex} className="border-b border-slate-800/30 hover:bg-slate-800/20">
+                        {row.map((cell, cellIndex) => (
+                          <td key={cellIndex} className="py-2 px-4 text-slate-200">
+                            {cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                    {datasetViewer.data.length > 50 && (
+                      <tr>
+                        <td colSpan={datasetViewer.headers.length} className="py-4 px-4 text-center text-slate-400">
+                          ... and {datasetViewer.data.length - 50} more rows
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-4 text-sm text-slate-400">
+                Showing {Math.min(datasetViewer.data.length, 50)} of {datasetViewer.data.length} rows
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         @keyframes fade-in {

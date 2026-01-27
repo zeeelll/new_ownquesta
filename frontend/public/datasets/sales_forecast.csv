@@ -1,0 +1,11 @@
+date,product_category,region,sales_quantity,sales_amount,promotion,discount
+2023-01-01,Electronics,North,150,45000,Yes,0.1
+2023-01-02,Clothing,South,200,30000,No,0
+2023-01-03,Electronics,East,180,54000,Yes,0.15
+2023-01-04,Books,West,120,18000,No,0
+2023-01-05,Electronics,North,160,48000,Yes,0.05
+2023-01-06,Clothing,South,190,28500,No,0
+2023-01-07,Electronics,East,175,52500,Yes,0.2
+2023-01-08,Books,West,110,16500,No,0
+2023-01-09,Electronics,North,155,46500,Yes,0.1
+2023-01-10,Clothing,South,210,31500,No,0
