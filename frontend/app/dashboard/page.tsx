@@ -1158,105 +1158,280 @@ export default function DashboardPage() {
             
             {/* Pipeline Steps */}
             <div className="flex items-center justify-between mb-8">
-              {/* Validation */}
-              <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white mb-3 shadow-lg shadow-green-500/40">
+              {/* Verify Dataset */}
+              <button 
+                onClick={() => router.push('/dl')}
+                className="flex flex-col items-center text-center hover:scale-105 transition-all duration-200 cursor-pointer group"
+              >
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center text-white mb-3 shadow-lg transition-all duration-200 group-hover:shadow-xl ${
+                  stats.validations > 0 
+                    ? 'bg-gradient-to-br from-green-500 to-green-600 shadow-green-500/40 group-hover:shadow-green-500/60' 
+                    : 'bg-gradient-to-br from-slate-600 to-slate-700 shadow-slate-500/40'
+                }`}>
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
                 <h3 className="text-white font-semibold mb-1">Verify the Dataset</h3>
-                <p className="text-green-400 text-sm font-medium">1 project</p>
-                <span className="inline-block bg-green-600/20 text-green-400 text-xs px-2 py-1 rounded-full mt-2">
-                  Active
+                <p className={`text-sm font-medium ${stats.validations > 0 ? 'text-green-400' : 'text-slate-400'}`}>
+                  {stats.validations} project{stats.validations !== 1 ? 's' : ''}
+                </p>
+                <span className={`inline-block text-xs px-2 py-1 rounded-full mt-2 ${
+                  stats.validations > 0 
+                    ? 'bg-green-600/20 text-green-400' 
+                    : 'bg-slate-600/20 text-slate-400'
+                }`}>
+                  {stats.validations > 0 ? 'Active' : 'Start Here'}
                 </span>
-              </div>
+              </button>
 
               {/* Feature Engineering */}
-              <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-400 mb-3 relative">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
+              <button 
+                onClick={() => {
+                  if (stats.validations >= 2 && stats.avgConfidence >= 75) {
+                    showNotification('Feature Engineering unlocked! Coming soon...', 'success');
+                  } else {
+                    showNotification(`Need ${2 - stats.validations} more validations and ${Math.max(0, 75 - stats.avgConfidence)}% higher confidence`, 'error');
+                  }
+                }}
+                className={`flex flex-col items-center text-center transition-all duration-200 ${
+                  stats.validations >= 2 && stats.avgConfidence >= 75 
+                    ? 'hover:scale-105 cursor-pointer' 
+                    : 'cursor-not-allowed opacity-60'
+                } group`}
+              >
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-3 shadow-lg transition-all duration-200 ${
+                  stats.validations >= 2 && stats.avgConfidence >= 75
+                    ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-blue-500/40 group-hover:shadow-blue-500/60 group-hover:shadow-xl'
+                    : 'bg-slate-700/50 text-slate-400 shadow-slate-500/20'
+                } relative`}>
+                  {stats.validations >= 2 && stats.avgConfidence >= 75 ? (
+                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  )}
                 </div>
-                <h3 className="text-slate-300 font-semibold mb-1">Feature</h3>
-                <h3 className="text-slate-300 font-semibold mb-1">Engineering</h3>
-                <span className="inline-block bg-slate-600/20 text-slate-400 text-xs px-2 py-1 rounded-full mt-2">
-                  Locked
+                <h3 className={`font-semibold mb-1 ${stats.validations >= 2 && stats.avgConfidence >= 75 ? 'text-white' : 'text-slate-300'}`}>Feature</h3>
+                <h3 className={`font-semibold mb-1 ${stats.validations >= 2 && stats.avgConfidence >= 75 ? 'text-white' : 'text-slate-300'}`}>Engineering</h3>
+                <span className={`inline-block text-xs px-2 py-1 rounded-full mt-2 ${
+                  stats.validations >= 2 && stats.avgConfidence >= 75
+                    ? 'bg-blue-600/20 text-blue-400'
+                    : 'bg-slate-600/20 text-slate-400'
+                }`}>
+                  {stats.validations >= 2 && stats.avgConfidence >= 75 ? 'Available' : 'Locked'}
                 </span>
-              </div>
+              </button>
 
               {/* Model Studio */}
-              <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-400 mb-3 relative">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
+              <button 
+                onClick={() => {
+                  if (stats.validations >= 3 && stats.avgConfidence >= 80) {
+                    router.push('/ml');
+                  } else {
+                    showNotification(`Need ${Math.max(0, 3 - stats.validations)} more validations and ${Math.max(0, 80 - stats.avgConfidence)}% higher confidence`, 'error');
+                  }
+                }}
+                className={`flex flex-col items-center text-center transition-all duration-200 ${
+                  stats.validations >= 3 && stats.avgConfidence >= 80 
+                    ? 'hover:scale-105 cursor-pointer' 
+                    : 'cursor-not-allowed opacity-60'
+                } group`}
+              >
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-3 shadow-lg transition-all duration-200 ${
+                  stats.validations >= 3 && stats.avgConfidence >= 80
+                    ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-purple-500/40 group-hover:shadow-purple-500/60 group-hover:shadow-xl'
+                    : 'bg-slate-700/50 text-slate-400 shadow-slate-500/20'
+                } relative`}>
+                  {stats.validations >= 3 && stats.avgConfidence >= 80 ? (
+                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  )}
                 </div>
-                <h3 className="text-slate-300 font-semibold mb-1">Model Studio</h3>
-                <span className="inline-block bg-slate-600/20 text-slate-400 text-xs px-2 py-1 rounded-full mt-2">
-                  Locked
+                <h3 className={`font-semibold mb-1 ${stats.validations >= 3 && stats.avgConfidence >= 80 ? 'text-white' : 'text-slate-300'}`}>Model Studio</h3>
+                <span className={`inline-block text-xs px-2 py-1 rounded-full mt-2 ${
+                  stats.validations >= 3 && stats.avgConfidence >= 80
+                    ? 'bg-purple-600/20 text-purple-400'
+                    : 'bg-slate-600/20 text-slate-400'
+                }`}>
+                  {stats.validations >= 3 && stats.avgConfidence >= 80 ? 'Available' : 'Locked'}
                 </span>
-              </div>
+              </button>
 
               {/* Deploy */}
-              <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-400 mb-3 relative">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
+              <button 
+                onClick={() => {
+                  if (stats.validations >= 5 && stats.avgConfidence >= 85) {
+                    showNotification('Deploy feature unlocked! Coming soon...', 'success');
+                  } else {
+                    showNotification(`Need ${Math.max(0, 5 - stats.validations)} more validations and ${Math.max(0, 85 - stats.avgConfidence)}% higher confidence`, 'error');
+                  }
+                }}
+                className={`flex flex-col items-center text-center transition-all duration-200 ${
+                  stats.validations >= 5 && stats.avgConfidence >= 85 
+                    ? 'hover:scale-105 cursor-pointer' 
+                    : 'cursor-not-allowed opacity-60'
+                } group`}
+              >
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-3 shadow-lg transition-all duration-200 ${
+                  stats.validations >= 5 && stats.avgConfidence >= 85
+                    ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-orange-500/40 group-hover:shadow-orange-500/60 group-hover:shadow-xl'
+                    : 'bg-slate-700/50 text-slate-400 shadow-slate-500/20'
+                } relative`}>
+                  {stats.validations >= 5 && stats.avgConfidence >= 85 ? (
+                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  )}
                 </div>
-                <h3 className="text-slate-300 font-semibold mb-1">Deploy</h3>
-                <span className="inline-block bg-slate-600/20 text-slate-400 text-xs px-2 py-1 rounded-full mt-2">
-                  Locked
+                <h3 className={`font-semibold mb-1 ${stats.validations >= 5 && stats.avgConfidence >= 85 ? 'text-white' : 'text-slate-300'}`}>Deploy</h3>
+                <span className={`inline-block text-xs px-2 py-1 rounded-full mt-2 ${
+                  stats.validations >= 5 && stats.avgConfidence >= 85
+                    ? 'bg-orange-600/20 text-orange-400'
+                    : 'bg-slate-600/20 text-slate-400'
+                }`}>
+                  {stats.validations >= 5 && stats.avgConfidence >= 85 ? 'Available' : 'Locked'}
                 </span>
-              </div>
+              </button>
             </div>
 
             {/* Progress Section */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-slate-300 font-medium">Workflow Progress</span>
-                <span className="text-white font-semibold">25% Complete</span>
+                <span className="text-white font-semibold">
+                  {(() => {
+                    let progress = 0;
+                    if (stats.validations > 0) progress += 25;
+                    if (stats.validations >= 2 && stats.avgConfidence >= 75) progress += 25;
+                    if (stats.validations >= 3 && stats.avgConfidence >= 80) progress += 25;
+                    if (stats.validations >= 5 && stats.avgConfidence >= 85) progress += 25;
+                    return `${progress}% Complete`;
+                  })()}
+                </span>
               </div>
               <div className="w-full bg-slate-700/50 rounded-full h-2">
-                <div className="bg-gradient-to-r from-green-500 to-orange-500 h-2 rounded-full w-1/4"></div>
+                <div 
+                  className="bg-gradient-to-r from-green-500 to-orange-500 h-2 rounded-full transition-all duration-500"
+                  style={{ 
+                    width: `${(() => {
+                      let progress = 0;
+                      if (stats.validations > 0) progress += 25;
+                      if (stats.validations >= 2 && stats.avgConfidence >= 75) progress += 25;
+                      if (stats.validations >= 3 && stats.avgConfidence >= 80) progress += 25;
+                      if (stats.validations >= 5 && stats.avgConfidence >= 85) progress += 25;
+                      return progress;
+                    })()}%` 
+                  }}
+                ></div>
               </div>
             </div>
 
             {/* Requirements Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Feature Engineering Requirements */}
-              <div className="bg-slate-800/30 rounded-lg p-4">
+              <div className={`rounded-lg p-4 transition-all duration-200 ${
+                stats.validations >= 2 && stats.avgConfidence >= 75 
+                  ? 'bg-blue-800/30 border border-blue-500/20' 
+                  : 'bg-slate-800/30'
+              }`}>
                 <h4 className="text-white font-medium mb-2 flex items-center">
-                  <div className="w-2 h-2 bg-slate-500 rounded-full mr-2"></div>
+                  <div className={`w-2 h-2 rounded-full mr-2 ${
+                    stats.validations >= 2 && stats.avgConfidence >= 75 ? 'bg-blue-500' : 'bg-slate-500'
+                  }`}></div>
                   Feature Engineering
                 </h4>
                 <p className="text-slate-400 text-xs mb-2">Requires: 2+ dataset verifications, 75%+ confidence</p>
                 <p className="text-slate-400 text-xs mb-1">Current:</p>
-                <p className="text-orange-400 text-xs font-medium">1 projects, 96% avg</p>
+                <p className={`text-xs font-medium ${
+                  stats.validations >= 2 && stats.avgConfidence >= 75 
+                    ? 'text-blue-400' 
+                    : 'text-orange-400'
+                }`}>
+                  {stats.validations} projects, {stats.avgConfidence}% avg
+                </p>
+                {stats.validations >= 2 && stats.avgConfidence >= 75 && (
+                  <div className="mt-2 text-green-400 text-xs flex items-center">
+                    <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Unlocked!
+                  </div>
+                )}
               </div>
 
               {/* Model Studio Requirements */}
-              <div className="bg-slate-800/30 rounded-lg p-4">
+              <div className={`rounded-lg p-4 transition-all duration-200 ${
+                stats.validations >= 3 && stats.avgConfidence >= 80 
+                  ? 'bg-purple-800/30 border border-purple-500/20' 
+                  : 'bg-slate-800/30'
+              }`}>
                 <h4 className="text-white font-medium mb-2 flex items-center">
-                  <div className="w-2 h-2 bg-slate-500 rounded-full mr-2"></div>
+                  <div className={`w-2 h-2 rounded-full mr-2 ${
+                    stats.validations >= 3 && stats.avgConfidence >= 80 ? 'bg-purple-500' : 'bg-slate-500'
+                  }`}></div>
                   Model Studio
                 </h4>
                 <p className="text-slate-400 text-xs mb-2">Requires: 3+ dataset verifications, 80%+ confidence</p>
                 <p className="text-slate-400 text-xs mb-1">Current:</p>
-                <p className="text-orange-400 text-xs font-medium">1 projects, 96% avg</p>
+                <p className={`text-xs font-medium ${
+                  stats.validations >= 3 && stats.avgConfidence >= 80 
+                    ? 'text-purple-400' 
+                    : 'text-orange-400'
+                }`}>
+                  {stats.validations} projects, {stats.avgConfidence}% avg
+                </p>
+                {stats.validations >= 3 && stats.avgConfidence >= 80 && (
+                  <div className="mt-2 text-green-400 text-xs flex items-center">
+                    <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Unlocked!
+                  </div>
+                )}
               </div>
 
               {/* Deploy Requirements */}
-              <div className="bg-slate-800/30 rounded-lg p-4">
+              <div className={`rounded-lg p-4 transition-all duration-200 ${
+                stats.validations >= 5 && stats.avgConfidence >= 85 
+                  ? 'bg-orange-800/30 border border-orange-500/20' 
+                  : 'bg-slate-800/30'
+              }`}>
                 <h4 className="text-white font-medium mb-2 flex items-center">
-                  <div className="w-2 h-2 bg-slate-500 rounded-full mr-2"></div>
+                  <div className={`w-2 h-2 rounded-full mr-2 ${
+                    stats.validations >= 5 && stats.avgConfidence >= 85 ? 'bg-orange-500' : 'bg-slate-500'
+                  }`}></div>
                   Deploy
                 </h4>
                 <p className="text-slate-400 text-xs mb-2">Requires: 5+ dataset verifications, 85%+ confidence</p>
                 <p className="text-slate-400 text-xs mb-1">Current:</p>
-                <p className="text-orange-400 text-xs font-medium">1 projects, 96% avg</p>
+                <p className={`text-xs font-medium ${
+                  stats.validations >= 5 && stats.avgConfidence >= 85 
+                    ? 'text-orange-400' 
+                    : 'text-orange-400'
+                }`}>
+                  {stats.validations} projects, {stats.avgConfidence}% avg
+                </p>
+                {stats.validations >= 5 && stats.avgConfidence >= 85 && (
+                  <div className="mt-2 text-green-400 text-xs flex items-center">
+                    <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Unlocked!
+                  </div>
+                )}
               </div>
             </div>
           </div>
