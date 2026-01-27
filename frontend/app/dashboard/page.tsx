@@ -38,7 +38,6 @@ export default function DashboardPage() {
   const [user, setUser] = useState<{ name?: string; email?: string; avatar?: string; role?: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [stats, setStats] = useState<MLStats>({
     validations: 0,
     datasets: 0,
@@ -57,12 +56,7 @@ export default function DashboardPage() {
     headers: [],
     fileName: ''
   });
-  const [workflowProgress, setWorkflowProgress] = useState({
-    validation: { completed: 0, unlocked: true },
-    featureEngineering: { completed: 0, unlocked: false },
-    modelStudio: { completed: 0, unlocked: false },
-    deploy: { completed: 0, unlocked: false }
-  });
+  const [analyzedProject, setAnalyzedProject] = useState<Project | null>(null);
   const router = useRouter();
 
   // Notification function
@@ -219,12 +213,6 @@ export default function DashboardPage() {
         allActivities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setActivities(allActivities); // Show all activities, no limit
       }
-      
-      // Load workflow progress
-      const savedProgress = localStorage.getItem("workflowProgress");
-      if (savedProgress) {
-        setWorkflowProgress(JSON.parse(savedProgress));
-      }
     }
   };
 
@@ -342,85 +330,6 @@ export default function DashboardPage() {
     return mimeTypes[fileExtension.toLowerCase()] || 'text/plain';
   };
 
-  const updateWorkflowProgress = () => {
-    const validationCount = projects.length;
-    const avgConfidence = validationCount > 0 ? stats.avgConfidence : 0;
-    
-    const newProgress = {
-      validation: { 
-        completed: validationCount, 
-        unlocked: true 
-      },
-      featureEngineering: { 
-        completed: 0, 
-        unlocked: validationCount >= 2 && avgConfidence >= 75 
-      },
-      modelStudio: { 
-        completed: 0, 
-        unlocked: validationCount >= 3 && avgConfidence >= 80 
-      },
-      deploy: { 
-        completed: 0, 
-        unlocked: validationCount >= 5 && avgConfidence >= 85 
-      }
-    };
-    
-    setWorkflowProgress(newProgress);
-    saveToLocalStorage('workflowProgress', newProgress);
-  };
-
-  const getWorkflowStepStatus = (step: keyof typeof workflowProgress) => {
-    const stepData = workflowProgress[step];
-    if (step === 'validation') {
-      return stepData.completed > 0 ? 'active' : 'ready';
-    }
-    if (stepData.completed > 0) return 'completed';
-    if (stepData.unlocked) return 'available';
-    return 'locked';
-  };
-
-  const getProgressPercentage = () => {
-    let progress = 0;
-    if (workflowProgress.validation.completed > 0) progress += 25;
-    if (workflowProgress.featureEngineering.unlocked) progress += 25;
-    if (workflowProgress.modelStudio.unlocked) progress += 25;
-    if (workflowProgress.deploy.unlocked) progress += 25;
-    return progress;
-  };
-
-  const handleWorkflowStepClick = (step: keyof typeof workflowProgress) => {
-    const status = getWorkflowStepStatus(step);
-    
-    if (status === 'locked') {
-      const requirements: { [key: string]: string } = {
-        validation: 'Upload your first dataset to get started',
-        featureEngineering: 'Complete 2+ validations with 75%+ avg confidence',
-        modelStudio: 'Complete 3+ validations with 80%+ avg confidence', 
-        deploy: 'Complete 5+ validations with 85%+ avg confidence'
-      };
-      showNotification(
-        `🔒 ${requirements[step] || 'Requirements not met'}`, 
-        'error'
-      );
-      return;
-    }
-    
-    switch (step) {
-      case 'validation':
-        setSidebarOpen(true);
-        break;
-      case 'featureEngineering':
-        showNotification('🔧 Feature Engineering coming soon!', 'success');
-        break;
-      case 'modelStudio':
-        showNotification('🎨 Model Studio will be available soon!', 'success');
-        break;
-      case 'deploy':
-        showNotification('🚀 Deployment tools coming soon!', 'success');
-        break;
-    }
-  };
-
   useEffect(() => {
     async function loadMe() {
       try {
@@ -447,11 +356,6 @@ export default function DashboardPage() {
     }
     loadMe();
   }, [router]);
-
-  // Update workflow progress when projects or stats change
-  useEffect(() => {
-    updateWorkflowProgress();
-  }, [projects, stats]);
 
   // Auto-refresh data when returning from other pages
   useEffect(() => {
@@ -523,16 +427,6 @@ export default function DashboardPage() {
     return () => {
       lenis.destroy();
     };
-  }, []);
-
-  // Mouse tracking for interactive background
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   useEffect(() => {
@@ -645,9 +539,6 @@ export default function DashboardPage() {
       setActivities(updatedActivities);
       saveToLocalStorage('userActivities', updatedActivities);
       
-      // Update workflow progress
-      setTimeout(updateWorkflowProgress, 100);
-      
       showNotification(`${datasetName} dataset loaded successfully! (${rowCount} rows)`, 'success');
     } catch (error) {
       console.error('Error loading dataset:', error);
@@ -661,16 +552,24 @@ export default function DashboardPage() {
     if (action === 'open') {
       // Open the dataset file in its native format
       openDatasetFile(project);
-    } else if (action === 'edit') {
-      // Navigate to ML page for editing/analysis
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('currentProject', JSON.stringify(project));
-        localStorage.setItem('returnToDashboard', 'true');
+    } else if (action === 'analyze') {
+      // Set the analyzed project and scroll to insights section
+      setAnalyzedProject(project);
+      
+      // Scroll to AI insights section
+      const insightsSection = document.getElementById('ai-insights');
+      if (insightsSection) {
+        insightsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Add a temporary highlight effect
+        insightsSection.style.boxShadow = '0 0 30px rgba(99, 102, 241, 0.5)';
+        setTimeout(() => {
+          insightsSection.style.boxShadow = '';
+        }, 2000);
       }
       
       const newActivity: Activity = {
         id: Date.now().toString(),
-        action: `Opened ${project.name} for analysis`,
+        action: `Analyzed ${project.name} with AI insights`,
         timestamp: new Date().toLocaleTimeString(),
         type: 'validation'
       };
@@ -678,14 +577,7 @@ export default function DashboardPage() {
       setActivities(updatedActivities);
       saveToLocalStorage('userActivities', updatedActivities);
       
-      showNotification(`Opening ${project.name} for analysis...`, 'success');
-      setTimeout(() => {
-        if (project.taskType === 'classification' || project.taskType === 'regression') {
-          router.push('/ml/machine-learning?project=' + encodeURIComponent(project.id));
-        } else {
-          router.push('/dl?project=' + encodeURIComponent(project.id));
-        }
-      }, 500);
+      showNotification(`AI insights for ${project.name} displayed below`, 'success');
     } else if (action === 'delete') {
       const updatedProjects = projects.filter(p => p.id !== project.id);
       setProjects(updatedProjects);
@@ -716,19 +608,12 @@ export default function DashboardPage() {
       // Update stats
       setTimeout(() => {
         loadDashboardData();
-        updateWorkflowProgress();
       }, 100);
-    } else if (action === 'view') {
-      showNotification(`Viewing details for ${project.name}`, 'success');
-      // Could show file info, size, columns, etc.
     }
   };
 
-  // Generate AI insights from latest dataset
-  const generateAIInsights = () => {
-    if (projects.length === 0) return [];
-    
-    const latestProject = projects[0]; // Most recent project
+  // Generate AI insights for analyzed dataset
+  const generateAIInsights = (project: Project) => {
     const insights: string[] = [];
     
     // Generate dynamic insights based on project data
@@ -738,24 +623,24 @@ export default function DashboardPage() {
     
     // Missing values insight
     if (missingValuePercent > 15) {
-      insights.push(`Dataset "${latestProject.name}" has ~${missingValuePercent}% missing values - data cleaning recommended`);
+      insights.push(`Dataset "${project.name}" has ~${missingValuePercent}% missing values - data cleaning recommended`);
     } else if (missingValuePercent < 10) {
-      insights.push(`Excellent data quality: Only ${missingValuePercent}% missing values in "${latestProject.name}"`);
+      insights.push(`Excellent data quality: Only ${missingValuePercent}% missing values in "${project.name}"`);
     } else {
       insights.push(`Good data quality: ${missingValuePercent}% missing values detected`);
     }
     
     // Task type specific insights
-    if (latestProject.taskType === 'classification') {
+    if (project.taskType === 'classification') {
       const classBalance = Math.random() > 0.5 ? 'balanced' : 'imbalanced';
       if (classBalance === 'imbalanced') {
         insights.push('Target class imbalance detected - consider SMOTE or resampling techniques');
       } else {
         insights.push('Well-balanced classification dataset - good for model training');
       }
-    } else if (latestProject.taskType === 'regression') {
+    } else if (project.taskType === 'regression') {
       insights.push('Feature correlation analysis shows 3 strong predictors identified');
-    } else if (latestProject.taskType === 'clustering') {
+    } else if (project.taskType === 'clustering') {
       insights.push('Optimal cluster count: 4-6 based on elbow method analysis');
     } else {
       insights.push('Dataset ready for multi-purpose ML analysis');
@@ -773,18 +658,18 @@ export default function DashboardPage() {
     }
     
     // Additional insights based on project status and confidence
-    if (latestProject.confidence >= 95) {
-      insights.push(`Excellent model performance: ${latestProject.confidence}% validation confidence`);
-    } else if (latestProject.confidence >= 85) {
-      insights.push(`Good model performance: ${latestProject.confidence}% confidence achieved`);
+    if (project.confidence >= 95) {
+      insights.push(`Excellent model performance: ${project.confidence}% validation confidence`);
+    } else if (project.confidence >= 85) {
+      insights.push(`Good model performance: ${project.confidence}% confidence achieved`);
     } else {
-      insights.push(`Model needs improvement: ${latestProject.confidence}% confidence - try feature engineering`);
+      insights.push(`Model needs improvement: ${project.confidence}% confidence - try feature engineering`);
     }
     
     // File format and processing insights
-    if (latestProject.dataset.includes('.csv')) {
+    if (project.dataset.includes('.csv')) {
       insights.push('CSV format: Optimal for ML pipelines and data processing');
-    } else if (latestProject.dataset.includes('.xlsx')) {
+    } else if (project.dataset.includes('.xlsx')) {
       insights.push('Excel format: Successfully parsed for ML analysis');
     }
     
@@ -812,8 +697,7 @@ export default function DashboardPage() {
         'mlValidationStats', 
         'uploadedFiles', 
         'fileUploadActivities', 
-        'validationResults', 
-        'workflowProgress'
+        'validationResults'
       ];
       
       keysToRemove.forEach(key => {
@@ -1265,309 +1149,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Enhanced Workflow Pipeline */}
-          <div className="rounded-xl p-8 bg-slate-800/70 backdrop-blur-xl border border-slate-600/50 mb-10 shadow-2xl">
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-white mb-2">
-                Your AI Workflow Pipeline
-              </h2>
-              <p className="text-slate-300 text-sm">
-                Complete validations to unlock advanced features
-              </p>
-            </div>
-            
-            <div className="flex items-center justify-between relative px-4">
-              {/* Validation Step */}
-              <div className="flex flex-col items-center flex-1 relative z-10">
-                <button
-                  onClick={() => handleWorkflowStepClick('validation')}
-                  className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl transition-all duration-300 shadow-lg ${
-                    workflowProgress.validation.completed > 0
-                      ? 'bg-gradient-to-br from-green-500 to-green-600 shadow-green-500/40 hover:scale-110 cursor-pointer'
-                      : 'bg-gradient-to-br from-green-400 to-green-500 shadow-green-400/30 hover:scale-105 cursor-pointer border-2 border-green-300/50'
-                  }`}
-                  title={workflowProgress.validation.completed > 0 ? "Add more validations" : "Start your first validation"}
-                >
-                  {workflowProgress.validation.completed > 0 ? (
-                    <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  )}
-                </button>
-                <div className="text-white font-semibold text-sm mt-3">
-                  Verify Dataset
-                </div>
-                <div className="text-slate-300 text-xs mt-1 font-medium">
-                  {workflowProgress.validation.completed > 0 
-                    ? `${workflowProgress.validation.completed} project${workflowProgress.validation.completed !== 1 ? 's' : ''}`
-                    : 'Get started'
-                  }
-                </div>
-                <div className={`text-xs mt-2 px-3 py-1 rounded-full font-medium ${
-                  workflowProgress.validation.completed > 0 
-                    ? 'bg-green-500/20 text-green-300 border border-green-400/30' 
-                    : 'bg-green-400/20 text-green-300 border border-green-300/30 animate-pulse'
-                }`}>
-                  {workflowProgress.validation.completed > 0 ? 'Active' : 'Ready to start'}
-                </div>
-              </div>
-
-              {/* Connection Line 1 */}
-              <div className="flex-1 mx-6 relative">
-                <div className={`h-1 rounded-full transition-all duration-1000 ease-out ${
-                  workflowProgress.featureEngineering.unlocked 
-                    ? 'bg-gradient-to-r from-green-500 to-blue-500 shadow-sm shadow-blue-500/30' 
-                    : 'bg-slate-700/40'
-                }`} />
-                {workflowProgress.featureEngineering.unlocked && (
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full animate-pulse" />
-                )}
-              </div>
-
-              {/* Feature Engineering Step */}
-              <div className="flex flex-col items-center flex-1 relative z-10">
-                <button
-                  onClick={() => handleWorkflowStepClick('featureEngineering')}
-                  className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl transition-all duration-300 shadow-lg relative overflow-hidden ${
-                    workflowProgress.featureEngineering.unlocked
-                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/40 hover:scale-110 cursor-pointer'
-                      : 'bg-slate-700/50 border-2 border-slate-600/30 cursor-not-allowed opacity-60 hover:opacity-80'
-                  }`}
-                  title={workflowProgress.featureEngineering.unlocked ? 'Feature Engineering (Coming Soon)' : 'Complete 2+ validations with 75%+ confidence'}
-                >
-                  {!workflowProgress.featureEngineering.unlocked && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-800/80 to-slate-900/80 flex items-center justify-center">
-                      <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                  )}
-                  <svg className={`w-10 h-10 transition-all duration-300 ${
-                    workflowProgress.featureEngineering.unlocked ? 'text-white' : 'text-slate-500'
-                  }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-                <div className="text-white font-semibold text-sm mt-3">
-                  Feature Engineering
-                </div>
-                <div className="text-slate-400 text-xs mt-1">
-                  {workflowProgress.featureEngineering.unlocked ? 'Available Soon' : 'Requirements needed'}
-                </div>
-                <div className={`text-xs mt-2 px-3 py-1 rounded-full font-medium border ${
-                  workflowProgress.featureEngineering.unlocked 
-                    ? 'bg-blue-500/20 text-blue-300 border-blue-400/30' 
-                    : 'bg-slate-600/20 text-slate-500 border-slate-500/30'
-                }`}>
-                  {workflowProgress.featureEngineering.unlocked ? 'Unlocked' : 'Locked'}
-                </div>
-              </div>
-
-              {/* Connection Line 2 */}
-              <div className="flex-1 mx-6 relative">
-                <div className={`h-1 rounded-full transition-all duration-1000 ease-out ${
-                  workflowProgress.modelStudio.unlocked 
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 shadow-sm shadow-purple-500/30' 
-                    : 'bg-slate-700/40'
-                }`} />
-                {workflowProgress.modelStudio.unlocked && (
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full animate-pulse" />
-                )}
-              </div>
-
-              {/* Model Studio Step */}
-              <div className="flex flex-col items-center flex-1 relative z-10">
-                <button
-                  onClick={() => handleWorkflowStepClick('modelStudio')}
-                  className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl transition-all duration-300 shadow-lg relative overflow-hidden ${
-                    workflowProgress.modelStudio.unlocked
-                      ? 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-purple-500/40 hover:scale-110 cursor-pointer'
-                      : 'bg-slate-700/50 border-2 border-slate-600/30 cursor-not-allowed opacity-60 hover:opacity-80'
-                  }`}
-                  title={workflowProgress.modelStudio.unlocked ? 'Model Studio (Coming Soon)' : 'Complete 3+ validations with 80%+ confidence'}
-                >
-                  {!workflowProgress.modelStudio.unlocked && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-800/80 to-slate-900/80 flex items-center justify-center">
-                      <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                  )}
-                  <svg className={`w-10 h-10 transition-all duration-300 ${
-                    workflowProgress.modelStudio.unlocked ? 'text-white' : 'text-slate-500'
-                  }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
-                <div className="text-white font-semibold text-sm mt-3">
-                  Model Studio
-                </div>
-                <div className="text-slate-400 text-xs mt-1">
-                  {workflowProgress.modelStudio.unlocked ? 'Available Soon' : 'Complete more validations'}
-                </div>
-                <div className={`text-xs mt-2 px-3 py-1 rounded-full font-medium border ${
-                  workflowProgress.modelStudio.unlocked 
-                    ? 'bg-purple-500/20 text-purple-300 border-purple-400/30' 
-                    : 'bg-slate-600/20 text-slate-500 border-slate-500/30'
-                }`}>
-                  {workflowProgress.modelStudio.unlocked ? 'Unlocked' : 'Locked'}
-                </div>
-              </div>
-
-              {/* Connection Line 3 */}
-              <div className="flex-1 mx-6 relative">
-                <div className={`h-1 rounded-full transition-all duration-1000 ease-out ${
-                  workflowProgress.deploy.unlocked 
-                    ? 'bg-gradient-to-r from-purple-500 to-orange-500 shadow-sm shadow-orange-500/30' 
-                    : 'bg-slate-700/40'
-                }`} />
-                {workflowProgress.deploy.unlocked && (
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full animate-pulse" />
-                )}
-              </div>
-
-              {/* Deploy Step */}
-              <div className="flex flex-col items-center flex-1 relative z-10">
-                <button
-                  onClick={() => handleWorkflowStepClick('deploy')}
-                  className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl transition-all duration-300 shadow-lg relative overflow-hidden ${
-                    workflowProgress.deploy.unlocked
-                      ? 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-orange-500/40 hover:scale-110 cursor-pointer'
-                      : 'bg-slate-700/50 border-2 border-slate-600/30 cursor-not-allowed opacity-60 hover:opacity-80'
-                  }`}
-                  title={workflowProgress.deploy.unlocked ? 'Deploy (Coming Soon)' : 'Complete 5+ validations with 85%+ confidence'}
-                >
-                  {!workflowProgress.deploy.unlocked && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-800/80 to-slate-900/80 flex items-center justify-center">
-                      <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                  )}
-                  <svg className={`w-10 h-10 transition-all duration-300 ${
-                    workflowProgress.deploy.unlocked ? 'text-white' : 'text-slate-500'
-                  }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </button>
-                <div className="text-white font-semibold text-sm mt-3">
-                  Deploy
-                </div>
-                <div className="text-slate-400 text-xs mt-1">
-                  {workflowProgress.deploy.unlocked ? 'Available Soon' : 'Advanced feature'}
-                </div>
-                <div className={`text-xs mt-2 px-3 py-1 rounded-full font-medium border ${
-                  workflowProgress.deploy.unlocked 
-                    ? 'bg-orange-500/20 text-orange-300 border-orange-400/30' 
-                    : 'bg-slate-600/20 text-slate-500 border-slate-500/30'
-                }`}>
-                  {workflowProgress.deploy.unlocked ? 'Unlocked' : 'Locked'}
-                </div>
-              </div>
-            </div>
-            
-            {/* Progress Indicator */}
-            <div className="mt-10 space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-300 font-medium">Workflow Progress</span>
-                <span className="text-slate-300 font-semibold">{getProgressPercentage()}% Complete</span>
-              </div>
-              <div className="bg-slate-700/30 rounded-full h-3 overflow-hidden shadow-inner">
-                <div 
-                  className="h-full bg-gradient-to-r from-green-500 via-blue-500 via-purple-500 to-orange-500 transition-all duration-1000 ease-out relative overflow-hidden"
-                  style={{ width: `${getProgressPercentage()}%` }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
-                </div>
-              </div>
-              {getProgressPercentage() === 0 && (
-                <p className="text-slate-400 text-xs text-center mt-2">
-                  ✨ Start your first validation to unlock your AI workflow pipeline
-                </p>
-              )}
-              {getProgressPercentage() > 0 && getProgressPercentage() < 100 && (
-                <p className="text-blue-300 text-xs text-center mt-2">
-                  🚀 Great progress! Keep validating to unlock more features
-                </p>
-              )}
-            </div>
-            
-            {/* Requirements Summary */}
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className={`p-4 rounded-lg border transition-all duration-300 ${
-                workflowProgress.featureEngineering.unlocked 
-                  ? 'bg-blue-500/10 border-blue-500/30 text-blue-300 shadow-lg shadow-blue-500/10'
-                  : 'bg-slate-700/30 border-slate-600/30 text-slate-400 hover:border-slate-500/50'
-              }`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    workflowProgress.featureEngineering.unlocked ? 'bg-blue-400' : 'bg-slate-500'
-                  }`} />
-                  <div className="font-semibold">Feature Engineering</div>
-                </div>
-                <div className="mb-1">Requires: 2+ validations, 75%+ confidence</div>
-                <div className="flex items-center justify-between">
-                  <span>Current:</span>
-                  <span className={`font-medium ${
-                    workflowProgress.validation.completed >= 2 && (workflowProgress.validation.completed > 0 ? stats.avgConfidence : 0) >= 75
-                      ? 'text-green-400' : 'text-orange-400'
-                  }`}>
-                    {workflowProgress.validation.completed} projects, {workflowProgress.validation.completed > 0 ? stats.avgConfidence : 0}% avg
-                  </span>
-                </div>
-              </div>
-              <div className={`p-4 rounded-lg border transition-all duration-300 ${
-                workflowProgress.modelStudio.unlocked 
-                  ? 'bg-purple-500/10 border-purple-500/30 text-purple-300 shadow-lg shadow-purple-500/10'
-                  : 'bg-slate-700/30 border-slate-600/30 text-slate-400 hover:border-slate-500/50'
-              }`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    workflowProgress.modelStudio.unlocked ? 'bg-purple-400' : 'bg-slate-500'
-                  }`} />
-                  <div className="font-semibold">Model Studio</div>
-                </div>
-                <div className="mb-1">Requires: 3+ validations, 80%+ confidence</div>
-                <div className="flex items-center justify-between">
-                  <span>Current:</span>
-                  <span className={`font-medium ${
-                    workflowProgress.validation.completed >= 3 && (workflowProgress.validation.completed > 0 ? stats.avgConfidence : 0) >= 80
-                      ? 'text-green-400' : 'text-orange-400'
-                  }`}>
-                    {workflowProgress.validation.completed} projects, {workflowProgress.validation.completed > 0 ? stats.avgConfidence : 0}% avg
-                  </span>
-                </div>
-              </div>
-              <div className={`p-4 rounded-lg border transition-all duration-300 ${
-                workflowProgress.deploy.unlocked 
-                  ? 'bg-orange-500/10 border-orange-500/30 text-orange-300 shadow-lg shadow-orange-500/10'
-                  : 'bg-slate-700/30 border-slate-600/30 text-slate-400 hover:border-slate-500/50'
-              }`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    workflowProgress.deploy.unlocked ? 'bg-orange-400' : 'bg-slate-500'
-                  }`} />
-                  <div className="font-semibold">Deploy</div>
-                </div>
-                <div className="mb-1">Requires: 5+ validations, 85%+ confidence</div>
-                <div className="flex items-center justify-between">
-                  <span>Current:</span>
-                  <span className={`font-medium ${
-                    workflowProgress.validation.completed >= 5 && (workflowProgress.validation.completed > 0 ? stats.avgConfidence : 0) >= 85
-                      ? 'text-green-400' : 'text-orange-400'
-                  }`}>
-                    {workflowProgress.validation.completed} projects, {workflowProgress.validation.completed > 0 ? stats.avgConfidence : 0}% avg
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Projects Table */}
           <div id="projects-table" className="rounded-xl p-6 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 mb-10">
             <div className="flex items-center justify-between mb-5">
@@ -1667,13 +1248,6 @@ export default function DashboardPage() {
                           <td className="py-4 px-4">
                             <div className="flex gap-2">
                               <button 
-                                onClick={() => handleProjectAction(project, 'view')}
-                                className="text-blue-400 hover:text-blue-300 font-semibold transition-colors text-xs px-2 py-1 rounded bg-blue-500/10 hover:bg-blue-500/20"
-                                title="View dataset details"
-                              >
-                                View
-                              </button>
-                              <button 
                                 onClick={() => handleProjectAction(project, 'open')}
                                 className="text-green-400 hover:text-green-300 font-semibold transition-colors text-xs px-2 py-1 rounded bg-green-500/10 hover:bg-green-500/20"
                                 title="Open dataset file"
@@ -1681,9 +1255,9 @@ export default function DashboardPage() {
                                 Open File
                               </button>
                               <button 
-                                onClick={() => handleProjectAction(project, 'edit')}
+                                onClick={() => handleProjectAction(project, 'analyze')}
                                 className="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors text-xs px-2 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20"
-                                title="Analyze in ML workspace"
+                                title="View AI insights"
                               >
                                 Analyze
                               </button>
@@ -1779,17 +1353,31 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* AI Insights - Only show when datasets exist */}
-            {projects.length > 0 && (
-              <div className="rounded-xl p-6 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-indigo-400/40 shadow-xl backdrop-blur-sm">
-                <h2 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
-                  🤖 AI Insights
-                  <span className="text-xs bg-indigo-500/40 px-2 py-1 rounded-full text-indigo-200 border border-indigo-400/30">
-                    Latest Dataset
+            {/* Dataset Analysis - Only show when a project is being analyzed */}
+            {analyzedProject && (
+              <div id="ai-insights" className="rounded-xl p-6 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-indigo-400/40 shadow-xl backdrop-blur-sm">
+                <h2 className="text-lg font-bold text-white mb-5 flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <svg className="w-6 h-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Analyze of Dataset
+                    <span className="text-xs bg-indigo-500/40 px-2 py-1 rounded-full text-indigo-200 border border-indigo-400/30">
+                      {analyzedProject.name}
+                    </span>
                   </span>
+                  <button
+                    onClick={() => setAnalyzedProject(null)}
+                    className="text-slate-400 hover:text-white transition-colors"
+                    title="Close analysis"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </h2>
                 <ul className="space-y-3">
-                  {generateAIInsights().map((insight, index) => (
+                  {generateAIInsights(analyzedProject).map((insight, index) => (
                     <li key={index} className="flex gap-3 items-start">
                       <span className="text-indigo-400 text-lg">●</span>
                       <span className="text-slate-200 text-sm">
@@ -1800,9 +1388,9 @@ export default function DashboardPage() {
                 </ul>
                 <div className="mt-4 text-xs text-slate-400 flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Based on: {projects[0]?.name || 'Latest upload'} • Updated {projects[0]?.createdDate || 'recently'}
+                  Analysis complete for: {analyzedProject.name} • {analyzedProject.createdDate}
                 </div>
               </div>
             )}

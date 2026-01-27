@@ -707,7 +707,7 @@ const MLPage: React.FC = () => {
                   }}
                   disabled={!selectedTask}
                   variant="primary"
-                  style={{ width: '100%', padding: '0.75rem' }}
+                  className="w-full py-3"
                 >
                   Continue to Model Configuration →
                 </Button>
@@ -717,7 +717,7 @@ const MLPage: React.FC = () => {
                     clearAllData();
                   }}
                   variant="secondary"
-                  style={{ width: '100%', marginTop: '0.75rem', padding: '0.75rem', backgroundColor: 'rgb(239 68 68 / 0.1)', borderColor: 'rgb(239 68 68 / 0.3)', color: 'rgb(248 113 113)' }}
+                  className="w-full mt-3 py-3 bg-red-500/10 border-red-500/30 text-red-300 hover:bg-red-500/20"
                 >
                   Clear All Data
                 </Button>
