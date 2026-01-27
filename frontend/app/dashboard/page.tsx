@@ -1149,6 +1149,118 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* AI Workflow Pipeline */}
+          <div className="rounded-xl p-6 bg-gradient-to-r from-purple-900/50 to-indigo-900/50 backdrop-blur-xl border border-slate-700/10 mb-10">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-white mb-2">Your AI Workflow Pipeline</h2>
+              <p className="text-slate-300 text-sm">Complete dataset verifications to unlock advanced features</p>
+            </div>
+            
+            {/* Pipeline Steps */}
+            <div className="flex items-center justify-between mb-8">
+              {/* Validation */}
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white mb-3 shadow-lg shadow-green-500/40">
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-white font-semibold mb-1">Verify the Dataset</h3>
+                <p className="text-green-400 text-sm font-medium">1 project</p>
+                <span className="inline-block bg-green-600/20 text-green-400 text-xs px-2 py-1 rounded-full mt-2">
+                  Active
+                </span>
+              </div>
+
+              {/* Feature Engineering */}
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-400 mb-3 relative">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h3 className="text-slate-300 font-semibold mb-1">Feature</h3>
+                <h3 className="text-slate-300 font-semibold mb-1">Engineering</h3>
+                <span className="inline-block bg-slate-600/20 text-slate-400 text-xs px-2 py-1 rounded-full mt-2">
+                  Locked
+                </span>
+              </div>
+
+              {/* Model Studio */}
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-400 mb-3 relative">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h3 className="text-slate-300 font-semibold mb-1">Model Studio</h3>
+                <span className="inline-block bg-slate-600/20 text-slate-400 text-xs px-2 py-1 rounded-full mt-2">
+                  Locked
+                </span>
+              </div>
+
+              {/* Deploy */}
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-400 mb-3 relative">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h3 className="text-slate-300 font-semibold mb-1">Deploy</h3>
+                <span className="inline-block bg-slate-600/20 text-slate-400 text-xs px-2 py-1 rounded-full mt-2">
+                  Locked
+                </span>
+              </div>
+            </div>
+
+            {/* Progress Section */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-slate-300 font-medium">Workflow Progress</span>
+                <span className="text-white font-semibold">25% Complete</span>
+              </div>
+              <div className="w-full bg-slate-700/50 rounded-full h-2">
+                <div className="bg-gradient-to-r from-green-500 to-orange-500 h-2 rounded-full w-1/4"></div>
+              </div>
+            </div>
+
+            {/* Requirements Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Feature Engineering Requirements */}
+              <div className="bg-slate-800/30 rounded-lg p-4">
+                <h4 className="text-white font-medium mb-2 flex items-center">
+                  <div className="w-2 h-2 bg-slate-500 rounded-full mr-2"></div>
+                  Feature Engineering
+                </h4>
+                <p className="text-slate-400 text-xs mb-2">Requires: 2+ dataset verifications, 75%+ confidence</p>
+                <p className="text-slate-400 text-xs mb-1">Current:</p>
+                <p className="text-orange-400 text-xs font-medium">1 projects, 96% avg</p>
+              </div>
+
+              {/* Model Studio Requirements */}
+              <div className="bg-slate-800/30 rounded-lg p-4">
+                <h4 className="text-white font-medium mb-2 flex items-center">
+                  <div className="w-2 h-2 bg-slate-500 rounded-full mr-2"></div>
+                  Model Studio
+                </h4>
+                <p className="text-slate-400 text-xs mb-2">Requires: 3+ dataset verifications, 80%+ confidence</p>
+                <p className="text-slate-400 text-xs mb-1">Current:</p>
+                <p className="text-orange-400 text-xs font-medium">1 projects, 96% avg</p>
+              </div>
+
+              {/* Deploy Requirements */}
+              <div className="bg-slate-800/30 rounded-lg p-4">
+                <h4 className="text-white font-medium mb-2 flex items-center">
+                  <div className="w-2 h-2 bg-slate-500 rounded-full mr-2"></div>
+                  Deploy
+                </h4>
+                <p className="text-slate-400 text-xs mb-2">Requires: 5+ dataset verifications, 85%+ confidence</p>
+                <p className="text-slate-400 text-xs mb-1">Current:</p>
+                <p className="text-orange-400 text-xs font-medium">1 projects, 96% avg</p>
+              </div>
+            </div>
+          </div>
+
           {/* Recent Activity */}
           <div className="rounded-xl p-6 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 mb-10">
             <div className="flex items-center justify-between mb-5">
