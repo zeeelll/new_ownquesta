@@ -1149,6 +1149,55 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Recent Activity */}
+          <div className="rounded-xl p-6 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 mb-10">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-white">
+                Recent Activity
+              </h2>
+              {activities.length > 10 && (
+                <span className="text-xs text-slate-400">
+                  Showing latest activities
+                </span>
+              )}
+            </div>
+            {activities.length === 0 ? (
+              <div className="text-center text-slate-400 py-10 text-sm">
+                No activity yet
+              </div>
+            ) : (
+              <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+                {activities.slice(0, 15).map((activity, idx) => ( // Show latest 15 for performance
+                  <div key={activity.id} className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-lg shadow-lg shadow-indigo-500/40">
+                        {getActivityIcon(activity.type)}
+                      </div>
+                      {idx < Math.min(activities.length - 1, 14) && (
+                        <div className="w-0.5 h-8 bg-gradient-to-b from-indigo-600 to-transparent my-2" />
+                      )}
+                    </div>
+                    <div className="pt-1 flex-1">
+                      <div className="text-white font-medium text-sm">
+                        {activity.action}
+                      </div>
+                      <div className="text-slate-400 text-xs">
+                        {activity.timestamp}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {activities.length > 15 && (
+                  <div className="text-center pt-4">
+                    <div className="text-slate-400 text-xs">
+                      + {activities.length - 15} more activities
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Projects Table */}
           <div id="projects-table" className="rounded-xl p-6 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 mb-10">
             <div className="flex items-center justify-between mb-5">
@@ -1303,98 +1352,47 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-            {/* Recent Activity */}
-            <div className="rounded-xl p-6 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-white">
-                  Recent Activity
-                </h2>
-                {activities.length > 10 && (
-                  <span className="text-xs text-slate-400">
-                    Showing latest activities
-                  </span>
-                )}
-              </div>
-              {activities.length === 0 ? (
-                <div className="text-center text-slate-400 py-10 text-sm">
-                  No activity yet
-                </div>
-              ) : (
-                <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
-                  {activities.slice(0, 15).map((activity, idx) => ( // Show latest 15 for performance
-                    <div key={activity.id} className="flex gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-lg shadow-lg shadow-indigo-500/40">
-                          {getActivityIcon(activity.type)}
-                        </div>
-                        {idx < Math.min(activities.length - 1, 14) && (
-                          <div className="w-0.5 h-8 bg-gradient-to-b from-indigo-600 to-transparent my-2" />
-                        )}
-                      </div>
-                      <div className="pt-1 flex-1">
-                        <div className="text-white font-medium text-sm">
-                          {activity.action}
-                        </div>
-                        <div className="text-slate-400 text-xs">
-                          {activity.timestamp}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {activities.length > 15 && (
-                    <div className="text-center pt-4">
-                      <div className="text-slate-400 text-xs">
-                        + {activities.length - 15} more activities
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Dataset Analysis - Only show when a project is being analyzed */}
-            {analyzedProject && (
-              <div id="ai-insights" className="rounded-xl p-6 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-indigo-400/40 shadow-xl backdrop-blur-sm">
-                <h2 className="text-lg font-bold text-white mb-5 flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <svg className="w-6 h-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    Analyze of Dataset
-                    <span className="text-xs bg-indigo-500/40 px-2 py-1 rounded-full text-indigo-200 border border-indigo-400/30">
-                      {analyzedProject.name}
-                    </span>
-                  </span>
-                  <button
-                    onClick={() => setAnalyzedProject(null)}
-                    className="text-slate-400 hover:text-white transition-colors"
-                    title="Close analysis"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </h2>
-                <ul className="space-y-3">
-                  {generateAIInsights(analyzedProject).map((insight, index) => (
-                    <li key={index} className="flex gap-3 items-start">
-                      <span className="text-indigo-400 text-lg">●</span>
-                      <span className="text-slate-200 text-sm">
-                        {insight}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-4 text-xs text-slate-400 flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          {/* Dataset Analysis - Only show when a project is being analyzed */}
+          {analyzedProject && (
+            <div id="ai-insights" className="rounded-xl p-6 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-indigo-400/40 shadow-xl backdrop-blur-sm mb-10">
+              <h2 className="text-lg font-bold text-white mb-5 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <svg className="w-6 h-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  Analysis complete for: {analyzedProject.name} • {analyzedProject.createdDate}
-                </div>
+                  Analyze of Dataset
+                  <span className="text-xs bg-indigo-500/40 px-2 py-1 rounded-full text-indigo-200 border border-indigo-400/30">
+                    {analyzedProject.name}
+                  </span>
+                </span>
+                <button
+                  onClick={() => setAnalyzedProject(null)}
+                  className="text-slate-400 hover:text-white transition-colors"
+                  title="Close analysis"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </h2>
+              <ul className="space-y-3">
+                {generateAIInsights(analyzedProject).map((insight, index) => (
+                  <li key={index} className="flex gap-3 items-start">
+                    <span className="text-indigo-400 text-lg">●</span>
+                    <span className="text-slate-200 text-sm">
+                      {insight}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 text-xs text-slate-400 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Analysis complete for: {analyzedProject.name} • {analyzedProject.createdDate}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Demo Templates */}
           <div className="rounded-xl p-6 bg-slate-800/60 backdrop-blur-xl border border-slate-600/40 shadow-2xl">
