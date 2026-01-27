@@ -1096,52 +1096,52 @@ export default function DashboardPage() {
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
             <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
-              <div className="text-3xl mb-2">
-              <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                {stats.validations}
+              <div className="flex items-center justify-between mb-3">
+                <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <div className="text-2xl font-bold text-white">
+                  {stats.validations}
+                </div>
               </div>
               <div className="text-slate-400 font-medium text-xs">
                 ML Verify Dataset
               </div>
             </div>
             <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
-              <div className="text-3xl mb-2">
-              <svg className="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                {stats.datasets}
+              <div className="flex items-center justify-between mb-3">
+                <svg className="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <div className="text-2xl font-bold text-white">
+                  {stats.datasets}
+                </div>
               </div>
               <div className="text-slate-400 font-medium text-xs">
                 Datasets Uploaded
               </div>
             </div>
             <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
-              <div className="text-3xl mb-2">
-              <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                {stats.avgConfidence}%
+              <div className="flex items-center justify-between mb-3">
+                <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="text-2xl font-bold text-white">
+                  {stats.avgConfidence}%
+                </div>
               </div>
               <div className="text-slate-400 font-medium text-xs">
                 Avg Confidence
               </div>
             </div>
             <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
-              <div className="text-3xl mb-2">
-              <svg className="w-8 h-8 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                {stats.totalRows.toLocaleString()}
+              <div className="flex items-center justify-between mb-3">
+                <svg className="w-8 h-8 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <div className="text-2xl font-bold text-white">
+                  {stats.totalRows.toLocaleString()}
+                </div>
               </div>
               <div className="text-slate-400 font-medium text-xs">
                 Total Rows Analyzed
@@ -1364,10 +1364,10 @@ export default function DashboardPage() {
                 </p>
                 {stats.validations >= 2 && stats.avgConfidence >= 75 && (
                   <div className="mt-2 text-green-400 text-xs flex items-center">
-                    <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-3 h-3 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Unlocked!
+                    <span>Unlocked!</span>
                   </div>
                 )}
               </div>
@@ -1395,10 +1395,10 @@ export default function DashboardPage() {
                 </p>
                 {stats.validations >= 3 && stats.avgConfidence >= 80 && (
                   <div className="mt-2 text-green-400 text-xs flex items-center">
-                    <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-3 h-3 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Unlocked!
+                    <span>Unlocked!</span>
                   </div>
                 )}
               </div>
@@ -1426,10 +1426,10 @@ export default function DashboardPage() {
                 </p>
                 {stats.validations >= 5 && stats.avgConfidence >= 85 && (
                   <div className="mt-2 text-green-400 text-xs flex items-center">
-                    <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-3 h-3 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Unlocked!
+                    <span>Unlocked!</span>
                   </div>
                 )}
               </div>
@@ -1455,20 +1455,20 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
                 {activities.slice(0, 15).map((activity, idx) => ( // Show latest 15 for performance
-                  <div key={activity.id} className="flex gap-4">
+                  <div key={activity.id} className="flex items-start gap-4">
                     <div className="flex flex-col items-center">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-lg shadow-lg shadow-indigo-500/40">
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-lg shadow-lg shadow-indigo-500/40 flex-shrink-0">
                         {getActivityIcon(activity.type)}
                       </div>
                       {idx < Math.min(activities.length - 1, 14) && (
                         <div className="w-0.5 h-8 bg-gradient-to-b from-indigo-600 to-transparent my-2" />
                       )}
                     </div>
-                    <div className="pt-1 flex-1">
-                      <div className="text-white font-medium text-sm">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white font-medium text-sm leading-5">
                         {activity.action}
                       </div>
-                      <div className="text-slate-400 text-xs">
+                      <div className="text-slate-400 text-xs mt-1">
                         {activity.timestamp}
                       </div>
                     </div>
@@ -1560,7 +1560,12 @@ export default function DashboardPage() {
                           className="border-b border-slate-700/30 hover:bg-indigo-500/10 transition-all"
                         >
                           <td className="py-4 px-4 text-white font-medium">
-                            📍 {project.name}
+                            <div className="flex items-center gap-2">
+                              <svg className="w-4 h-4 text-indigo-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 7a2 2 0 012-2h10a2 2 0 012 2v2M7 7h10" />
+                              </svg>
+                              <span>{project.name}</span>
+                            </div>
                           </td>
                           <td className="py-4 px-4 text-slate-300">
                             {project.dataset}
@@ -1643,15 +1648,17 @@ export default function DashboardPage() {
           {analyzedProject && (
             <div id="ai-insights" className="rounded-xl p-6 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-indigo-400/40 shadow-xl backdrop-blur-sm mb-10">
               <h2 className="text-lg font-bold text-white mb-5 flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <svg className="w-6 h-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex items-center gap-3">
+                  <svg className="w-6 h-6 text-yellow-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  Analyze of Dataset
-                  <span className="text-xs bg-indigo-500/40 px-2 py-1 rounded-full text-indigo-200 border border-indigo-400/30">
-                    {analyzedProject.name}
+                  <span className="flex items-center gap-2">
+                    <span>Analysis of Dataset</span>
+                    <span className="text-xs bg-indigo-500/40 px-2 py-1 rounded-full text-indigo-200 border border-indigo-400/30">
+                      {analyzedProject.name}
+                    </span>
                   </span>
-                </span>
+                </div>
                 <button
                   onClick={() => setAnalyzedProject(null)}
                   className="text-slate-400 hover:text-white transition-colors"
@@ -1664,9 +1671,9 @@ export default function DashboardPage() {
               </h2>
               <ul className="space-y-3">
                 {generateAIInsights(analyzedProject).map((insight, index) => (
-                  <li key={index} className="flex gap-3 items-start">
-                    <span className="text-indigo-400 text-lg">●</span>
-                    <span className="text-slate-200 text-sm">
+                  <li key={index} className="flex items-start gap-3">
+                    <span className="text-indigo-400 text-lg flex-shrink-0 mt-0.5">●</span>
+                    <span className="text-slate-200 text-sm leading-relaxed">
                       {insight}
                     </span>
                   </li>
@@ -1751,8 +1758,11 @@ export default function DashboardPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-slate-900 rounded-xl border border-slate-700 shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-slate-700">
-              <h3 className="text-xl font-bold text-white">
-                📊 {datasetViewer.fileName}
+              <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                <svg className="w-6 h-6 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span>{datasetViewer.fileName}</span>
               </h3>
               <button
                 onClick={() => setDatasetViewer({ isOpen: false, data: [], headers: [], fileName: '' })}
