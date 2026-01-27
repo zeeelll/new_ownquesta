@@ -21,7 +21,7 @@ export default function HomePage() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastScrollY = useRef(0);
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
   useEffect(() => {
     // Check authentication status
