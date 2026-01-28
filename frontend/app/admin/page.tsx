@@ -99,8 +99,26 @@ export default function AdminPage() {
         (user.role?.toLowerCase() || '').includes(searchTerm.toLowerCase())
       );
       setFilteredUsers(filtered);
+    } else {
+      setFilteredUsers(users);
     }
   }, [users, searchTerm, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'activities' && allActivities.length === 0) {
+      handleViewAllActivities();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 'users') {
+      setSearchTerm('');
+    }
+    if (activeTab !== 'activities') {
+      setActivitySearch('');
+      setActivityFilter('all');
+    }
+  }, [activeTab]);
 
   const checkAuthAndLoadUsers = async () => {
     try {
@@ -651,7 +669,7 @@ export default function AdminPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search activities..."
+                    placeholder="Search by user name or email..."
                     value={activitySearch}
                     onChange={(e) => setActivitySearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
@@ -686,17 +704,15 @@ export default function AdminPage() {
                       .filter(activity => {
                         const matchesSearch = activitySearch === '' ||
                           activity.userName.toLowerCase().includes(activitySearch.toLowerCase()) ||
-                          activity.userEmail.toLowerCase().includes(activitySearch.toLowerCase()) ||
-                          activity.description.toLowerCase().includes(activitySearch.toLowerCase()) ||
-                          activity.action.toLowerCase().includes(activitySearch.toLowerCase());
+                          activity.userEmail.toLowerCase().includes(activitySearch.toLowerCase());
 
                         const matchesFilter = activityFilter === 'all' ||
                           (activityFilter === 'login' && activity.action === 'login') ||
                           (activityFilter === 'registration' && activity.action === 'registration') ||
-                          (activityFilter === 'admin' && activity.action.includes('admin')) ||
-                          (activityFilter === 'profile' && activity.action.includes('profile')) ||
+                          (activityFilter === 'admin' && activity.action.startsWith('admin_')) ||
+                          (activityFilter === 'profile' && activity.action === 'admin_update_profile') ||
                           (activityFilter === 'upload' && activity.action.includes('upload')) ||
-                          (activityFilter === 'delete' && activity.action.includes('delete'));
+                          (activityFilter === 'delete' && activity.action === 'admin_delete_account');
 
                         return matchesSearch && matchesFilter;
                       })
@@ -809,17 +825,15 @@ export default function AdminPage() {
                     <span>Showing {allActivities.filter(activity => {
                       const matchesSearch = activitySearch === '' ||
                         activity.userName.toLowerCase().includes(activitySearch.toLowerCase()) ||
-                        activity.userEmail.toLowerCase().includes(activitySearch.toLowerCase()) ||
-                        activity.description.toLowerCase().includes(activitySearch.toLowerCase()) ||
-                        activity.action.toLowerCase().includes(activitySearch.toLowerCase());
+                        activity.userEmail.toLowerCase().includes(activitySearch.toLowerCase());
 
                       const matchesFilter = activityFilter === 'all' ||
                         (activityFilter === 'login' && activity.action === 'login') ||
                         (activityFilter === 'registration' && activity.action === 'registration') ||
-                        (activityFilter === 'admin' && activity.action.includes('admin')) ||
-                        (activityFilter === 'profile' && activity.action.includes('profile')) ||
+                        (activityFilter === 'admin' && activity.action.startsWith('admin_')) ||
+                        (activityFilter === 'profile' && activity.action === 'admin_update_profile') ||
                         (activityFilter === 'upload' && activity.action.includes('upload')) ||
-                        (activityFilter === 'delete' && activity.action.includes('delete'));
+                        (activityFilter === 'delete' && activity.action === 'admin_delete_account');
 
                       return matchesSearch && matchesFilter;
                     }).length} of {allActivities.length} activities</span>
