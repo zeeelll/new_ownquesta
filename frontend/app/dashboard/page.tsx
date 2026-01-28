@@ -482,9 +482,9 @@ export default function DashboardPage() {
       // Map dataset names to URLs
       const datasetFiles: { [key: string]: string } = {
         'Telco Customer Churn': 'https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv',
-        'Boston Housing': 'https://raw.githubusercontent.com/selva86/datasets/master/BostonHousing.csv',
-        'German Credit Risk': 'https://raw.githubusercontent.com/IBM/german-credit-risk/master/data/german_credit_data.csv',
-        'Superstore Sales': 'https://raw.githubusercontent.com/vkrit/data-science/master/Sample%20Superstore.csv'
+        'Boston Housing': '/datasets/boston.csv',
+        'German Credit Risk': '/datasets/german_credit.csv',
+        'Superstore Sales': '/datasets/superstore_sales.csv'
       };
 
       const filePath = datasetFiles[datasetName];
@@ -612,10 +612,9 @@ export default function DashboardPage() {
       
       showNotification('Dataset deleted successfully', 'success');
       
-      // Update stats
-      setTimeout(() => {
-        loadDashboardData();
-      }, 100);
+      // Reset stats to 0
+      setStats({ validations: 0, datasets: 0, avgConfidence: 0, totalRows: 0 });
+      saveToLocalStorage('mlValidationStats', { validations: 0, datasets: 0, avgConfidence: 0, totalRows: 0 });
     }
   };
 
@@ -822,12 +821,6 @@ export default function DashboardPage() {
             className="px-4 py-2 rounded-lg text-white font-medium text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all"
           >
             Back
-          </button>
-          <button
-            onClick={clearAllData}
-            className="px-4 py-2 rounded-lg text-white font-medium text-sm bg-red-600/50 border border-red-500/20 backdrop-blur-md hover:bg-red-600/80 transition-all"
-          >
-            Clear Data
           </button>
           
           {/* User Dropdown */}
