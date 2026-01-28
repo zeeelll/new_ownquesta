@@ -44,7 +44,7 @@ const MLPage: React.FC = () => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const router = useRouter();
 
-  const saveProjectToLocalStorage = (fileData: DataFile) => {
+  const saveProjectToLocalStorage = (fileData: DataFile, rowCount?: number) => {
     if (typeof window === 'undefined') return;
     
     // Create project data for dashboard
@@ -61,6 +61,7 @@ const MLPage: React.FC = () => {
         year: 'numeric' 
       }),
       filePath: fileData.name, // Store for opening
+      rowCount: rowCount || 0, // Store actual row count
       fileData: {
         name: fileData.name,
         size: fileData.size,
@@ -86,7 +87,7 @@ const MLPage: React.FC = () => {
     // Add activity to dashboard
     const activityData = {
       id: Date.now().toString(),
-      action: `Uploaded dataset ${fileData.name} for analysis`,
+      action: `Uploaded dataset ${fileData.name} for analysis (${rowCount?.toLocaleString() || 'unknown'} rows)`,
       timestamp: new Date().toLocaleTimeString(),
       type: 'upload'
     };
@@ -267,8 +268,26 @@ const MLPage: React.FC = () => {
 
     setIsProcessing(true);
 
-    // Simulate file processing
-    setTimeout(() => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      if (!content) {
+        alert('Failed to read file content');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Parse CSV content
+      const lines = content.split('\n').filter(line => line.trim());
+      const headers = lines[0]?.split(',') || [];
+      const dataRows = lines.slice(1).filter(line => line.trim());
+      const actualRowCount = dataRows.length;
+
+      // Generate preview data from actual file
+      const previewRows = dataRows.slice(0, 5).map(row => 
+        row.split(',').map(cell => cell.trim())
+      );
+
       const fileData: DataFile = {
         name: file.name,
         size: file.size,
@@ -278,40 +297,41 @@ const MLPage: React.FC = () => {
 
       setUploadedFile(fileData);
 
-      // Save project to localStorage for dashboard integration  
+      // Save project to localStorage for dashboard integration with actual row count
       setTimeout(() => {
-        saveProjectToLocalStorage(fileData);
+        saveProjectToLocalStorage(fileData, actualRowCount);
         saveCurrentSession();
       }, 100);
 
-      // Generate mock preview data
-      const mockPreview: DataPreview = {
-        columns: ['Customer_ID', 'Age', 'Purchase_Amount', 'Frequency', 'Satisfaction', 'Status'],
-        rows: [
-          ['C001', '35', '1250.50', '12', '4.5', 'Active'],
-          ['C002', '42', '2100.75', '18', '4.8', 'Active'],
-          ['C003', '28', '890.25', '8', '3.9', 'Inactive'],
-          ['C004', '55', '3450.00', '25', '4.7', 'Active'],
-          ['C005', '31', '1670.80', '14', '4.3', 'Active'],
-        ],
-        rowCount: 5000,
-        columnCount: 6,
+      // Generate actual preview data
+      const actualPreview: DataPreview = {
+        columns: headers.map(h => h.trim()),
+        rows: previewRows,
+        rowCount: actualRowCount,
+        columnCount: headers.length,
         fileSize: (file.size / 1024).toFixed(2) + ' KB'
       };
 
-      setDataPreview(mockPreview);
+      setDataPreview(actualPreview);
       setCurrentStep('validate');
       setIsProcessing(false);
 
-      // AI Agent greeting message
+      // AI Agent greeting message with actual data
       setChatMessages([
         {
           type: 'ai',
-          text: `Great! I've successfully loaded your dataset "${file.name}". I can see it has ${mockPreview.columnCount} columns and ${mockPreview.rowCount.toLocaleString()} rows. What would you like to predict or analyze from this data?`,
+          text: `Great! I've successfully loaded your dataset "${file.name}". I can see it has ${actualPreview.columnCount} columns and ${actualPreview.rowCount.toLocaleString()} rows. What would you like to predict or analyze from this data?`,
           timestamp: new Date().toLocaleTimeString()
         }
       ]);
-    }, 1500);
+    };
+
+    reader.onerror = () => {
+      alert('Failed to read file');
+      setIsProcessing(false);
+    };
+
+    reader.readAsText(file);
   };
 
   const handleSendMessage = () => {

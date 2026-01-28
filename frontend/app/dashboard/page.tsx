@@ -18,6 +18,7 @@ interface Project {
   fileUrl?: string;
   filePath?: string;
   fileType?: string;
+  rowCount?: number;
 }
 
 interface Activity {
@@ -108,7 +109,8 @@ export default function DashboardPage() {
             createdDate: file.uploadDate || file.date || new Date().toLocaleDateString(),
             fileUrl: file.fileUrl || file.url, // Store file URL for opening
             filePath: file.filePath, // Store file path if available
-            fileType: file.type || file.fileType || 'csv'
+            fileType: file.type || file.fileType || 'csv',
+            rowCount: file.rowCount || 0 // Use stored row count or 0
           };
           
           // Avoid duplicates based on filename and upload date
@@ -132,7 +134,8 @@ export default function DashboardPage() {
             createdDate: validation.date || new Date().toLocaleDateString(),
             fileUrl: validation.fileUrl,
             filePath: validation.filePath,
-            fileType: validation.fileType || 'csv'
+            fileType: validation.fileType || 'csv',
+            rowCount: validation.rowCount || validation.rows || 0
           };
           
           // Avoid duplicates
@@ -151,7 +154,10 @@ export default function DashboardPage() {
       if (allProjects.length > 0) {
         const totalConfidence = allProjects.reduce((sum, project) => sum + project.confidence, 0);
         const avgConfidence = Math.round(totalConfidence / allProjects.length);
-        const totalRows = allProjects.length * 1500; // Estimate rows per dataset
+        // Sum up actual row counts from projects, fallback to estimate for older projects
+        const totalRows = allProjects.reduce((sum, project) => {
+          return sum + (project.rowCount || 1500);
+        }, 0);
         
         const updatedStats = {
           validations: allProjects.filter(p => p.status === 'validated').length,
@@ -511,7 +517,8 @@ export default function DashboardPage() {
         createdDate: new Date().toLocaleDateString(),
         fileUrl: filePath,
         filePath: filePath,
-        fileType: 'csv'
+        fileType: 'csv',
+        rowCount: rowCount
       };
       
       const updatedProjects = [...projects, newProject];
