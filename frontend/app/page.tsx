@@ -22,7 +22,7 @@ export default function Home() {
   const orb2Ref = useRef<HTMLDivElement | null>(null);
   const orb3Ref = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
   useEffect(() => {
     // Check authentication status

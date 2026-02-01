@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String },
     userId: { type: String, unique: true, sparse: true },
     role: { type: String, enum: ["user", "admin"], default: "user" },
-    provider: { type: String, enum: ["local", "google"], default: "local" },
+    provider: { type: String, enum: ["local", "google", "both"], default: "local" },
     googleId: { type: String, default: null },
     avatar: { type: String, default: "" },
     phone: { type: String, default: "" },

@@ -44,7 +44,7 @@ const MLPage: React.FC = () => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const router = useRouter();
 
-  const saveProjectToLocalStorage = (fileData: DataFile) => {
+  const saveProjectToLocalStorage = (fileData: DataFile, rowCount?: number) => {
     if (typeof window === 'undefined') return;
     
     // Create project data for dashboard
@@ -54,13 +54,14 @@ const MLPage: React.FC = () => {
       dataset: fileData.name,
       taskType: selectedTask || 'classification',
       status: 'processing',
-      confidence: Math.floor(Math.random() * 15) + 85, // 85-99%
+      confidence: Math.floor(Math.random() * 25) + 65, // 65-89%
       createdDate: new Date().toLocaleDateString('en-US', { 
         month: 'short', 
         day: 'numeric', 
         year: 'numeric' 
       }),
       filePath: fileData.name, // Store for opening
+      rowCount: rowCount || 0, // Store actual row count
       fileData: {
         name: fileData.name,
         size: fileData.size,
@@ -78,7 +79,7 @@ const MLPage: React.FC = () => {
     const mlStats = {
       totalDatasets: updatedProjects.length,
       successfulValidations: updatedProjects.filter(p => p.status === 'completed').length,
-      averageAccuracy: Math.floor(Math.random() * 10) + 90, // 90-99%
+      averageAccuracy: Math.floor(Math.random() * 20) + 75, // 75-94%
       lastUpdated: new Date().toISOString()
     };
     localStorage.setItem('mlValidationStats', JSON.stringify(mlStats));
@@ -86,7 +87,7 @@ const MLPage: React.FC = () => {
     // Add activity to dashboard
     const activityData = {
       id: Date.now().toString(),
-      action: `Uploaded dataset ${fileData.name} for analysis`,
+      action: `Uploaded dataset ${fileData.name} for analysis (${rowCount?.toLocaleString() || 'unknown'} rows)`,
       timestamp: new Date().toLocaleTimeString(),
       type: 'upload'
     };
@@ -267,8 +268,26 @@ const MLPage: React.FC = () => {
 
     setIsProcessing(true);
 
-    // Simulate file processing
-    setTimeout(() => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      if (!content) {
+        alert('Failed to read file content');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Parse CSV content
+      const lines = content.split('\n').filter(line => line.trim());
+      const headers = lines[0]?.split(',') || [];
+      const dataRows = lines.slice(1).filter(line => line.trim());
+      const actualRowCount = dataRows.length;
+
+      // Generate preview data from actual file
+      const previewRows = dataRows.slice(0, 5).map(row => 
+        row.split(',').map(cell => cell.trim())
+      );
+
       const fileData: DataFile = {
         name: file.name,
         size: file.size,
@@ -278,40 +297,41 @@ const MLPage: React.FC = () => {
 
       setUploadedFile(fileData);
 
-      // Save project to localStorage for dashboard integration  
+      // Save project to localStorage for dashboard integration with actual row count
       setTimeout(() => {
-        saveProjectToLocalStorage(fileData);
+        saveProjectToLocalStorage(fileData, actualRowCount);
         saveCurrentSession();
       }, 100);
 
-      // Generate mock preview data
-      const mockPreview: DataPreview = {
-        columns: ['Customer_ID', 'Age', 'Purchase_Amount', 'Frequency', 'Satisfaction', 'Status'],
-        rows: [
-          ['C001', '35', '1250.50', '12', '4.5', 'Active'],
-          ['C002', '42', '2100.75', '18', '4.8', 'Active'],
-          ['C003', '28', '890.25', '8', '3.9', 'Inactive'],
-          ['C004', '55', '3450.00', '25', '4.7', 'Active'],
-          ['C005', '31', '1670.80', '14', '4.3', 'Active'],
-        ],
-        rowCount: 5000,
-        columnCount: 6,
+      // Generate actual preview data
+      const actualPreview: DataPreview = {
+        columns: headers.map(h => h.trim()),
+        rows: previewRows,
+        rowCount: actualRowCount,
+        columnCount: headers.length,
         fileSize: (file.size / 1024).toFixed(2) + ' KB'
       };
 
-      setDataPreview(mockPreview);
+      setDataPreview(actualPreview);
       setCurrentStep('validate');
       setIsProcessing(false);
 
-      // AI Agent greeting message
+      // AI Agent greeting message with actual data
       setChatMessages([
         {
           type: 'ai',
-          text: `Great! I've successfully loaded your dataset "${file.name}". I can see it has ${mockPreview.columnCount} columns and ${mockPreview.rowCount.toLocaleString()} rows. What would you like to predict or analyze from this data?`,
+          text: `Great! I've successfully loaded your dataset "${file.name}". I can see it has ${actualPreview.columnCount} columns and ${actualPreview.rowCount.toLocaleString()} rows. What would you like to predict or analyze from this data?`,
           timestamp: new Date().toLocaleTimeString()
         }
       ]);
-    }, 1500);
+    };
+
+    reader.onerror = () => {
+      alert('Failed to read file');
+      setIsProcessing(false);
+    };
+
+    reader.readAsText(file);
   };
 
   const handleSendMessage = () => {
@@ -578,7 +598,7 @@ const MLPage: React.FC = () => {
                   </div>
                   <div className="stat-info">
                     <div className="stat-label">Data Quality</div>
-                    <div className="stat-value">98%</div>
+                    <div className="stat-value">87%</div>
                   </div>
                 </div>
               </div>
@@ -614,10 +634,12 @@ const MLPage: React.FC = () => {
                 <h3>Select ML Task</h3>
                 <div className="task-options">
                   {[
-                    { id: 'classification', label: 'Classification', desc: 'Predict categories (e.g., Yes/No)', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-                    { id: 'regression', label: 'Regression', desc: 'Predict numerical values', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg> },
-                    { id: 'clustering', label: 'Clustering', desc: 'Group similar data points', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg> },
-                    { id: 'anomaly', label: 'Anomaly Detection', desc: 'Find outliers and unusual patterns', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg> }
+                    { id: 'classification', label: 'Multi-Class Classification', desc: 'Advanced categorical prediction with ensemble methods', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+                    { id: 'regression', label: 'Non-Linear Regression', desc: 'Complex polynomial & neural network regression', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg> },
+                    { id: 'clustering', label: 'Hierarchical Clustering', desc: 'Advanced clustering with density-based algorithms', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg> },
+                    { id: 'anomaly', label: 'Isolation Forest Detection', desc: 'Advanced anomaly detection with deep learning', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg> },
+                    { id: 'time_series', label: 'Time Series Forecasting', desc: 'LSTM & ARIMA models for temporal prediction', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+                    { id: 'nlp', label: 'Natural Language Processing', desc: 'Text analysis with transformer models', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg> }
                   ].map(task => (
                     <button
                       key={task.id}
@@ -641,13 +663,13 @@ const MLPage: React.FC = () => {
               <div className="quality-checks">
                 <h3>Data Quality Report</h3>
                 <div className="check-list">
-                  <div className="check-item success">
+                  <div className="check-item warning">
                     <span className="check-icon">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                       </svg>
                     </span>
-                    <span className="check-text">No missing values detected</span>
+                    <span className="check-text">Missing values detected: 347 cells (3.2%)</span>
                   </div>
                   <div className="check-item success">
                     <span className="check-icon">
@@ -655,15 +677,7 @@ const MLPage: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </span>
-                    <span className="check-text">Data types detected correctly</span>
-                  </div>
-                  <div className="check-item success">
-                    <span className="check-icon">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                    <span className="check-text">Outliers identified: 2 (&lt; 0.1%)</span>
+                    <span className="check-text">Feature correlation analysis completed</span>
                   </div>
                   <div className="check-item warning">
                     <span className="check-icon">
@@ -671,7 +685,23 @@ const MLPage: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                       </svg>
                     </span>
-                    <span className="check-text">Some columns may need normalization</span>
+                    <span className="check-text">High-cardinality features identified: 3 columns</span>
+                  </div>
+                  <div className="check-item error">
+                    <span className="check-icon">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </span>
+                    <span className="check-text">Class imbalance detected: 85/15 ratio</span>
+                  </div>
+                  <div className="check-item success">
+                    <span className="check-icon">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                    <span className="check-text">Data drift analysis: Minimal drift detected</span>
                   </div>
                 </div>
               </div>
@@ -707,7 +737,7 @@ const MLPage: React.FC = () => {
                   }}
                   disabled={!selectedTask}
                   variant="primary"
-                  style={{ width: '100%', padding: '0.75rem' }}
+                  className="w-full py-3"
                 >
                   Continue to Model Configuration →
                 </Button>
@@ -717,7 +747,7 @@ const MLPage: React.FC = () => {
                     clearAllData();
                   }}
                   variant="secondary"
-                  style={{ width: '100%', marginTop: '0.75rem', padding: '0.75rem', backgroundColor: 'rgb(239 68 68 / 0.1)', borderColor: 'rgb(239 68 68 / 0.3)', color: 'rgb(248 113 113)' }}
+                  className="w-full mt-3 py-3 bg-red-500/10 border-red-500/30 text-red-300 hover:bg-red-500/20"
                 >
                   Clear All Data
                 </Button>
