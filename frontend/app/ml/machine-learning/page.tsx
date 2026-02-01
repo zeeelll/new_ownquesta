@@ -26,6 +26,14 @@ interface ChatMessage {
   timestamp: string;
 }
 
+type ProjectStatus = 'in_progress' | 'completed';
+interface ProjectItem {
+  id: string;
+  name: string;
+  createdAt: string;
+  status: ProjectStatus;
+}
+
 const MLStudioAdvanced: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'setup' | 'validate' | 'configure'>('setup');
   const [uploadedFile, setUploadedFile] = useState<DataFile | null>(null);
@@ -43,6 +51,9 @@ const MLStudioAdvanced: React.FC = () => {
   const [validationResult, setValidationResult] = useState<any>(null);
   const [showLastRows, setShowLastRows] = useState(false);
   const [viewMode, setViewMode] = useState<'first' | 'last' | 'all'>('first');
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const hasGoal = userQuery.trim().length > 0;
   const hasDataset = Boolean(uploadedFile && actualFile && dataPreview);
@@ -51,6 +62,29 @@ const MLStudioAdvanced: React.FC = () => {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  // Load projects from localStorage on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('mlProjects');
+    if (stored) {
+      const parsed = JSON.parse(stored) as ProjectItem[];
+      setProjects(parsed);
+      if (parsed.length) setSelectedProjectId(parsed[0].id);
+    } else {
+      const seed: ProjectItem[] = [
+        { id: 'proj-' + Date.now(), name: 'Customer Churn Model', createdAt: new Date().toISOString(), status: 'in_progress' }
+      ];
+      setProjects(seed);
+      setSelectedProjectId(seed[0].id);
+    }
+  }, []);
+
+  // Persist projects when they change
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('mlProjects', JSON.stringify(projects));
+  }, [projects]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -251,30 +285,53 @@ const MLStudioAdvanced: React.FC = () => {
     return <span dangerouslySetInnerHTML={{ __html: html }} />;
   };
 
+  // Project handlers
+  const handleAddProject = () => {
+    const name = prompt('Project name');
+    if (!name || !name.trim()) return;
+    const newProject: ProjectItem = {
+      id: 'proj-' + Date.now(),
+      name: name.trim(),
+      createdAt: new Date().toISOString(),
+      status: 'in_progress'
+    };
+    setProjects(prev => [newProject, ...prev]);
+    setSelectedProjectId(newProject.id);
+  };
+
+  const handleDeleteProject = (id: string) => {
+    const confirmDelete = confirm('Delete this project and its history?');
+    if (!confirmDelete) return;
+    setProjects(prev => prev.filter(p => p.id !== id));
+    if (selectedProjectId === id) {
+      const remaining = projects.filter(p => p.id !== id);
+      setSelectedProjectId(remaining[0]?.id || null);
+    }
+  };
+
+  const handleSelectProject = (id: string) => {
+    setSelectedProjectId(id);
+  };
+
+  const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/20 to-slate-950 text-white relative overflow-hidden">
+    <div className="min-h-screen bg-slate-900 text-slate-100 relative overflow-hidden">
       <style>{`
-        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(50px, -50px); } }
-        @keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); } 50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); } }
-        @keyframes shimmer { from { background-position: -1000px 0; } to { background-position: 1000px 0; } }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
-        .animate-glow { animation: glow 3s ease-in-out infinite; }
-        .animate-slide { animation: slideIn 0.5s ease-out; }
-        .text-gradient { background: linear-gradient(135deg, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        @keyframes pulse-ring { 0% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+        @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes slideOutLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+        .animate-slide { animation: slideIn 0.45s ease-out; }
+        .animate-slide-in-left { animation: slideInLeft 0.3s ease-out; }
+        .animate-slide-out-left { animation: slideOutLeft 0.3s ease-out; }
+        .text-gradient { background: linear-gradient(135deg, #e5e7eb, #c7d2fe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .text-gradient-rainbow { background: linear-gradient(135deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
       `}</style>
 
-      {/* Background Orbs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute w-[600px] h-[600px] rounded-full bg-indigo-500/20 blur-[120px] -top-48 -left-48" style={{ animation: 'float 20s ease-in-out infinite' }} />
-        <div className="absolute w-[500px] h-[500px] rounded-full bg-pink-500/20 blur-[120px] -bottom-32 -right-32" style={{ animation: 'float 25s ease-in-out infinite reverse' }} />
-        <div className="absolute w-[400px] h-[400px] rounded-full bg-purple-500/20 blur-[120px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'float 30s ease-in-out infinite' }} />
-      </div>
-
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-2xl bg-slate-950/80 border-b border-indigo-500/20 relative">
+      <header className="sticky top-0 z-50 backdrop-blur bg-slate-900/90 border-b border-slate-800 relative">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between flex-wrap gap-6">
             <div className="flex items-center gap-4">
@@ -313,6 +370,17 @@ const MLStudioAdvanced: React.FC = () => {
           </div>
         </div>
 
+        {/* Menu Toggle Button in Upper Left Corner */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="absolute top-4 left-6 p-3 rounded-lg text-white font-medium text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all"
+          title="Project History"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
         {/* Back Button in Upper Right Corner */}
         <button
           onClick={() => router.back()}
@@ -321,6 +389,115 @@ const MLStudioAdvanced: React.FC = () => {
           Back
         </button>
       </header>
+
+      {/* Sidebar */}
+      {sidebarOpen && (
+        <>
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            onClick={() => setSidebarOpen(false)}
+          />
+          
+          {/* Sidebar Panel */}
+          <div className="fixed top-0 left-0 h-full w-96 bg-slate-900 border-r border-slate-700 shadow-2xl z-50 animate-slide-in-left overflow-hidden flex flex-col">
+            {/* Sidebar Header */}
+            <div className="p-6 border-b border-slate-700">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gradient">ML Projects</h2>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-2 rounded-lg hover:bg-white/10 transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {/* Add New Project Button */}
+              <button
+                onClick={() => {
+                  handleAddProject();
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 font-semibold shadow-lg transition-all flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                New Project
+              </button>
+            </div>
+
+            {/* Projects List */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-3">
+              {projects.length === 0 ? (
+                <div className="text-center py-12">
+                  <svg className="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="text-gray-400 text-sm">No projects yet</p>
+                  <p className="text-gray-500 text-xs mt-2">Click the + button to create your first project</p>
+                </div>
+              ) : (
+                projects.map((project) => (
+                  <div
+                    key={project.id}
+                    className={`group relative p-4 rounded-xl border transition-all cursor-pointer ${
+                      selectedProjectId === project.id
+                        ? 'bg-indigo-500/20 border-indigo-500/50 shadow-lg'
+                        : 'bg-slate-800/50 border-slate-700 hover:border-slate-600 hover:bg-slate-800/70'
+                    }`}
+                    onClick={() => handleSelectProject(project.id)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-white truncate mb-1">{project.name}</h3>
+                        <p className="text-xs text-gray-400 mb-2">{formatDate(project.createdAt)}</p>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            project.status === 'completed'
+                              ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                              : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                          }`}>
+                            {project.status === 'completed' ? '✓ Completed' : '⏳ In Progress'}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Delete Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteProject(project.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-2 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all"
+                        title="Delete project"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    {selectedProjectId === project.id && (
+                      <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-pink-500 rounded-r-xl" />
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Sidebar Footer */}
+            <div className="p-6 border-t border-slate-700">
+              <div className="flex items-center justify-between text-xs text-gray-400">
+                <span>{projects.length} project{projects.length !== 1 ? 's' : ''}</span>
+                <span>ML Studio v1.0</span>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-12">
@@ -347,7 +524,7 @@ const MLStudioAdvanced: React.FC = () => {
                   <div><h3 className="text-xl font-bold">Define Your Goal</h3><p className="text-sm text-gray-400">What do you want to predict or analyze?</p></div>
                 </div>
 
-                <div className="group backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6 hover:border-indigo-500/40 transition-all">
+                <div className="group bg-slate-800/70 border border-slate-700 rounded-2xl p-6 shadow-sm transition-all hover:border-indigo-500/50">
                   <textarea 
                     placeholder="Example: I want to predict which customers are likely to churn in the next 3 months..." 
                     value={userQuery} 
@@ -379,7 +556,7 @@ const MLStudioAdvanced: React.FC = () => {
                       example: 'A, B, C' 
                     }
                   ].map((item) => (
-                    <div key={item.title} className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-xl p-4 hover:border-indigo-500/40 hover:-translate-y-1 transition-all cursor-pointer group">
+                    <div key={item.title} className="bg-slate-800/70 border border-slate-700 rounded-xl p-4 shadow-sm hover:border-indigo-500/50 hover:-translate-y-1 transition-all cursor-pointer group">
                       <div className="mb-2 group-hover:scale-110 transition-transform">{item.icon}</div>
                       <h4 className="text-sm font-semibold mb-1">{item.title}</h4>
                       <code className="text-xs text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">{item.example}</code>
@@ -399,7 +576,7 @@ const MLStudioAdvanced: React.FC = () => {
                   <div><h3 className="text-xl font-bold">Upload Dataset</h3><p className="text-sm text-gray-400">CSV or Excel (Max 50MB)</p></div>
                 </div>
 
-                <div className={`backdrop-blur-2xl bg-slate-900/60 border rounded-2xl p-12 text-center cursor-pointer transition-all ${dragActive ? 'border-indigo-500 bg-indigo-500/10 scale-105' : 'border-indigo-500/20 hover:border-indigo-500/40'} ${isProcessing ? 'pointer-events-none' : ''}`} onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} onClick={() => !isProcessing && fileInputRef.current?.click()}>
+                <div className={`bg-slate-800/70 border border-slate-700 rounded-2xl p-12 text-center cursor-pointer transition-all shadow-sm ${dragActive ? 'border-indigo-500 bg-indigo-500/10 scale-105' : 'hover:border-indigo-500/40'} ${isProcessing ? 'pointer-events-none' : ''}`} onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} onClick={() => !isProcessing && fileInputRef.current?.click()}>
                   <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={(e) => e.target.files?.[0] && processFile(e.target.files[0])} className="hidden" />
                   {isProcessing ? (
                     <div className="space-y-4">
@@ -442,12 +619,12 @@ const MLStudioAdvanced: React.FC = () => {
                 )}
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-xl p-4 hover:border-indigo-500/40 hover:-translate-y-1 transition-all">
+                  <div className="bg-slate-800/70 border border-slate-700 rounded-xl p-4 shadow-sm hover:border-indigo-500/40 hover:-translate-y-1 transition-all">
                     <svg className="w-5 h-5 text-indigo-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <h4 className="text-sm font-semibold mb-1">Supported</h4>
                     <p className="text-xs text-gray-400">CSV, Excel formats</p>
                   </div>
-                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-xl p-4 hover:border-indigo-500/40 hover:-translate-y-1 transition-all">
+                  <div className="bg-slate-800/70 border border-slate-700 rounded-xl p-4 shadow-sm hover:border-indigo-500/40 hover:-translate-y-1 transition-all">
                     <svg className="w-5 h-5 text-pink-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                     <h4 className="text-sm font-semibold mb-1">Secure</h4>
                     <p className="text-xs text-gray-400">Never stored</p>
@@ -523,7 +700,7 @@ const MLStudioAdvanced: React.FC = () => {
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6 hover:border-indigo-500/40 hover:-translate-y-1 transition-all group"
+                  className="bg-slate-800/70 border border-slate-700 rounded-2xl p-6 shadow-sm hover:border-indigo-500/40 hover:-translate-y-1 transition-all group"
                 >
                   <div className="mb-2">{stat.icon}</div>
                   <p className="text-sm text-gray-400 mb-1">{stat.label}</p>
@@ -538,7 +715,7 @@ const MLStudioAdvanced: React.FC = () => {
               ))}
             </div>
 
-            <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
+            <div className="bg-slate-800/70 border border-slate-700 rounded-2xl p-6 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold">Data Sample</h3>
                 <div className="flex gap-2">
@@ -591,7 +768,7 @@ const MLStudioAdvanced: React.FC = () => {
               </p>
             </div>
 
-            <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
+            <div className="bg-slate-800/70 border border-slate-700 rounded-2xl p-6 shadow-sm">
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -664,7 +841,7 @@ const MLStudioAdvanced: React.FC = () => {
               <div className="space-y-6">
                 {/* User View Report - Markdown Display */}
                 {validationResult.user_view_report && (
-                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8">
+                  <div className="bg-slate-800/70 border border-slate-700 rounded-2xl p-8 shadow-sm">
                     <div className="prose prose-invert max-w-none">
                       <div className="whitespace-pre-wrap text-sm leading-relaxed">
                         {validationResult.user_view_report.split('\n').map((line: string, i: number) => {
@@ -695,7 +872,7 @@ const MLStudioAdvanced: React.FC = () => {
 
                 {/* Dataset Summary Card */}
                 {validationResult.dataset_summary && (
-                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
+                  <div className="bg-slate-800/70 border border-slate-700 rounded-2xl p-6 shadow-sm">
                     <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
                       <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -725,7 +902,7 @@ const MLStudioAdvanced: React.FC = () => {
 
                 {/* Goal Understanding */}
                 {validationResult.goal_understanding && (
-                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-green-500/30 rounded-2xl p-6">
+                  <div className="bg-slate-800/70 border border-slate-700 rounded-2xl p-6 shadow-sm">
                     <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
                       <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -750,7 +927,7 @@ const MLStudioAdvanced: React.FC = () => {
                 )}
 
                 {/* Full JSON Response (Collapsible) */}
-                <details className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
+                <details className="bg-slate-800/70 border border-slate-700 rounded-2xl p-6 shadow-sm">
                   <summary className="text-xl font-bold cursor-pointer hover:text-indigo-300 transition-colors flex items-center gap-2">
                     <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
