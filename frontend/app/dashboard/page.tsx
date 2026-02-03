@@ -864,27 +864,58 @@ export default function DashboardPage() {
 
       {/* ML Project Name Modal */}
       {showMLModal && (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-lg bg-slate-800/95 border border-indigo-500/30 rounded-xl p-6 shadow-xl">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-1">Open ML Workspace</h3>
-                <p className="text-sm text-slate-300">Enter a project name to open in the ML workspace, or pick a previous project.</p>
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl mx-4 animate-in fade-in-0 zoom-in-95 duration-300">
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex-1">
+                <div className="flex items-center mb-2">
+                  <div className="p-2 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-xl mr-3">
+                    <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-white">Open ML Workspace</h3>
+                </div>
+                <p className="text-white/70 text-sm leading-relaxed">Enter a project name to open in the ML workspace, or pick a previous project.</p>
               </div>
-              <button onClick={() => { setShowMLModal(false); setMlProjectName(''); }} className="text-slate-400 hover:text-white">✕</button>
+              <button 
+                onClick={() => { setShowMLModal(false); setMlProjectName(''); }} 
+                className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 ml-4"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
-            <div className="mt-4">
-              <input
-                value={mlProjectName}
-                onChange={(e) => setMlProjectName(e.target.value)}
-                placeholder="Project name (optional)"
-                className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700 text-white mb-3 outline-none"
-              />
+            <div className="space-y-6">
+              <div className="relative">
+                <label className="block text-white/80 text-sm font-medium mb-2">
+                  Project Name
+                </label>
+                <div className="relative">
+                  <input
+                    value={mlProjectName}
+                    onChange={(e) => setMlProjectName(e.target.value)}
+                    placeholder="Enter project name (optional)"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 outline-none focus:border-indigo-400/60 focus:bg-white/10 transition-all duration-300 backdrop-blur-sm"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <svg className="w-5 h-5 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
 
               {projects && projects.length > 0 && (
-                <div className="mb-3">
-                  <div className="text-slate-300 text-sm mb-2">Previous projects</div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-white/80 text-sm font-medium">Recent Projects</span>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {projects.slice(0, 6).map((p) => (
                       <Button
@@ -892,7 +923,11 @@ export default function DashboardPage() {
                         onClick={() => { setMlProjectName(p.name); setMlSelectedProjectTemp(p); }}
                         variant={mlProjectName === p.name ? 'secondary' : 'outline'}
                         size="sm"
-                        className={`px-3 py-1 text-xs ${mlProjectName === p.name ? 'bg-indigo-600 text-white' : ''}`}
+                        className={`px-4 py-2 text-xs rounded-lg border transition-all duration-200 ${
+                          mlProjectName === p.name 
+                            ? 'bg-indigo-500/20 text-indigo-300 border-indigo-400/50 shadow-lg shadow-indigo-500/20' 
+                            : 'bg-white/5 text-white/80 border-white/20 hover:bg-white/10 hover:border-white/30'
+                        }`}
                       >
                         {p.name}
                       </Button>
@@ -901,8 +936,15 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-3 mt-4">
-                <Button onClick={() => { setShowMLModal(false); setMlProjectName(''); }} variant="outline" size="sm">Cancel</Button>
+              <div className="flex items-center justify-end gap-3 pt-6 border-t border-white/10">
+                <Button 
+                  onClick={() => { setShowMLModal(false); setMlProjectName(''); }} 
+                  variant="outline" 
+                  size="sm"
+                  className="px-6 py-2 bg-white/5 text-white/80 border border-white/20 rounded-xl hover:bg-white/10 hover:border-white/30 transition-all duration-200"
+                >
+                  Cancel
+                </Button>
                 <Button onClick={() => {
                   try {
                     const name = mlProjectName.trim();
@@ -917,8 +959,31 @@ export default function DashboardPage() {
                         localStorage.setItem('mlSelectedProject', JSON.stringify(match));
                         showNotification(`Opening ML workspace for ${match.name}...`, 'success');
                       } else {
-                        localStorage.setItem('mlSelectedProject', JSON.stringify({ name }));
-                        showNotification(`Opening ML workspace for ${name}...`, 'success');
+                        // Create new project and save it to userProjects
+                        const newProject: Project = {
+                          id: `ml_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                          name: name,
+                          dataset: `${name} Dataset`,
+                          taskType: 'classification',
+                          status: 'in-progress',
+                          confidence: 0,
+                          createdDate: new Date().toLocaleDateString(),
+                          fileType: 'pending',
+                          rowCount: 0
+                        };
+                        
+                        // Save to userProjects for dashboard display
+                        const existingProjects = JSON.parse(localStorage.getItem('userProjects') || '[]');
+                        const updatedProjects = [newProject, ...existingProjects];
+                        localStorage.setItem('userProjects', JSON.stringify(updatedProjects));
+                        
+                        // Store for ML workspace
+                        localStorage.setItem('mlSelectedProject', JSON.stringify(newProject));
+                        
+                        // Update local state to show new project immediately
+                        setProjects(prev => [newProject, ...prev]);
+                        
+                        showNotification(`Created and opening ML workspace for ${name}...`, 'success');
                       }
                     } else {
                       try { localStorage.removeItem('mlSelectedProject'); } catch (e) {}
@@ -933,7 +998,16 @@ export default function DashboardPage() {
                     setMlSelectedProjectTemp(null);
                     router.push('/ml/machine-learning');
                   }
-                }} variant="primary" size="sm">Open</Button>
+                }} 
+                variant="primary" 
+                size="sm"
+                className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 font-medium"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Open Workspace
+              </Button>
               </div>
             </div>
           </div>

@@ -375,43 +375,46 @@ const MLPage: React.FC = () => {
       position: 'relative'
     }}>
       {/* Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-8 bg-transparent">
+      <nav className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-8 bg-black/20 backdrop-blur-lg border-b border-white/10">
         <div className="flex items-center gap-3">
           <Logo href="/home" size="md" />
+          <div className="ml-4 text-white/80 text-sm font-medium">Machine Learning Studio</div>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
-            className="px-4 py-2 rounded-lg text-white font-medium text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all"
+            className="px-6 py-2.5 rounded-xl text-white font-medium text-sm bg-white/10 border border-white/20 backdrop-blur-md hover:bg-white/20 hover:border-white/30 transition-all duration-300 shadow-lg"
           >
-            Back
+            ← Back
           </button>
         </div>
       </nav>
 
-      <div className="ml-container">
+      <div className="ml-container pt-20 px-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="ml-header">
-        <div className="ml-header-content">
-          <div className="ml-title">
-            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span>Machine Learning Studio</span>
+      <div className="ml-header mb-8">
+        <div className="ml-header-content bg-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/10 shadow-2xl">
+          <div className="ml-title flex items-center text-3xl font-bold text-white mb-6">
+            <div className="p-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl mr-4 shadow-lg">
+              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <span className="bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">Machine Learning Studio</span>
           </div>
-          <div className="ml-breadcrumb">
-            <span className={`breadcrumb-item ${currentStep === 'upload' ? 'active' : ''}`}>
-              <span className="breadcrumb-number">1</span>
-              <span>Upload Dataset</span>
+          <div className="ml-breadcrumb flex space-x-4">
+            <span className={`breadcrumb-item flex items-center space-x-3 px-6 py-3 rounded-xl transition-all duration-300 ${currentStep === 'upload' ? 'bg-blue-500/30 text-blue-200 border border-blue-400/50 shadow-lg' : 'bg-white/5 text-white/60 border border-white/10'}`}>
+              <span className={`breadcrumb-number w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${currentStep === 'upload' ? 'bg-blue-500 text-white' : 'bg-white/20 text-white/80'}`}>1</span>
+              <span className="font-medium">Upload Dataset</span>
             </span>
-            <span className={`breadcrumb-item ${currentStep === 'validate' ? 'active' : ''}`}>
-              <span className="breadcrumb-number">2</span>
-              <span>Validate & Preview</span>
+            <span className={`breadcrumb-item flex items-center space-x-3 px-6 py-3 rounded-xl transition-all duration-300 ${currentStep === 'validate' ? 'bg-green-500/30 text-green-200 border border-green-400/50 shadow-lg' : 'bg-white/5 text-white/60 border border-white/10'}`}>
+              <span className={`breadcrumb-number w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${currentStep === 'validate' ? 'bg-green-500 text-white' : 'bg-white/20 text-white/80'}`}>2</span>
+              <span className="font-medium">Validate & Preview</span>
             </span>
-            <span className={`breadcrumb-item ${currentStep === 'configure' ? 'active' : ''}`}>
-              <span className="breadcrumb-number">3</span>
-              <span>Configure Model</span>
+            <span className={`breadcrumb-item flex items-center space-x-3 px-6 py-3 rounded-xl transition-all duration-300 ${currentStep === 'configure' ? 'bg-purple-500/30 text-purple-200 border border-purple-400/50 shadow-lg' : 'bg-white/5 text-white/60 border border-white/10'}`}>
+              <span className={`breadcrumb-number w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${currentStep === 'configure' ? 'bg-purple-500 text-white' : 'bg-white/20 text-white/80'}`}>3</span>
+              <span className="font-medium">Configure Model</span>
             </span>
           </div>
         </div>
@@ -421,18 +424,20 @@ const MLPage: React.FC = () => {
       <div className="ml-content">
         {currentStep === 'upload' && (
           <div className="ml-section upload-section">
-            <div className="section-title">
-              <h2>
-                <svg className="w-6 h-6 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
+            <div className="section-title mb-8 text-center">
+              <h2 className="text-3xl font-bold text-white mb-3 flex items-center justify-center">
+                <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg mr-3">
+                  <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </div>
                 Upload Your Dataset
               </h2>
-              <p>Support CSV and Excel formats</p>
+              <p className="text-white/70 text-lg">Support CSV and Excel formats with professional processing</p>
             </div>
 
             <div
-              className={`upload-area ${dragActive ? 'active' : ''} ${isProcessing ? 'processing' : ''}`}
+              className={`upload-area bg-white/5 backdrop-blur-lg border-2 border-dashed border-white/20 rounded-2xl p-12 text-center transition-all duration-300 hover:bg-white/10 hover:border-white/30 cursor-pointer group shadow-2xl ${dragActive ? 'bg-blue-500/20 border-blue-400/50 scale-105' : ''} ${isProcessing ? 'bg-yellow-500/20 border-yellow-400/50' : ''}`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
@@ -447,35 +452,38 @@ const MLPage: React.FC = () => {
                 style={{ display: 'none' }}
               />
 
-              <div className="upload-icon">
+              <div className="upload-icon mb-6">
                 {isProcessing ? (
-                  <div className="spinner"></div>
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-500/20 rounded-full mb-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400"></div>
+                  </div>
                 ) : (
-                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                  </div>
                 )}
               </div>
 
-              <div className="upload-text">
-                <h3>{isProcessing ? 'Processing...' : 'Drag & Drop Your File Here'}</h3>
-                <p>or click to browse</p>
+              <div className="upload-text mb-6">
+                <h3 className="text-2xl font-bold text-white mb-2">{isProcessing ? 'Processing Your Dataset...' : 'Drag & Drop Your Dataset Here'}</h3>
+                <p className="text-white/70 text-lg">or click to browse your files</p>
               </div>
 
-              <div className="upload-formats">
-                <span className="format-badge">CSV</span>
-                <span className="format-badge">XLSX</span>
-                <span className="format-badge">XLS</span>
+              <div className="upload-formats flex justify-center space-x-3 mb-6">
+                <span className="format-badge px-4 py-2 bg-green-500/20 text-green-300 rounded-lg border border-green-400/30 text-sm font-medium">CSV</span>
+                <span className="format-badge px-4 py-2 bg-blue-500/20 text-blue-300 rounded-lg border border-blue-400/30 text-sm font-medium">XLSX</span>
+                <span className="format-badge px-4 py-2 bg-purple-500/20 text-purple-300 rounded-lg border border-purple-400/30 text-sm font-medium">XLS</span>
               </div>
               
               {(uploadedFile || (typeof window !== 'undefined' && localStorage.getItem('currentMLSession'))) && (
-                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                <div className="mt-6 text-center">
                   <button
                     onClick={clearAllData}
-                    className="px-4 py-2 rounded-lg text-red-400 border border-red-400/30 hover:bg-red-500/10 transition-all"
-                    style={{ fontSize: '14px' }}
+                    className="px-6 py-3 rounded-xl text-red-300 bg-red-500/10 border border-red-400/30 hover:bg-red-500/20 hover:border-red-400/50 transition-all duration-300 font-medium shadow-lg"
                   >
                     🗑️ Clear All Data
                   </button>
@@ -483,38 +491,50 @@ const MLPage: React.FC = () => {
               )}
             </div>
 
-            <div className="upload-info">
-              <div className="info-card">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="16" x2="12" y2="12"></line>
-                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                </svg>
-                <div>
-                  <h4>What's supported?</h4>
-                  <p>CSV, Excel (.xlsx, .xls) formats with structured data</p>
+            <div className="upload-info grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+              <div className="info-card bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300">
+                <div className="flex items-start space-x-4">
+                  <div className="p-2 bg-blue-500/20 rounded-lg">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-blue-300">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-semibold mb-1">What's supported?</h4>
+                    <p className="text-white/70 text-sm">CSV, Excel (.xlsx, .xls) formats with structured data</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="info-card">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path>
-                  <path d="M16.5 12.5l-5.5 3.5-3.5-2.5"></path>
-                </svg>
-                <div>
-                  <h4>Data Privacy</h4>
-                  <p>Your data is processed securely and never stored permanently</p>
+              <div className="info-card bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300">
+                <div className="flex items-start space-x-4">
+                  <div className="p-2 bg-green-500/20 rounded-lg">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-300">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path>
+                      <path d="M16.5 12.5l-5.5 3.5-3.5-2.5"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-semibold mb-1">Data Privacy</h4>
+                    <p className="text-white/70 text-sm">Your data is processed securely and never stored permanently</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="info-card">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                  <polyline points="13 2 13 9 20 9"></polyline>
-                </svg>
-                <div>
-                  <h4>File Size Limit</h4>
-                  <p>No file size limit</p>
+              <div className="info-card bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300">
+                <div className="flex items-start space-x-4">
+                  <div className="p-2 bg-purple-500/20 rounded-lg">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-purple-300">
+                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                      <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-semibold mb-1">File Size Limit</h4>
+                    <p className="text-white/70 text-sm">No file size limit - process datasets of any size</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -548,42 +568,61 @@ const MLPage: React.FC = () => {
               </Button>
             </div>
 
-            <div className="validate-grid">
+            <div className="validate-grid grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Data Statistics */}
-              <div className="data-stats">
-                <div className="stat-box">
-                  <div className="stat-icon rows">
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="data-stats bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+                  <div className="p-2 bg-blue-500/20 rounded-lg mr-3">
+                    <svg className="w-5 h-5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </div>
-                  <div className="stat-info">
-                    <div className="stat-label">Total Rows</div>
-                    <div className="stat-value">{dataPreview.rowCount.toLocaleString()}</div>
+                  Dataset Statistics
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="stat-box bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-400/20 rounded-lg p-4 hover:bg-blue-500/20 transition-all duration-300">
+                    <div className="flex items-center justify-between">
+                      <div className="stat-icon rows">
+                        <svg className="w-6 h-6 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                      </div>
+                      <div className="stat-info text-right">
+                        <div className="stat-label text-white/70 text-sm">Total Rows</div>
+                        <div className="stat-value text-2xl font-bold text-white">{dataPreview.rowCount.toLocaleString()}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="stat-box bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-400/20 rounded-lg p-4 hover:bg-green-500/20 transition-all duration-300">
+                    <div className="flex items-center justify-between">
+                      <div className="stat-icon cols">
+                        <svg className="w-6 h-6 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </div>
+                      <div className="stat-info text-right">
+                        <div className="stat-label text-white/70 text-sm">Total Columns</div>
+                        <div className="stat-value text-2xl font-bold text-white">{dataPreview.columnCount}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="stat-box bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-400/20 rounded-lg p-4 hover:bg-purple-500/20 transition-all duration-300">
+                    <div className="flex items-center justify-between">
+                      <div className="stat-icon size">
+                        <svg className="w-6 h-6 text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                        </svg>
+                      </div>
+                      <div className="stat-info text-right">
+                        <div className="stat-label text-white/70 text-sm">File Size</div>
+                        <div className="stat-value text-2xl font-bold text-white">{dataPreview.fileSize}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <div className="stat-box">
-                  <div className="stat-icon cols">
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div className="stat-info">
-                    <div className="stat-label">Total Columns</div>
-                    <div className="stat-value">{dataPreview.columnCount}</div>
-                  </div>
-                </div>
-
-                <div className="stat-box">
-                  <div className="stat-icon size">
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-                    </svg>
-                  </div>
-                  <div className="stat-info">
-                    <div className="stat-label">File Size</div>
-                    <div className="stat-value">{dataPreview.fileSize}</div>
+              </div>
                   </div>
                 </div>
 
