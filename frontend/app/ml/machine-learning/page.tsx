@@ -252,7 +252,7 @@ const MLStudioAdvanced: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/20 to-slate-950 text-white relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-950 text-white relative overflow-hidden">
       <style>{`
         @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(50px, -50px); } }
         @keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); } 50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); } }
@@ -266,11 +266,11 @@ const MLStudioAdvanced: React.FC = () => {
         .text-gradient-rainbow { background: linear-gradient(135deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
       `}</style>
 
-      {/* Background Orbs */}
+      {/* Professional Background Pattern */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute w-[600px] h-[600px] rounded-full bg-indigo-500/20 blur-[120px] -top-48 -left-48" style={{ animation: 'float 20s ease-in-out infinite' }} />
-        <div className="absolute w-[500px] h-[500px] rounded-full bg-pink-500/20 blur-[120px] -bottom-32 -right-32" style={{ animation: 'float 25s ease-in-out infinite reverse' }} />
-        <div className="absolute w-[400px] h-[400px] rounded-full bg-purple-500/20 blur-[120px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'float 30s ease-in-out infinite' }} />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293710_1px,transparent_1px),linear-gradient(to_bottom,#1f293710_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+        <div className="absolute w-[800px] h-[800px] rounded-full bg-slate-800/10 blur-[150px] -top-64 -left-64" />
+        <div className="absolute w-[600px] h-[600px] rounded-full bg-slate-700/10 blur-[150px] -bottom-48 -right-48" />
       </div>
 
       {/* Header */}
