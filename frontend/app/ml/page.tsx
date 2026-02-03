@@ -261,10 +261,7 @@ const MLPage: React.FC = () => {
       return;
     }
 
-    if (file.size > 50 * 1024 * 1024) {
-      alert('File size should be less than 50MB');
-      return;
-    }
+    // No file size limit enforced here (allow large uploads)
 
     setIsProcessing(true);
 
@@ -431,7 +428,7 @@ const MLPage: React.FC = () => {
                 </svg>
                 Upload Your Dataset
               </h2>
-              <p>Support CSV and Excel formats (Max 50MB)</p>
+              <p>Support CSV and Excel formats</p>
             </div>
 
             <div
@@ -517,7 +514,7 @@ const MLPage: React.FC = () => {
                 </svg>
                 <div>
                   <h4>File Size Limit</h4>
-                  <p>Maximum 50MB per file</p>
+                  <p>No file size limit</p>
                 </div>
               </div>
             </div>

@@ -277,10 +277,7 @@ const MLStudioAdvanced: React.FC = () => {
       return;
     }
 
-    if (file.size > 50 * 1024 * 1024) {
-      alert('File size should be less than 50MB');
-      return;
-    }
+    // No file size limit enforced here (allow large uploads)
 
     setIsProcessing(true);
     setActualFile(file);
@@ -500,7 +497,7 @@ const MLStudioAdvanced: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
                   </div>
-                  <div><h3 className="text-xl font-bold">Upload Dataset</h3><p className="text-sm text-gray-400">CSV or Excel (Max 50MB)</p></div>
+                  <div><h3 className="text-xl font-bold">Upload Dataset</h3><p className="text-sm text-gray-400">CSV or Excel</p></div>
                 </div>
 
                 <div className={`backdrop-blur-2xl bg-slate-900/60 border rounded-2xl p-12 text-center cursor-pointer transition-all ${dragActive ? 'border-indigo-500 bg-indigo-500/10 scale-105' : 'border-indigo-500/20 hover:border-indigo-500/40'} ${isProcessing ? 'pointer-events-none' : ''}`} onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} onClick={() => !isProcessing && fileInputRef.current?.click()}>
