@@ -807,35 +807,64 @@ export default function DashboardPage() {
       {/* ML Project Name Modal */}
       {showMLModal && (
         <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-md bg-slate-800/95 border border-indigo-500/30 rounded-xl p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-white mb-2">Open ML Workspace</h3>
-            <p className="text-sm text-slate-300 mb-4">Enter a project name to open in the ML workspace, or leave blank to start a new workspace.</p>
-            <input
-              value={mlProjectName}
-              onChange={(e) => setMlProjectName(e.target.value)}
-              placeholder="Project name (optional)"
-              className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700 text-white mb-4 outline-none"
-            />
-            <div className="flex justify-end gap-3">
-              <button onClick={() => { setShowMLModal(false); setMlProjectName(''); }} className="px-4 py-2 rounded bg-white/5 hover:bg-white/10 text-sm">Cancel</button>
-              <button onClick={() => {
-                try {
-                  const name = mlProjectName.trim();
-                  if (name.length > 0) {
-                    localStorage.setItem('mlSelectedProject', JSON.stringify({ name }));
-                    showNotification(`Opening ML workspace for ${name}...`, 'success');
-                  } else {
-                    try { localStorage.removeItem('mlSelectedProject'); } catch (e) {}
-                    showNotification('Opening blank ML workspace', 'success');
+          <div className="w-full max-w-lg bg-slate-800/95 border border-indigo-500/30 rounded-xl p-6 shadow-xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-1">Open ML Workspace</h3>
+                <p className="text-sm text-slate-300">Enter a project name to open in the ML workspace, or pick a previous project.</p>
+              </div>
+              <button onClick={() => { setShowMLModal(false); setMlProjectName(''); }} className="text-slate-400 hover:text-white">✕</button>
+            </div>
+
+            <div className="mt-4">
+              <input
+                value={mlProjectName}
+                onChange={(e) => setMlProjectName(e.target.value)}
+                placeholder="Project name (optional)"
+                className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700 text-white mb-3 outline-none"
+              />
+
+              {projects && projects.length > 0 && (
+                <div className="mb-3">
+                  <div className="text-slate-300 text-sm mb-2">Previous projects</div>
+                  <div className="flex flex-wrap gap-2">
+                    {projects.slice(0, 6).map((p) => (
+                      <Button
+                        key={p.id}
+                        onClick={() => setMlProjectName(p.name)}
+                        variant={mlProjectName === p.name ? 'secondary' : 'outline'}
+                        size="sm"
+                        className={`px-3 py-1 text-xs ${mlProjectName === p.name ? 'bg-indigo-600 text-white' : ''}`}
+                      >
+                        {p.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 mt-4">
+                <Button onClick={() => { setShowMLModal(false); setMlProjectName(''); }} variant="outline" size="sm">Cancel</Button>
+                <Button onClick={() => {
+                  try {
+                    const name = mlProjectName.trim();
+                    if (name.length > 0) {
+                      localStorage.setItem('mlSelectedProject', JSON.stringify({ name }));
+                      showNotification(`Opening ML workspace for ${name}...`, 'success');
+                    } else {
+                      try { localStorage.removeItem('mlSelectedProject'); } catch (e) {}
+                      showNotification('Opening blank ML workspace', 'success');
+                    }
+                  } catch (e) {
+                    console.error('storage error', e);
+                    showNotification('Failed to save selection', 'error');
+                  } finally {
+                    setShowMLModal(false);
+                    setMlProjectName('');
+                    router.push('/ml/machine-learning');
                   }
-                } catch (e) {
-                  console.error('storage error', e);
-                } finally {
-                  setShowMLModal(false);
-                  setMlProjectName('');
-                  router.push('/ml/machine-learning');
-                }
-              }} className="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm">Open</button>
+                }} variant="primary" size="sm">Open</Button>
+              </div>
             </div>
           </div>
         </div>
