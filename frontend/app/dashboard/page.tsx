@@ -1092,76 +1092,84 @@ export default function DashboardPage() {
       <main className="pt-24 pb-12 px-6">
         <div className="max-w-7xl mx-auto">
           {/* Welcome Dashboard Section - Enhanced Visibility */}
-          <div className="mb-12 text-center bg-slate-800/40 backdrop-blur-xl border border-slate-600/30 rounded-2xl p-8 shadow-2xl">
-            <h1 className="text-5xl font-bold text-white mb-6 bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent drop-shadow-lg">
-              Welcome to Your AI Dashboard
-            </h1>
-            <div className="max-w-3xl mx-auto mb-10">
-              <h2 className="text-xl font-semibold text-slate-200 mb-4">
-                Dashboard Overview
-              </h2>
-              <p className="text-slate-300 text-lg leading-relaxed">
-                Manage your AI validation projects with advanced analytics and insights. 
-                Get started by uploading a dataset, validating your data, or continue working on existing projects.
-              </p>
-            </div>
+          <div className="mb-12 text-center relative overflow-hidden">
+            {/* Enhanced background with subtle animations */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-800/50 via-slate-800/40 to-slate-900/60 backdrop-blur-xl border border-slate-600/40 rounded-3xl shadow-2xl" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-indigo-500/15 to-purple-500/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-blue-500/10 to-cyan-500/15 rounded-full blur-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 via-transparent to-slate-800/10 rounded-3xl" />
+            
+            <div className="relative z-10 p-10">
+              <h1 className="text-6xl font-bold text-white mb-8 bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent drop-shadow-2xl tracking-tight">
+                Welcome to Your AI Dashboard
+              </h1>
+              <div className="max-w-3xl mx-auto mb-12">
+                <h2 className="text-2xl font-semibold text-slate-200 mb-5 tracking-wide">
+                  Dashboard Overview
+                </h2>
+                <p className="text-slate-300 text-lg leading-relaxed font-medium">
+                  Manage your AI validation projects with advanced analytics and insights. 
+                  Get started by uploading a dataset, validating your data, or continue working on existing projects.
+                </p>
+              </div>
 
-            <div className="flex flex-wrap justify-center gap-6 mb-8">
-              <Button
-                onClick={() => {
-                  setSidebarOpen(true);
-                  showNotification('Opening validation platform selector...', 'success');
-                }}
-                size="lg"
-                className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold px-10 py-5 rounded-xl shadow-xl hover:shadow-indigo-500/40 transition-all hover:scale-110 border border-indigo-400/30"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                }
-              >
-                Start Validation
-              </Button>
-              
-              <Button 
-                onClick={() => {
-                  const projectsTable = document.getElementById('projects-table');
-                  if (projectsTable) {
-                    projectsTable.scrollIntoView({ behavior: 'smooth' });
-                    projectsTable.classList.add('ring-4', 'ring-blue-500', 'ring-opacity-60');
-                    setTimeout(() => {
-                      projectsTable.classList.remove('ring-4', 'ring-blue-500', 'ring-opacity-60');
-                    }, 3000);
-                  }
-                  showNotification(`Viewing ${projects.length} project(s)`, 'success');
-                }}
-                variant="outline"
-                size="lg"
-                className="border-3 border-blue-500 text-white hover:bg-blue-600/30 hover:border-blue-400 px-10 py-5 rounded-xl font-bold transition-all hover:scale-110 shadow-lg backdrop-blur-sm bg-blue-500/10"
-                icon={
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                }
-              >
-                View Projects ({projects.length})
-              </Button>
-              
-              {projects.length > 0 && (
-                <Button 
-                  onClick={() => { setShowContinueModal(true); }}
-                  variant="secondary"
+              <div className="flex flex-wrap justify-center gap-6 mb-8">
+                <Button
+                  onClick={() => {
+                    setSidebarOpen(true);
+                    showNotification('Opening validation platform selector...', 'success');
+                  }}
                   size="lg"
-                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-emerald-500/25 transition-all hover:scale-105"
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold px-12 py-6 rounded-2xl shadow-2xl hover:shadow-indigo-500/50 transition-all duration-300 hover:scale-110 border border-indigo-400/40 hover:border-indigo-300/60 group"
                   icon={
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 11H15" />
+                    <svg className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                   }
                 >
-                  Continue Session
+                  Start Validation
                 </Button>
-              )}
+                
+                <Button 
+                  onClick={() => {
+                    const projectsTable = document.getElementById('projects-table');
+                    if (projectsTable) {
+                      projectsTable.scrollIntoView({ behavior: 'smooth' });
+                      projectsTable.classList.add('ring-4', 'ring-blue-500', 'ring-opacity-60');
+                      setTimeout(() => {
+                        projectsTable.classList.remove('ring-4', 'ring-blue-500', 'ring-opacity-60');
+                      }, 3000);
+                    }
+                    showNotification(`Viewing ${projects.length} project(s)`, 'success');
+                  }}
+                  variant="outline"
+                  size="lg"
+                  className="border-3 border-blue-500/70 text-white hover:bg-blue-600/30 hover:border-blue-400 px-12 py-6 rounded-2xl font-bold transition-all duration-300 hover:scale-110 shadow-xl backdrop-blur-sm bg-blue-500/15 hover:shadow-blue-500/30 group"
+                  icon={
+                    <svg className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  }
+                >
+                  View Projects ({projects.length})
+                </Button>
+                
+                {projects.length > 0 && (
+                  <Button 
+                    onClick={() => { setShowContinueModal(true); }}
+                    variant="secondary"
+                    size="lg"
+                    className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold px-10 py-5 rounded-2xl shadow-xl hover:shadow-emerald-500/40 transition-all duration-300 hover:scale-105 border border-emerald-400/30 group"
+                    icon={
+                      <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 11H15" />
+                      </svg>
+                    }
+                  >
+                    Continue Session
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1210,58 +1218,101 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
-            <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
-              <div className="flex items-center justify-between mb-3">
-                <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <div className="text-2xl font-bold text-white">
-                  {stats.validations}
+          {/* KPI Cards - Enhanced */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {/* ML Verify Dataset */}
+            <div className="group relative rounded-2xl p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-green-400/50 hover:shadow-2xl hover:shadow-green-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+              {/* Background glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/30 group-hover:shadow-green-500/50 transition-all duration-300 group-hover:scale-110">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-white mb-1 group-hover:text-green-300 transition-colors">
+                      {stats.validations}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="text-slate-400 font-medium text-xs">
-                ML Verify Dataset
+                <div className="text-slate-400 font-semibold text-sm tracking-wide group-hover:text-slate-300 transition-colors">
+                  ML Verify Dataset
+                </div>
               </div>
             </div>
-            <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
-              <div className="flex items-center justify-between mb-3">
-                <svg className="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <div className="text-2xl font-bold text-white">
-                  {stats.datasets}
+
+            {/* Datasets Uploaded */}
+            <div className="group relative rounded-2xl p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+              {/* Background glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-all duration-300 group-hover:scale-110">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">
+                      {stats.datasets}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="text-slate-400 font-medium text-xs">
-                Datasets Uploaded
+                <div className="text-slate-400 font-semibold text-sm tracking-wide group-hover:text-slate-300 transition-colors">
+                  Datasets Uploaded
+                </div>
               </div>
             </div>
-            <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
-              <div className="flex items-center justify-between mb-3">
-                <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div className="text-2xl font-bold text-white">
-                  {stats.avgConfidence}%
+
+            {/* Avg Confidence */}
+            <div className="group relative rounded-2xl p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-purple-400/50 hover:shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+              {/* Background glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:shadow-purple-500/50 transition-all duration-300 group-hover:scale-110">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-white mb-1 group-hover:text-purple-300 transition-colors">
+                      {stats.avgConfidence}%
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="text-slate-400 font-medium text-xs">
-                Avg Confidence
+                <div className="text-slate-400 font-semibold text-sm tracking-wide group-hover:text-slate-300 transition-colors">
+                  Avg Confidence
+                </div>
               </div>
             </div>
-            <div className="rounded-xl p-5 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1">
-              <div className="flex items-center justify-between mb-3">
-                <svg className="w-8 h-8 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                <div className="text-2xl font-bold text-white">
-                  {stats.totalRows.toLocaleString()}
+
+            {/* Total Rows Analyzed */}
+            <div className="group relative rounded-2xl p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-orange-400/50 hover:shadow-2xl hover:shadow-orange-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+              {/* Background glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:shadow-orange-500/50 transition-all duration-300 group-hover:scale-110">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-white mb-1 group-hover:text-orange-300 transition-colors">
+                      {stats.totalRows.toLocaleString()}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="text-slate-400 font-medium text-xs">
-                Total Rows Analyzed
+                <div className="text-slate-400 font-semibold text-sm tracking-wide group-hover:text-slate-300 transition-colors">
+                  Total Rows Analyzed
+                </div>
               </div>
             </div>
           </div>
