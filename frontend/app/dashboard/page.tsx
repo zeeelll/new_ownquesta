@@ -60,6 +60,9 @@ export default function DashboardPage() {
   const [analyzedProject, setAnalyzedProject] = useState<Project | null>(null);
   const [showMLModal, setShowMLModal] = useState(false);
   const [mlProjectName, setMlProjectName] = useState('');
+  const [mlSelectedProjectTemp, setMlSelectedProjectTemp] = useState<Project | null>(null);
+  const [showContinueModal, setShowContinueModal] = useState(false);
+  const [continueSelectedProject, setContinueSelectedProject] = useState<Project | null>(null);
   const router = useRouter();
 
   // Notification function
@@ -804,6 +807,52 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Continue Session Modal */}
+      {showContinueModal && (
+        <div className="fixed inset-0 z-[1110] flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-2xl bg-slate-800/95 border border-indigo-500/30 rounded-xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white">Continue Session</h3>
+                <p className="text-sm text-slate-300">Select which project you'd like to continue working on.</p>
+              </div>
+              <button onClick={() => { setShowContinueModal(false); setContinueSelectedProject(null); }} className="text-slate-400 hover:text-white">✕</button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 max-h-80 overflow-auto">
+              {projects.map((p) => (
+                <div key={p.id} className={`p-3 rounded-lg border ${continueSelectedProject?.id === p.id ? 'border-indigo-400 bg-indigo-900/20' : 'border-slate-700/30 bg-slate-900/30'}`}
+                  onClick={() => setContinueSelectedProject(p)}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-white font-semibold">{p.name}</div>
+                      <div className="text-xs text-slate-400">{p.dataset} • {p.taskType} • {p.createdDate}</div>
+                    </div>
+                    <div className="text-sm text-slate-300">{p.confidence}%</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex justify-end gap-3">
+              <Button variant="outline" size="sm" onClick={() => { setShowContinueModal(false); setContinueSelectedProject(null); }}>Cancel</Button>
+              <Button variant="primary" size="sm" onClick={() => {
+                if (!continueSelectedProject) {
+                  showNotification('Please select a project to continue', 'error');
+                  return;
+                }
+                try {
+                  localStorage.setItem('mlSelectedProject', JSON.stringify(continueSelectedProject));
+                } catch (e) {}
+                setShowContinueModal(false);
+                // navigate to ML workspace
+                router.push('/ml/machine-learning');
+              }}>Open in ML</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ML Project Name Modal */}
       {showMLModal && (
         <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60">
@@ -831,7 +880,7 @@ export default function DashboardPage() {
                     {projects.slice(0, 6).map((p) => (
                       <Button
                         key={p.id}
-                        onClick={() => setMlProjectName(p.name)}
+                        onClick={() => { setMlProjectName(p.name); setMlSelectedProjectTemp(p); }}
                         variant={mlProjectName === p.name ? 'secondary' : 'outline'}
                         size="sm"
                         className={`px-3 py-1 text-xs ${mlProjectName === p.name ? 'bg-indigo-600 text-white' : ''}`}
@@ -848,9 +897,20 @@ export default function DashboardPage() {
                 <Button onClick={() => {
                   try {
                     const name = mlProjectName.trim();
-                    if (name.length > 0) {
-                      localStorage.setItem('mlSelectedProject', JSON.stringify({ name }));
-                      showNotification(`Opening ML workspace for ${name}...`, 'success');
+                    if (mlSelectedProjectTemp) {
+                      // store full project object
+                      localStorage.setItem('mlSelectedProject', JSON.stringify(mlSelectedProjectTemp));
+                      showNotification(`Opening ML workspace for ${mlSelectedProjectTemp.name}...`, 'success');
+                    } else if (name.length > 0) {
+                      // try to find matching project by name
+                      const match = projects.find(p => p.name === name);
+                      if (match) {
+                        localStorage.setItem('mlSelectedProject', JSON.stringify(match));
+                        showNotification(`Opening ML workspace for ${match.name}...`, 'success');
+                      } else {
+                        localStorage.setItem('mlSelectedProject', JSON.stringify({ name }));
+                        showNotification(`Opening ML workspace for ${name}...`, 'success');
+                      }
                     } else {
                       try { localStorage.removeItem('mlSelectedProject'); } catch (e) {}
                       showNotification('Opening blank ML workspace', 'success');
@@ -861,6 +921,7 @@ export default function DashboardPage() {
                   } finally {
                     setShowMLModal(false);
                     setMlProjectName('');
+                    setMlSelectedProjectTemp(null);
                     router.push('/ml/machine-learning');
                   }
                 }} variant="primary" size="sm">Open</Button>
@@ -1079,16 +1140,7 @@ export default function DashboardPage() {
               
               {projects.length > 0 && (
                 <Button 
-                  onClick={() => {
-                    const sortedProjects = [...projects].sort((a, b) => 
-                      new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
-                    );
-                    const lastProject = sortedProjects[0];
-                    showNotification(`Continuing work on ${lastProject.name}...`, 'success');
-                    setTimeout(() => {
-                      handleProjectAction(lastProject, 'open');
-                    }, 500);
-                  }}
+                  onClick={() => { setShowContinueModal(true); }}
                   variant="secondary"
                   size="lg"
                   className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-emerald-500/25 transition-all hover:scale-105"
@@ -1137,21 +1189,7 @@ export default function DashboardPage() {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => {
-                  if (projects.length === 0) {
-                    showNotification('No active sessions. Start a new validation first!', 'error');
-                    return;
-                  }
-                  // Find most recent project
-                  const sortedProjects = [...projects].sort((a, b) => 
-                    new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
-                  );
-                  const lastProject = sortedProjects[0];
-                  showNotification(`Continuing work on ${lastProject.name}...`, 'success');
-                  setTimeout(() => {
-                    handleProjectAction(lastProject, 'open');
-                  }, 500);
-                }}
+                onClick={() => setShowContinueModal(true)}
                 icon={
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 11H15m-3 7.5A9.5 9.5 0 1121.5 12 9.5 9.5 0 0112 2.5z" />

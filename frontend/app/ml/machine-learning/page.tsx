@@ -43,6 +43,7 @@ const MLStudioAdvanced: React.FC = () => {
   const [validationResult, setValidationResult] = useState<any>(null);
   const [showLastRows, setShowLastRows] = useState(false);
   const [viewMode, setViewMode] = useState<'first' | 'last' | 'all'>('first');
+  const [savedProjects, setSavedProjects] = useState<any[]>([]);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const router = useRouter();
   const hasGoal = userQuery.trim().length > 0;
@@ -183,6 +184,84 @@ const MLStudioAdvanced: React.FC = () => {
       // ignore
     }
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('userProjects');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setSavedProjects(parsed);
+      }
+    } catch (e) {}
+  }, []);
+
+  const saveProjectToDashboard = (name?: string) => {
+    try {
+      const projectName = (name && name.trim()) || selectedProject?.name || uploadedFile?.name || `ML Project ${Date.now()}`;
+
+      const fileName = uploadedFile?.name || (actualFile ? actualFile.name : projectName + '.csv');
+      const fileType = fileName.split('.').pop() || 'csv';
+
+      const project = {
+        id: Date.now().toString(),
+        name: projectName,
+        dataset: fileName,
+        taskType: selectedTask || (validationResult?.taskType) || 'classification',
+        status: validationResult ? 'validated' : 'in-progress',
+        confidence: validationResult?.confidence || Math.floor(Math.random() * 10) + 85,
+        createdDate: new Date().toLocaleDateString(),
+        fileUrl: '',
+        filePath: '',
+        fileType: fileType,
+        rowCount: dataPreview?.rowCount || 0
+      } as any;
+
+      // Read existing projects
+      const raw = localStorage.getItem('userProjects');
+      let list = [] as any[];
+      if (raw) {
+        try { list = JSON.parse(raw); } catch (e) { list = []; }
+      }
+
+      // Avoid exact duplicates by name + date
+      if (!list.some(p => p.name === project.name && p.dataset === project.dataset)) {
+        list.unshift(project);
+        localStorage.setItem('userProjects', JSON.stringify(list));
+        setSavedProjects(list);
+
+        // Update mlValidationStats
+        try {
+          const statsRaw = localStorage.getItem('mlValidationStats');
+          let stats = { validations: 0, datasets: 0, avgConfidence: 0, totalRows: 0 } as any;
+          if (statsRaw) { stats = JSON.parse(statsRaw); }
+          const totalConfidence = (stats.avgConfidence || 0) * (stats.validations || 0) + (project.confidence || 0);
+          const newValidations = (stats.validations || 0) + (project.status === 'validated' ? 1 : 0);
+          const newAvg = newValidations > 0 ? Math.round(totalConfidence / newValidations) : 0;
+          const newStats = {
+            validations: newValidations,
+            datasets: (stats.datasets || 0) + 1,
+            avgConfidence: newAvg,
+            totalRows: (stats.totalRows || 0) + (project.rowCount || 0)
+          };
+          localStorage.setItem('mlValidationStats', JSON.stringify(newStats));
+        } catch (e) {
+          // ignore stats errors
+        }
+
+        // Flag for dashboard if desired
+        try { localStorage.setItem('returnToDashboard', 'true'); } catch (e) {}
+
+        setChatMessages(prev => [...prev, { type: 'ai', text: `✅ Project "${project.name}" saved to dashboard.`, timestamp: new Date().toLocaleTimeString() }]);
+        // keep selectedProject in ML view in sync
+        setSelectedProject({ name: project.name });
+      } else {
+        setChatMessages(prev => [...prev, { type: 'ai', text: `ℹ️ Project "${project.name}" already exists in dashboard.`, timestamp: new Date().toLocaleTimeString() }]);
+      }
+    } catch (e) {
+      console.error('Error saving project:', e);
+      setChatMessages(prev => [...prev, { type: 'ai', text: `❌ Failed to save project: ${e instanceof Error ? e.message : 'Unknown'}`, timestamp: new Date().toLocaleTimeString() }]);
+    }
+  };
 
   const processFile = (file: File) => {
     const validTypes = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
@@ -343,6 +422,33 @@ const MLStudioAdvanced: React.FC = () => {
             <div className="text-sm text-indigo-100">Opening ML workspace for: <span className="font-semibold text-white">{selectedProject.name}</span></div>
             <div className="flex items-center gap-2">
               <button onClick={() => { try { localStorage.removeItem('mlSelectedProject'); } catch (e) {} setSelectedProject(null); }} className="text-xs px-3 py-1 rounded bg-white/5 hover:bg-white/10">Clear</button>
+            </div>
+          </div>
+        )}
+        {/* Quick save to dashboard */}
+        {(selectedProject || uploadedFile || dataPreview) && (
+          <div className="mb-6 flex items-center gap-3">
+            <Button onClick={() => saveProjectToDashboard(selectedProject?.name)} variant="primary" size="sm">Save Project to Dashboard</Button>
+            <Button onClick={() => { router.push('/dashboard'); }} variant="outline" size="sm">Go to Dashboard</Button>
+          </div>
+        )}
+        {/* Recent projects saved in dashboard (persistent) */}
+        {savedProjects && savedProjects.length > 0 && (
+          <div className="rounded-xl p-4 bg-slate-800/60 border border-slate-700/30 mb-6">
+            <h4 className="text-sm font-semibold text-white mb-2">Recent Projects</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {savedProjects.slice(0, 8).map((p) => (
+                <div key={p.id} className="flex items-center justify-between gap-3 p-2 bg-slate-900/40 rounded">
+                  <div>
+                    <div className="text-sm text-white">{p.name}</div>
+                    <div className="text-xs text-slate-400">{p.createdDate}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => { setSelectedProject({ name: p.name }); try { localStorage.setItem('mlSelectedProject', JSON.stringify({ name: p.name })); } catch (e) {} setChatMessages(prev => [...prev, { type: 'ai', text: `Loaded ${p.name} in ML workspace`, timestamp: new Date().toLocaleTimeString() }]); }}>Open</Button>
+                    <Button size="sm" variant="outline" onClick={() => { const filtered = savedProjects.filter(sp => sp.id !== p.id); setSavedProjects(filtered); localStorage.setItem('userProjects', JSON.stringify(filtered)); setChatMessages(prev => [...prev, { type: 'ai', text: `Removed ${p.name}`, timestamp: new Date().toLocaleTimeString() }]); }}>Remove</Button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
