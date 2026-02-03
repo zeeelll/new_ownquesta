@@ -2058,46 +2058,91 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Dataset Analysis - Only show when a project is being analyzed */}
+          {/* Project Analysis - Enhanced */}
           {analyzedProject && (
-            <div id="ai-insights" className="rounded-xl p-6 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-indigo-400/40 shadow-xl backdrop-blur-sm mb-10">
-              <h2 className="text-lg font-bold text-white mb-5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <svg className="w-6 h-6 text-yellow-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <span className="flex items-center gap-2">
-                    <span>Analysis of Dataset</span>
-                    <span className="text-xs bg-indigo-500/40 px-2 py-1 rounded-full text-indigo-200 border border-indigo-400/30">
-                      {analyzedProject.name}
-                    </span>
-                  </span>
+            <div id="ai-insights" className="relative rounded-3xl p-8 bg-gradient-to-br from-indigo-500/40 via-purple-500/30 to-pink-500/20 backdrop-blur-xl border border-indigo-400/50 shadow-2xl mb-12 overflow-hidden">
+              {/* Enhanced background effects */}
+              <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-yellow-500/20 to-orange-500/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-56 h-56 bg-gradient-to-tr from-indigo-500/15 to-purple-500/20 rounded-full blur-3xl" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/10 via-transparent to-slate-800/5 rounded-3xl" />
+              
+              <div className="relative z-10">
+                {/* Enhanced Header */}
+                <div className="flex items-center justify-between mb-8 pb-6 border-b border-indigo-400/30">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400/20 to-orange-500/20 border border-yellow-400/40 flex items-center justify-center shadow-lg shadow-yellow-400/30">
+                      <svg className="w-7 h-7 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white mb-1 tracking-tight">Analysis of Project</h2>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold bg-gradient-to-r from-indigo-400/30 to-purple-400/30 px-4 py-2 rounded-xl text-indigo-200 border border-indigo-400/40 backdrop-blur-sm">
+                          {analyzedProject.name}
+                        </span>
+                        <span className="text-xs text-slate-400">•</span>
+                        <span className="text-xs text-slate-400 font-medium">AI-Powered Insights</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setAnalyzedProject(null)}
+                    className="group w-10 h-10 rounded-xl bg-slate-700/50 hover:bg-slate-600/60 border border-slate-600/50 hover:border-slate-500/70 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                    title="Close analysis"
+                  >
+                    <svg className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-                <button
-                  onClick={() => setAnalyzedProject(null)}
-                  className="text-slate-400 hover:text-white transition-colors"
-                  title="Close analysis"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </h2>
-              <ul className="space-y-3">
-                {generateAIInsights(analyzedProject).map((insight, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <span className="text-indigo-400 text-lg flex-shrink-0 mt-0.5">●</span>
-                    <span className="text-slate-200 text-sm leading-relaxed">
-                      {insight}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-4 text-xs text-slate-400 flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Analysis complete for: {analyzedProject.name} • {analyzedProject.createdDate}
+                
+                {/* Enhanced Insights List */}
+                <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-600/20">
+                  <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    Key Insights & Recommendations
+                  </h3>
+                  <ul className="space-y-4">
+                    {generateAIInsights(analyzedProject).map((insight, index) => (
+                      <li key={index} className="group flex items-start gap-4 p-4 rounded-xl hover:bg-slate-700/20 transition-all duration-200">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                          <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-slate-200 text-sm leading-relaxed font-medium">
+                            {insight}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                {/* Enhanced Footer */}
+                <div className="mt-6 flex items-center justify-between p-4 bg-slate-800/20 backdrop-blur-sm rounded-xl border border-slate-600/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">Analysis Complete</p>
+                      <p className="text-xs text-slate-400">
+                        {analyzedProject.name} • {analyzedProject.createdDate}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/30 rounded-lg">
+                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                    <span className="text-green-300 text-xs font-semibold">Ready</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
