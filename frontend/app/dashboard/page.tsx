@@ -58,6 +58,8 @@ export default function DashboardPage() {
     fileName: ''
   });
   const [analyzedProject, setAnalyzedProject] = useState<Project | null>(null);
+  const [showMLModal, setShowMLModal] = useState(false);
+  const [mlProjectName, setMlProjectName] = useState('');
   const router = useRouter();
 
   // Notification function
@@ -469,7 +471,9 @@ export default function DashboardPage() {
     setSidebarOpen(false);
     setTimeout(() => {
       if (type === "machine-learning") {
-        router.push("/ml/machine-learning");
+        // Open an in-page modal to ask for project name (better UX than window.prompt)
+        setMlProjectName('');
+        setShowMLModal(true);
       } else if (type === "deep-learning") {
         router.push("/dl");
       }
@@ -797,6 +801,43 @@ export default function DashboardPage() {
             : 'bg-red-500/90 border-red-400 text-white'
         } backdrop-blur-md animate-bounce`}>
           {notification.message}
+        </div>
+      )}
+
+      {/* ML Project Name Modal */}
+      {showMLModal && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-md bg-slate-800/95 border border-indigo-500/30 rounded-xl p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-white mb-2">Open ML Workspace</h3>
+            <p className="text-sm text-slate-300 mb-4">Enter a project name to open in the ML workspace, or leave blank to start a new workspace.</p>
+            <input
+              value={mlProjectName}
+              onChange={(e) => setMlProjectName(e.target.value)}
+              placeholder="Project name (optional)"
+              className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700 text-white mb-4 outline-none"
+            />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => { setShowMLModal(false); setMlProjectName(''); }} className="px-4 py-2 rounded bg-white/5 hover:bg-white/10 text-sm">Cancel</button>
+              <button onClick={() => {
+                try {
+                  const name = mlProjectName.trim();
+                  if (name.length > 0) {
+                    localStorage.setItem('mlSelectedProject', JSON.stringify({ name }));
+                    showNotification(`Opening ML workspace for ${name}...`, 'success');
+                  } else {
+                    try { localStorage.removeItem('mlSelectedProject'); } catch (e) {}
+                    showNotification('Opening blank ML workspace', 'success');
+                  }
+                } catch (e) {
+                  console.error('storage error', e);
+                } finally {
+                  setShowMLModal(false);
+                  setMlProjectName('');
+                  router.push('/ml/machine-learning');
+                }
+              }} className="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm">Open</button>
+            </div>
+          </div>
         </div>
       )}
       

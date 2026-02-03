@@ -43,6 +43,7 @@ const MLStudioAdvanced: React.FC = () => {
   const [validationResult, setValidationResult] = useState<any>(null);
   const [showLastRows, setShowLastRows] = useState(false);
   const [viewMode, setViewMode] = useState<'first' | 'last' | 'all'>('first');
+  const [selectedProject, setSelectedProject] = useState<any>(null);
   const router = useRouter();
   const hasGoal = userQuery.trim().length > 0;
   const hasDataset = Boolean(uploadedFile && actualFile && dataPreview);
@@ -169,6 +170,19 @@ const MLStudioAdvanced: React.FC = () => {
       updatePreviewRows(viewMode);
     }
   }, [viewMode]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('mlSelectedProject');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setSelectedProject(parsed);
+        // keep the key in storage in case user navigates back; remove if you prefer one-time use
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   const processFile = (file: File) => {
     const validTypes = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
@@ -324,6 +338,14 @@ const MLStudioAdvanced: React.FC = () => {
 
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-12">
+        {selectedProject && (
+          <div className="mb-6 p-3 rounded-lg bg-indigo-700/10 border border-indigo-500/20 flex items-center justify-between">
+            <div className="text-sm text-indigo-100">Opening ML workspace for: <span className="font-semibold text-white">{selectedProject.name}</span></div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => { try { localStorage.removeItem('mlSelectedProject'); } catch (e) {} setSelectedProject(null); }} className="text-xs px-3 py-1 rounded bg-white/5 hover:bg-white/10">Clear</button>
+            </div>
+          </div>
+        )}
         {currentStep === 'setup' && (
           <div className="animate-slide space-y-8">
             <div className="text-center space-y-4 mb-12">
