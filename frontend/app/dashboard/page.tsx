@@ -564,8 +564,17 @@ export default function DashboardPage() {
 
   const handleProjectAction = (project: Project, action: string) => {
     if (action === 'open') {
-      // Open the dataset file in its native format
-      openDatasetFile(project);
+      // Open the project in the ML workspace: store full project and navigate there
+      try {
+        localStorage.setItem('mlSelectedProject', JSON.stringify(project));
+      } catch (e) {
+        console.error('Failed to save selected project to localStorage', e);
+      }
+      showNotification(`Opening ${project.name} in ML workspace...`, 'success');
+      setTimeout(() => {
+        router.push('/ml/machine-learning');
+      }, 250);
+      return;
     } else if (action === 'analyze') {
       // Set the analyzed project and scroll to insights section
       setAnalyzedProject(project);

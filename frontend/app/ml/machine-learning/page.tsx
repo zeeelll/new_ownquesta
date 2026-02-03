@@ -118,6 +118,12 @@ const MLStudioAdvanced: React.FC = () => {
       }
 
       // Keep on validate step; user will proceed manually
+      // Auto-save a project entry to dashboard so it appears in Dashboard and persists
+      try {
+        saveProjectToDashboard();
+      } catch (e) {
+        console.warn('Auto-save to dashboard failed', e);
+      }
     } catch (error) {
       console.error('Validation error:', error);
       setChatMessages(prev => [...prev, {
@@ -418,38 +424,8 @@ const MLStudioAdvanced: React.FC = () => {
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-12">
         {selectedProject && (
-          <div className="mb-6 p-3 rounded-lg bg-indigo-700/10 border border-indigo-500/20 flex items-center justify-between">
+          <div className="mb-6 p-3 rounded-lg bg-indigo-700/10 border border-indigo-500/20">
             <div className="text-sm text-indigo-100">Opening ML workspace for: <span className="font-semibold text-white">{selectedProject.name}</span></div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => { try { localStorage.removeItem('mlSelectedProject'); } catch (e) {} setSelectedProject(null); }} className="text-xs px-3 py-1 rounded bg-white/5 hover:bg-white/10">Clear</button>
-            </div>
-          </div>
-        )}
-        {/* Quick save to dashboard */}
-        {(selectedProject || uploadedFile || dataPreview) && (
-          <div className="mb-6 flex items-center gap-3">
-            <Button onClick={() => saveProjectToDashboard(selectedProject?.name)} variant="primary" size="sm">Save Project to Dashboard</Button>
-            <Button onClick={() => { router.push('/dashboard'); }} variant="outline" size="sm">Go to Dashboard</Button>
-          </div>
-        )}
-        {/* Recent projects saved in dashboard (persistent) */}
-        {savedProjects && savedProjects.length > 0 && (
-          <div className="rounded-xl p-4 bg-slate-800/60 border border-slate-700/30 mb-6">
-            <h4 className="text-sm font-semibold text-white mb-2">Recent Projects</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {savedProjects.slice(0, 8).map((p) => (
-                <div key={p.id} className="flex items-center justify-between gap-3 p-2 bg-slate-900/40 rounded">
-                  <div>
-                    <div className="text-sm text-white">{p.name}</div>
-                    <div className="text-xs text-slate-400">{p.createdDate}</div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => { setSelectedProject({ name: p.name }); try { localStorage.setItem('mlSelectedProject', JSON.stringify({ name: p.name })); } catch (e) {} setChatMessages(prev => [...prev, { type: 'ai', text: `Loaded ${p.name} in ML workspace`, timestamp: new Date().toLocaleTimeString() }]); }}>Open</Button>
-                    <Button size="sm" variant="outline" onClick={() => { const filtered = savedProjects.filter(sp => sp.id !== p.id); setSavedProjects(filtered); localStorage.setItem('userProjects', JSON.stringify(filtered)); setChatMessages(prev => [...prev, { type: 'ai', text: `Removed ${p.name}`, timestamp: new Date().toLocaleTimeString() }]); }}>Remove</Button>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         )}
         {currentStep === 'setup' && (
