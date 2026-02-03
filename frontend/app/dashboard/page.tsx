@@ -47,10 +47,10 @@ export default function DashboardPage() {
   });
   const [projects, setProjects] = useState<Project[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [showAllActivities, setShowAllActivities] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showAllProjects, setShowAllProjects] = useState(false);
-  const [showAllActivities, setShowAllActivities] = useState(false);
   const [datasetViewer, setDatasetViewer] = useState<{ isOpen: boolean; data: string[][]; headers: string[]; fileName: string }>({
     isOpen: false,
     data: [],
@@ -1775,8 +1775,8 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="space-y-0 max-h-[500px] overflow-y-auto pr-3 custom-scrollbar">
-                  {activities.slice(0, 15).map((activity, idx) => {
-                    const isLast = idx === Math.min(activities.length - 1, 14);
+                  {activities.slice(0, showAllActivities ? activities.length : 15).map((activity, idx) => {
+                    const isLast = idx === Math.min(showAllActivities ? activities.length - 1 : 14, activities.length - 1);
                     return (
                       <div key={activity.id} className="relative group">
                         <div className="flex items-start gap-4 py-4 px-4 rounded-xl hover:bg-slate-700/30 transition-all duration-300 cursor-pointer">
@@ -1804,15 +1804,6 @@ export default function DashboardPage() {
                               <p className="text-white font-semibold text-sm leading-relaxed group-hover:text-indigo-300 transition-colors">
                                 {activity.action}
                               </p>
-                              <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide whitespace-nowrap ${
-                                activity.type === 'upload' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
-                                activity.type === 'validation' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
-                                activity.type === 'clarification' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
-                                activity.type === 'error' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
-                                'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                              }`}>
-                                {activity.type}
-                              </span>
                             </div>
                             
                             {/* Timestamp with icon */}
@@ -1828,19 +1819,35 @@ export default function DashboardPage() {
                     );
                   })}
                   
-                  {/* Show More Indicator */}
+                  {/* Show More/Less Button */}
                   {activities.length > 15 && (
                     <div className="text-center pt-6 pb-2">
-                      <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
+                      <button
+                        onClick={() => setShowAllActivities(!showAllActivities)}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 hover:from-indigo-500/20 hover:to-purple-500/20 hover:border-indigo-500/30 transition-all duration-300 cursor-pointer group"
+                      >
                         <div className="flex -space-x-1">
                           <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
                           <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" style={{ animationDelay: '0.2s' }} />
                           <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" style={{ animationDelay: '0.4s' }} />
                         </div>
-                        <span className="text-xs font-semibold text-slate-300">
-                          + {activities.length - 15} more activities
+                        <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
+                          {showAllActivities 
+                            ? 'Show Less' 
+                            : `+ ${activities.length - 15} more activities`
+                          }
                         </span>
-                      </div>
+                        <svg 
+                          className={`w-3 h-3 text-slate-400 group-hover:text-white transition-all duration-300 ${
+                            showAllActivities ? 'rotate-180' : ''
+                          }`} 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
                     </div>
                   )}
                 </div>
