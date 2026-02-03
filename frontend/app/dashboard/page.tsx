@@ -1553,53 +1553,124 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Recent Activity */}
-          <div className="rounded-xl p-6 bg-slate-800/50 backdrop-blur-xl border border-slate-700/10 mb-10">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-white">
-                Recent Activity
-              </h2>
-              {activities.length > 10 && (
-                <span className="text-xs text-slate-400">
-                  Showing latest activities
-                </span>
-              )}
-            </div>
-            {activities.length === 0 ? (
-              <div className="text-center text-slate-400 py-10 text-sm">
-                No activity yet
-              </div>
-            ) : (
-              <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
-                {activities.slice(0, 15).map((activity, idx) => ( // Show latest 15 for performance
-                  <div key={activity.id} className="flex items-start gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-lg shadow-lg shadow-indigo-500/40 flex-shrink-0">
-                        {getActivityIcon(activity.type)}
-                      </div>
-                      {idx < Math.min(activities.length - 1, 14) && (
-                        <div className="w-0.5 h-8 bg-gradient-to-b from-indigo-600 to-transparent my-2" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-white font-medium text-sm leading-5">
-                        {activity.action}
-                      </div>
-                      <div className="text-slate-400 text-xs mt-1">
-                        {activity.timestamp}
-                      </div>
-                    </div>
+          {/* Recent Activity - Enhanced */}
+          <div className="rounded-2xl p-8 bg-gradient-to-br from-slate-800/60 via-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/30 shadow-2xl mb-10 relative overflow-hidden">
+            {/* Decorative background elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-full blur-3xl -z-0" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-blue-500/10 to-cyan-500/10 rounded-full blur-3xl -z-0" />
+            
+            <div className="relative z-10">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-700/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
-                ))}
-                {activities.length > 15 && (
-                  <div className="text-center pt-4">
-                    <div className="text-slate-400 text-xs">
-                      + {activities.length - 15} more activities
-                    </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white tracking-tight">
+                      Recent Activity
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Track your workflow progress
+                    </p>
+                  </div>
+                </div>
+                {activities.length > 10 && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                    <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+                    <span className="text-xs font-medium text-indigo-300">
+                      {activities.length} Activities
+                    </span>
                   </div>
                 )}
               </div>
-            )}
+              
+              {/* Activity List */}
+              {activities.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-700/50 to-slate-800/50 flex items-center justify-center mx-auto mb-4 border border-slate-600/30">
+                    <svg className="w-10 h-10 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                  </div>
+                  <p className="text-slate-400 text-base font-medium mb-2">No activity yet</p>
+                  <p className="text-slate-500 text-sm">Your recent actions will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-0 max-h-[500px] overflow-y-auto pr-3 custom-scrollbar">
+                  {activities.slice(0, 15).map((activity, idx) => {
+                    const isLast = idx === Math.min(activities.length - 1, 14);
+                    return (
+                      <div key={activity.id} className="relative group">
+                        <div className="flex items-start gap-4 py-4 px-4 rounded-xl hover:bg-slate-700/30 transition-all duration-300 cursor-pointer">
+                          {/* Icon and Timeline */}
+                          <div className="flex flex-col items-center relative">
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-base font-semibold shadow-lg transition-all duration-300 group-hover:scale-110 flex-shrink-0 ${
+                              activity.type === 'upload' ? 'bg-gradient-to-br from-blue-500 to-cyan-600 shadow-blue-500/30' :
+                              activity.type === 'validation' ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-green-500/30' :
+                              activity.type === 'clarification' ? 'bg-gradient-to-br from-yellow-500 to-orange-600 shadow-yellow-500/30' :
+                              activity.type === 'error' ? 'bg-gradient-to-br from-red-500 to-rose-600 shadow-red-500/30' :
+                              'bg-gradient-to-br from-purple-500 to-pink-600 shadow-purple-500/30'
+                            }`}>
+                              {getActivityIcon(activity.type)}
+                            </div>
+                            {!isLast && (
+                              <div className="w-0.5 h-12 bg-gradient-to-b from-indigo-500/50 via-purple-500/30 to-transparent my-1 relative">
+                                <div className="absolute inset-0 w-0.5 bg-gradient-to-b from-indigo-400/0 via-indigo-400/50 to-transparent animate-pulse" />
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Content */}
+                          <div className="flex-1 min-w-0 pt-1">
+                            <div className="flex items-start justify-between gap-3 mb-1.5">
+                              <p className="text-white font-semibold text-sm leading-relaxed group-hover:text-indigo-300 transition-colors">
+                                {activity.action}
+                              </p>
+                              <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide whitespace-nowrap ${
+                                activity.type === 'upload' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+                                activity.type === 'validation' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                                activity.type === 'clarification' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
+                                activity.type === 'error' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
+                                'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                              }`}>
+                                {activity.type}
+                              </span>
+                            </div>
+                            
+                            {/* Timestamp with icon */}
+                            <div className="flex items-center gap-1.5 text-slate-400 text-xs">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span className="font-medium">{activity.timestamp}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Show More Indicator */}
+                  {activities.length > 15 && (
+                    <div className="text-center pt-6 pb-2">
+                      <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
+                        <div className="flex -space-x-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" style={{ animationDelay: '0.2s' }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" style={{ animationDelay: '0.4s' }} />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-300">
+                          + {activities.length - 15} more activities
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Projects Table */}
