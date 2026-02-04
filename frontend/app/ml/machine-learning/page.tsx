@@ -382,22 +382,23 @@ const MLStudioAdvanced: React.FC = () => {
         <div className="flex items-center gap-3">
           <Logo href="/home" size="md" />
           <div>
-            <h1 className="text-2xl font-bold text-gradient">ML Studio</h1>
-            <p className="text-xs text-indigo-300 uppercase tracking-wider">AI-Powered Analytics</p>
+            <h1 className="text-2xl font-black text-gradient tracking-wide">ML Platform</h1>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push('/home')}
-            className="px-4 py-2 rounded-lg text-white font-medium text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all"
+            onClick={() => {
+              router.back();
+            }}
+            className="px-5 py-2.5 rounded-xl text-white font-semibold text-sm bg-slate-700/60 border border-slate-600/30 backdrop-blur-md hover:bg-slate-600/70 hover:border-slate-500/40 transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             Back
           </button>
         </div>
       </nav>
 
-      {/* Step Navigation */}
-      <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md rounded-xl shadow-xl border border-slate-700/50 p-2">
+      {/* Step Navigation - Fixed at Top */}
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md rounded-xl shadow-xl border border-slate-700/50 p-2">
         <div className="flex items-center gap-2">
           {[{ step: 1, label: 'Setup', key: 'setup' }, { step: 2, label: 'Validate', key: 'validate' }, { step: 3, label: 'Configure', key: 'configure' }].map((item, idx) => (
             <React.Fragment key={item.key}>
@@ -426,7 +427,7 @@ const MLStudioAdvanced: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-12">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-12">
         {selectedProject && (
           <div className="mb-8 p-4 rounded-xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 backdrop-blur-sm">
             <div className="text-sm text-indigo-100">Opening ML workspace for: <span className="font-semibold text-white">{selectedProject.name}</span></div>
@@ -435,13 +436,13 @@ const MLStudioAdvanced: React.FC = () => {
         {currentStep === 'setup' && (
           <div className="animate-slide space-y-8">
             {/* Header Section */}
-            <div className="text-center space-y-12 mb-16">
+            <div className="text-center space-y-4 mb-16">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 backdrop-blur-sm">
                 <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
                 <span className="text-sm text-indigo-300 font-medium">AI-Powered Machine Learning</span>
               </div>
               
-              <div className="mt-16">
+              <div className="mt-2">
                 <h2 className="text-5xl md:text-6xl font-bold text-gradient-rainbow leading-relaxed">
                   Build Intelligent Models
                 </h2>
@@ -450,7 +451,7 @@ const MLStudioAdvanced: React.FC = () => {
               <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">Describe your goal and upload your data. Let AI guide you through the entire pipeline.</p>
               
               {/* Progress Indicators */}
-              <div className="flex justify-center items-center gap-4 mt-8">
+              <div className="flex justify-center items-center gap-4 mt-4">
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${hasGoal ? 'bg-green-500/20 border border-green-500/40' : 'bg-slate-800/50 border border-slate-600/30'}`}>
                   <div className={`w-3 h-3 rounded-full transition-colors ${hasGoal ? 'bg-green-500' : 'bg-slate-500'}`} />
                   <span className="text-sm font-medium">Goal Defined</span>
