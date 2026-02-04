@@ -27,9 +27,20 @@ interface ChatMessage {
 }
 
 const MLStudioAdvanced: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState<'setup' | 'validate' | 'configure'>('setup');
-  const [uploadedFile, setUploadedFile] = useState<DataFile | null>(null);
-  const [dataPreview, setDataPreview] = useState<DataPreview | null>(null);
+  const [currentStep, setCurrentStep] = useState<'setup' | 'validate' | 'configure'>('validate');
+  const [uploadedFile, setUploadedFile] = useState<DataFile | null>({
+    name: 'sample-dataset.csv',
+    size: 1024000,
+    type: 'text/csv',
+    uploadTime: new Date().toISOString()
+  });
+  const [dataPreview, setDataPreview] = useState<DataPreview | null>({
+    columns: ['feature1', 'feature2', 'target'],
+    rows: [['data1', 'data2', 'value1'], ['data3', 'data4', 'value2']],
+    rowCount: 1000,
+    columnCount: 3,
+    fileSize: '1.0 MB'
+  });
   const [isProcessing, setIsProcessing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -793,39 +804,68 @@ const MLStudioAdvanced: React.FC = () => {
               </p>
             </div>
 
-            <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* ML Agent Assistant - Vertical Chat Interface */}
+            <div className="fixed left-6 top-1/2 transform -translate-y-1/2 w-96 h-[500px] backdrop-blur-2xl bg-slate-900/90 border border-indigo-500/30 rounded-2xl p-6 z-50 shadow-2xl">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-indigo-500/20">
+                <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                ML Agent Assistant
-              </h3>
-              <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
-                {chatMessages.map((msg, i) => (
-                  <div key={i} className={`flex gap-3 ${msg.type === 'user' ? 'justify-end' : ''}`}>
-                    {msg.type === 'ai' && <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>}
-                    <div className={`max-w-2xl p-4 rounded-xl ${msg.type === 'user' ? 'bg-indigo-500/20 border border-indigo-500/30' : 'bg-white/5 border border-white/10'}`}>
-                      <p className="text-sm leading-relaxed">{renderMessage(msg.text)}</p>
-                      <p className="text-xs text-gray-500 mt-1">{msg.timestamp}</p>
-                    </div>
-                    {msg.type === 'user' && <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>}
-                  </div>
-                ))}
-                <div ref={chatEndRef} />
+                <h3 className="text-2xl font-bold text-white">ML Agent Assistant</h3>
               </div>
-              <div className="flex gap-2">
-                <input type="text" placeholder="Ask: What would you like to predict?" value={userQuery} onChange={(e) => setUserQuery(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-indigo-500/50 outline-none transition-all" />
-                <button onClick={handleSendMessage} disabled={!userQuery.trim()} className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 disabled:opacity-40 transition-all">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-                </button>
+              
+              <div className="flex flex-col h-full">
+                <div className="flex-1 space-y-4 mb-6 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-transparent">
+                  {chatMessages.length === 0 && (
+                    <div className="text-center text-slate-400 mt-12">
+                      <p className="text-xl font-medium">Ask me anything about your dataset!</p>
+                    </div>
+                  )}
+                  {chatMessages.map((msg, i) => (
+                    <div key={i} className={`flex gap-3 ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      {msg.type === 'ai' && (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center flex-shrink-0 mt-1">
+                          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                      <div className={`max-w-xs p-5 rounded-xl text-lg ${msg.type === 'user' ? 'bg-indigo-500/30 border border-indigo-500/40 text-white' : 'bg-slate-700/50 border border-slate-600/50 text-slate-200'}`}>
+                        <p className="leading-relaxed font-medium">{renderMessage(msg.text)}</p>
+                        <p className="text-base text-slate-400 mt-3">{msg.timestamp}</p>
+                      </div>
+                      {msg.type === 'user' && (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center flex-shrink-0 mt-1">
+                          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <div ref={chatEndRef} />
+                </div>
+                
+                <div className="mt-auto">
+                  <div className="flex gap-3">
+                    <input 
+                      type="text" 
+                      placeholder="Ask: What would you like to predict?" 
+                      value={userQuery} 
+                      onChange={(e) => setUserQuery(e.target.value)} 
+                      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} 
+                      className="flex-1 px-5 py-4 text-lg rounded-xl bg-slate-800/60 border border-slate-600/50 focus:border-indigo-500/50 outline-none transition-all text-white placeholder-slate-400" 
+                    />
+                    <button 
+                      onClick={handleSendMessage} 
+                      disabled={!userQuery.trim()} 
+                      className="px-5 py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 disabled:opacity-40 transition-all"
+                    >
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
