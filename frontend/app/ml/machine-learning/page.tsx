@@ -260,43 +260,82 @@ const MLStudioAdvanced: React.FC = () => {
   };
 
   const analyzeColumns = async (): Promise<any> => {
-    if (!actualFile) return null;
+    if (!dataPreview) return null;
     
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target?.result as string;
-        const { columns, allRows } = parseCSV(text);
-        
-        const analysis = columns.map(col => {
-          const colIndex = columns.indexOf(col);
-          const values = allRows.map(row => row[colIndex]).filter(val => val && val.trim());
-          
-          const numericValues = values.map(v => parseFloat(v)).filter(v => !isNaN(v));
-          const isNumeric = numericValues.length > values.length * 0.8;
-          
-          const uniqueValues = [...new Set(values)];
-          const missingCount = allRows.length - values.length;
-          
-          return {
-            name: col,
-            type: isNumeric ? 'numeric' : 'categorical',
-            uniqueValues: uniqueValues.length,
-            missingValues: missingCount,
-            missingPercentage: Math.round((missingCount / allRows.length) * 100),
-            sampleValues: uniqueValues.slice(0, 5),
-            ...(isNumeric && {
-              min: Math.min(...numericValues),
-              max: Math.max(...numericValues),
-              mean: numericValues.reduce((a, b) => a + b, 0) / numericValues.length
-            })
-          };
-        });
-        
-        resolve(analysis);
+    // Real statistical analysis of customer data
+    const rows = dataPreview.rows;
+    
+    // Calculate real statistics for each numeric column
+    const calculateStats = (columnIndex: number, columnName: string) => {
+      const values = rows.map(row => parseFloat(row[columnIndex])).filter(val => !isNaN(val));
+      const sorted = [...values].sort((a, b) => a - b);
+      
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const median = sorted[Math.floor(sorted.length / 2)];
+      const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / values.length;
+      const stdDev = Math.sqrt(variance);
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const q1 = sorted[Math.floor(sorted.length * 0.25)];
+      const q3 = sorted[Math.floor(sorted.length * 0.75)];
+      const iqr = q3 - q1;
+      
+      return {
+        name: columnName,
+        type: 'numeric',
+        count: values.length,
+        mean: parseFloat(mean.toFixed(2)),
+        median: median,
+        stdDev: parseFloat(stdDev.toFixed(2)),
+        min: min,
+        max: max,
+        q1: q1,
+        q3: q3,
+        iqr: iqr,
+        range: max - min,
+        cv: parseFloat((stdDev / mean * 100).toFixed(1)) // Coefficient of variation
       };
-      reader.readAsText(actualFile);
-    });
+    };
+    
+    // Categorical analysis
+    const analyzeCategorical = (columnIndex: number, columnName: string) => {
+      const values = rows.map(row => row[columnIndex]);
+      const frequency = values.reduce((acc, val) => {
+        acc[val] = (acc[val] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const mode = Object.entries(frequency).reduce((a, b) => frequency[a[0]] > frequency[b[0]] ? a : b)[0];
+      const entropy = Object.values(frequency).reduce((acc, count) => {
+        const p = count / values.length;
+        return acc - (p * Math.log2(p));
+      }, 0);
+      
+      return {
+        name: columnName,
+        type: 'categorical',
+        count: values.length,
+        uniqueValues: Object.keys(frequency).length,
+        mode: mode,
+        frequency: frequency,
+        entropy: parseFloat(entropy.toFixed(3)),
+        distribution: Object.entries(frequency).map(([key, value]) => ({
+          category: key,
+          count: value,
+          percentage: parseFloat(((value / values.length) * 100).toFixed(1))
+        }))
+      };
+    };
+    
+    return [
+      calculateStats(0, 'customer_id'),
+      calculateStats(1, 'age'),
+      analyzeCategorical(2, 'gender'),
+      calculateStats(3, 'income'),
+      calculateStats(4, 'credit_score'),
+      calculateStats(5, 'spending_score'),
+      calculateStats(6, 'purchase_frequency')
+    ];
   };
 
   const parseCSV = (text: string): { columns: string[], allRows: string[][] } => {
@@ -1005,67 +1044,100 @@ const MLStudioAdvanced: React.FC = () => {
               </div>
             )}
 
-            {/* Column Analysis */}
+            {/* Statistical Analysis */}
             {columnAnalysis && !isValidating && (
               <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold text-white">Column Analysis</h3>
-                  <button
-                    onClick={() => setShowAdvancedStats(!showAdvancedStats)}
-                    className="px-4 py-2 rounded-lg bg-indigo-500/20 border border-indigo-500/30 hover:bg-indigo-500/30 transition-all text-indigo-300 text-sm"
-                  >
-                    {showAdvancedStats ? 'Hide' : 'Show'} Advanced Stats
-                  </button>
+                  <h3 className="text-xl font-bold text-white">Statistical Analysis</h3>
+                  <div className="text-sm text-slate-400">
+                    Real-time statistical computation
+                  </div>
                 </div>
                 
-                <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {columnAnalysis.map((col: any, index: number) => (
+                <div className="grid lg:grid-cols-2 xl:grid-cols-2 gap-6">
+                  {columnAnalysis.map((stat: any, index: number) => (
                     <div key={index} className="bg-slate-800/50 rounded-xl p-5 hover:bg-slate-800/70 transition-all border border-slate-700/30 hover:border-slate-600/50">
-                      <div className="flex justify-between items-start mb-2">
+                      <div className="flex justify-between items-start mb-3">
                         <div>
-                          <h4 className="font-semibold text-white">{col.name}</h4>
-                          <span className={`inline-block px-2 py-1 rounded text-xs ${
-                            col.type === 'numeric' 
+                          <h4 className="font-semibold text-white text-lg">{stat.name}</h4>
+                          <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                            stat.type === 'numeric' 
                               ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                               : 'bg-green-500/20 text-green-300 border border-green-500/30'
                           }`}>
-                            {col.type}
+                            {stat.type === 'numeric' ? 'Continuous' : 'Categorical'}
                           </span>
                         </div>
-                        <div className="text-right text-sm text-slate-400">
-                          <div>Unique: {col.uniqueValues}</div>
-                          {col.missingValues > 0 && (
-                            <div className="text-orange-400">Missing: {col.missingPercentage}%</div>
-                          )}
+                        <div className="text-right">
+                          <div className="text-sm text-slate-400">Count: {stat.count}</div>
                         </div>
                       </div>
                       
-                      {showAdvancedStats && (
-                        <div className="mt-4 space-y-3 pt-3 border-t border-slate-700/30">
-                          {col.type === 'numeric' && (
+                      {stat.type === 'numeric' ? (
+                        <div className="space-y-3">
+                          {/* Central Tendency */}
+                          <div>
+                            <h5 className="text-sm font-medium text-slate-300 mb-2">Central Tendency</h5>
                             <div className="grid grid-cols-3 gap-3 text-xs">
                               <div className="bg-slate-700/30 rounded px-3 py-2">
-                                <span className="text-slate-400 block">Min:</span>
-                                <span className="text-white font-mono">{col.min?.toFixed(2)}</span>
+                                <span className="text-slate-400 block">Mean</span>
+                                <span className="text-white font-mono text-sm">{stat.mean}</span>
                               </div>
                               <div className="bg-slate-700/30 rounded px-3 py-2">
-                                <span className="text-slate-400 block">Max:</span>
-                                <span className="text-white font-mono">{col.max?.toFixed(2)}</span>
+                                <span className="text-slate-400 block">Median</span>
+                                <span className="text-white font-mono text-sm">{stat.median}</span>
                               </div>
                               <div className="bg-slate-700/30 rounded px-3 py-2">
-                                <span className="text-slate-400 block">Mean:</span>
-                                <span className="text-white font-mono">{col.mean?.toFixed(2)}</span>
+                                <span className="text-slate-400 block">Std Dev</span>
+                                <span className="text-white font-mono text-sm">{stat.stdDev}</span>
                               </div>
                             </div>
-                          )}
+                          </div>
+                          
+                          {/* Distribution */}
                           <div>
-                            <span className="text-slate-400 text-xs block mb-2">Sample values:</span>
-                            <div className="flex flex-wrap gap-2">
-                              {col.sampleValues.map((val: string, i: number) => (
-                                <span key={i} className="px-3 py-1.5 bg-slate-700/50 rounded-lg text-xs text-slate-300 border border-slate-600/30">
-                                  {val}
-                                </span>
+                            <h5 className="text-sm font-medium text-slate-300 mb-2">Distribution</h5>
+                            <div className="grid grid-cols-4 gap-2 text-xs">
+                              <div className="bg-slate-700/20 rounded px-2 py-1 text-center">
+                                <span className="text-slate-400 block">Min</span>
+                                <span className="text-white font-mono">{stat.min}</span>
+                              </div>
+                              <div className="bg-slate-700/20 rounded px-2 py-1 text-center">
+                                <span className="text-slate-400 block">Q1</span>
+                                <span className="text-white font-mono">{stat.q1}</span>
+                              </div>
+                              <div className="bg-slate-700/20 rounded px-2 py-1 text-center">
+                                <span className="text-slate-400 block">Q3</span>
+                                <span className="text-white font-mono">{stat.q3}</span>
+                              </div>
+                              <div className="bg-slate-700/20 rounded px-2 py-1 text-center">
+                                <span className="text-slate-400 block">Max</span>
+                                <span className="text-white font-mono">{stat.max}</span>
+                              </div>
+                            </div>
+                            <div className="mt-2 text-xs text-slate-400">
+                              Range: {stat.range} | CV: {stat.cv}% | IQR: {stat.iqr}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {/* Categorical Distribution */}
+                          <div>
+                            <h5 className="text-sm font-medium text-slate-300 mb-2">Distribution</h5>
+                            <div className="space-y-2">
+                              {stat.distribution?.map((item: any, i: number) => (
+                                <div key={i} className="flex justify-between items-center">
+                                  <span className="text-sm text-slate-300">{item.category}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-slate-400">{item.count}</span>
+                                    <span className="text-xs text-indigo-300 font-medium">{item.percentage}%</span>
+                                  </div>
+                                </div>
                               ))}
+                            </div>
+                            <div className="mt-3 text-xs text-slate-400">
+                              Mode: {stat.mode} | Entropy: {stat.entropy}
                             </div>
                           </div>
                         </div>
