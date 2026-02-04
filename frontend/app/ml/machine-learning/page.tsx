@@ -438,7 +438,7 @@ const MLStudioAdvanced: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-12">
+      <main className={`relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-12 ${currentStep === 'validate' ? 'lg:pr-96' : ''}`}>
         {selectedProject && (
           <div className="mb-8 p-4 rounded-xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 backdrop-blur-sm">
             <div className="text-sm text-indigo-100">Opening ML workspace for: <span className="font-semibold text-white">{selectedProject.name}</span></div>
@@ -805,7 +805,7 @@ const MLStudioAdvanced: React.FC = () => {
             </div>
 
             {/* ML Agent Assistant - Vertical Chat Interface */}
-            <div className="fixed left-6 top-1/2 transform -translate-y-1/2 w-96 h-[500px] backdrop-blur-2xl bg-slate-900/90 border border-indigo-500/30 rounded-2xl p-6 z-50 shadow-2xl">
+            <div className="fixed right-6 top-1/2 transform -translate-y-1/2 w-96 h-[720px] backdrop-blur-2xl bg-slate-900/90 border border-indigo-500/30 rounded-2xl p-6 z-50 shadow-2xl">
               <div className="flex items-center gap-3 mb-6 pb-4 border-b border-indigo-500/20">
                 <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
