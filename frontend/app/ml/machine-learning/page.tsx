@@ -27,61 +27,20 @@ interface ChatMessage {
 }
 
 const MLStudioAdvanced: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState<'setup' | 'validate' | 'configure'>('validate');
-  const [uploadedFile, setUploadedFile] = useState<DataFile | null>({
-    name: 'customer_data.csv',
-    size: 850,
-    type: 'text/csv',
-    uploadTime: new Date().toLocaleTimeString()
-  });
-  const [dataPreview, setDataPreview] = useState<DataPreview | null>({
-    columns: ['customer_id', 'age', 'gender', 'income', 'credit_score', 'spending_score', 'purchase_frequency'],
-    rows: [
-      ['1001', '25', 'Female', '45000', '650', '75', '12'],
-      ['1002', '34', 'Male', '78000', '720', '85', '18'],
-      ['1003', '28', 'Female', '52000', '680', '70', '8'],
-      ['1004', '45', 'Male', '95000', '780', '90', '25'],
-      ['1005', '31', 'Female', '62000', '710', '80', '15']
-    ],
-    rowCount: 20,
-    columnCount: 7,
-    fileSize: '850 B'
-  });
+  const [currentStep, setCurrentStep] = useState<'setup' | 'validate' | 'configure'>('setup');
+  const [uploadedFile, setUploadedFile] = useState<DataFile | null>(null);
+  const [dataPreview, setDataPreview] = useState<DataPreview | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedTask, setSelectedTask] = useState<string>('');
   
   const [userQuery, setUserQuery] = useState<string>('');
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      type: 'ai',
-      text: '🤖 **AI Data Scientist Ready**\n\nI\'ve loaded your customer dataset (20 records, 7 features). I can perform real-time analysis including:\n\n• Pattern recognition & correlations\n• Customer segmentation strategies\n• ML model recommendations\n• Data quality assessment\n\nWhat analysis would you like me to run?',
-      timestamp: new Date().toLocaleTimeString()
-    }
-  ]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [actualFile, setActualFile] = useState<File | null>(null);
   const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<any>({
-    satisfaction_score: 85,
-    dataset_summary: {
-      rows: 20,
-      columns: 7,
-      file_size_mb: 0.85
-    },
-    goal_understanding: {
-      interpreted_task: 'Customer Segmentation',
-      target_column_guess: 'spending_score',
-      confidence: 0.87
-    },
-    agent_answer: '✅ **Dataset Analysis Complete!**\n\nYour customer dataset looks excellent for machine learning! I\'ve identified this as a perfect candidate for **customer segmentation** analysis.',
-    optional_questions: [
-      'Would you like to predict customer lifetime value?',
-      'Should we focus on churn prediction instead?',
-      'Do you want to segment customers by spending behavior?'
-    ]
-  });
+  const [validationResult, setValidationResult] = useState<any>(null);
   const [showLastRows, setShowLastRows] = useState(false);
   const [viewMode, setViewMode] = useState<'first' | 'last' | 'all'>('first');
   const [savedProjects, setSavedProjects] = useState<any[]>([]);
@@ -97,20 +56,18 @@ const MLStudioAdvanced: React.FC = () => {
   const canProceedFromSetup = hasGoal && hasDataset;
 
   useEffect(() => {
-    // Initialize with sample column analysis
-    if (dataPreview && !columnAnalysis) {
-      const sampleAnalysis = [
-        { name: 'customer_id', type: 'numeric', uniqueValues: 20, missingValues: 0, missingPercentage: 0, sampleValues: ['1001', '1002', '1003', '1004', '1005'], min: 1001, max: 1020, mean: 1010.5 },
-        { name: 'age', type: 'numeric', uniqueValues: 15, missingValues: 0, missingPercentage: 0, sampleValues: ['25', '34', '28', '45', '31'], min: 22, max: 65, mean: 35.2 },
-        { name: 'gender', type: 'categorical', uniqueValues: 2, missingValues: 0, missingPercentage: 0, sampleValues: ['Female', 'Male'] },
-        { name: 'income', type: 'numeric', uniqueValues: 18, missingValues: 0, missingPercentage: 0, sampleValues: ['45000', '78000', '52000', '95000', '62000'], min: 35000, max: 120000, mean: 67500 },
-        { name: 'credit_score', type: 'numeric', uniqueValues: 16, missingValues: 0, missingPercentage: 0, sampleValues: ['650', '720', '680', '780', '710'], min: 580, max: 850, mean: 705 },
-        { name: 'spending_score', type: 'numeric', uniqueValues: 12, missingValues: 0, missingPercentage: 0, sampleValues: ['75', '85', '70', '90', '80'], min: 40, max: 95, mean: 75.5 },
-        { name: 'purchase_frequency', type: 'numeric', uniqueValues: 20, missingValues: 0, missingPercentage: 0, sampleValues: ['12', '18', '8', '25', '15'], min: 5, max: 30, mean: 16.2 }
-      ];
-      setColumnAnalysis(sampleAnalysis);
-    }
+    // Column analysis will be set only when actual file is validated
   }, [dataPreview, columnAnalysis]);
+
+  // Auto-redirect to setup if on validate page without data
+  useEffect(() => {
+    if (currentStep === 'validate' && !dataPreview && !uploadedFile) {
+      const timer = setTimeout(() => {
+        setCurrentStep('setup');
+      }, 3000); // Redirect after 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, dataPreview, uploadedFile]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -585,6 +542,14 @@ const MLStudioAdvanced: React.FC = () => {
       };
 
       setDataPreview(preview);
+      
+      // Add welcome message when data is loaded
+      setChatMessages([{
+        type: 'ai',
+        text: `🤖 **AI Data Scientist Ready**\n\nI've loaded your dataset "${file.name}" (${allRows.length.toLocaleString()} records, ${columns.length} features). I can perform real-time analysis including:\n\n• Pattern recognition & correlations\n• Customer segmentation strategies\n• ML model recommendations\n• Data quality assessment\n\nDefine your goal above and click "Proceed & Validate Dataset" to start the analysis!`,
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+      
       setIsProcessing(false);
     };
 
@@ -611,9 +576,9 @@ const MLStudioAdvanced: React.FC = () => {
       
       if (query.includes('pattern') || query.includes('insight') || query.includes('analysis')) {
         // Real analysis of customer data
-        const avgAge = columnAnalysis?.find(c => c.name === 'age')?.mean || 35.2;
-        const avgIncome = columnAnalysis?.find(c => c.name === 'income')?.mean || 67500;
-        const avgCredit = columnAnalysis?.find(c => c.name === 'credit_score')?.mean || 705;
+        const avgAge = columnAnalysis?.featureStats?.age?.mean || 35.2;
+        const avgIncome = columnAnalysis?.featureStats?.income?.mean || 67500;
+        const avgCredit = columnAnalysis?.featureStats?.credit_score?.mean || 705;
         const genderDistribution = dataPreview?.rows.reduce((acc, row) => {
           acc[row[2]] = (acc[row[2]] || 0) + 1;
           return acc;
@@ -998,6 +963,32 @@ const MLStudioAdvanced: React.FC = () => {
           </div>
         )}
 
+        {currentStep === 'validate' && !dataPreview && (
+          <div className="animate-slide space-y-8 text-center py-20">
+            <div className="space-y-6">
+              <div className="w-24 h-24 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center mx-auto">
+                <svg className="w-12 h-12 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div className="space-y-3">
+                <h2 className="text-3xl font-bold text-white">No Dataset Found</h2>
+                <p className="text-slate-400 text-lg max-w-md mx-auto">
+                  To validate your data, you need to first upload a dataset and define your goal in the Setup step.
+                </p>
+              </div>
+              <Button 
+                onClick={() => setCurrentStep('setup')}
+                variant="primary" 
+                size="lg"
+                className="mt-6"
+              >
+                Go to Setup
+              </Button>
+            </div>
+          </div>
+        )}
+
         {currentStep === 'validate' && dataPreview && (
           <div className="animate-slide space-y-8">
             {/* Header Section */}
@@ -1043,7 +1034,7 @@ const MLStudioAdvanced: React.FC = () => {
                   label: 'Columns',
                   value: validationResult?.dataset_summary?.columns || dataPreview.columnCount,
                   color: 'green',
-                  subtext: columnAnalysis ? `${columnAnalysis.filter((c: any) => c.type === 'numeric').length} numeric, ${columnAnalysis.filter((c: any) => c.type === 'categorical').length} categorical` : 'Customer features'
+                  subtext: columnAnalysis ? `${columnAnalysis.columnTypes?.numeric?.length || 0} numeric, ${columnAnalysis.columnTypes?.categorical?.length || 0} categorical` : 'Customer features'
                 },
                 {
                   icon: <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>,
@@ -1279,7 +1270,7 @@ const MLStudioAdvanced: React.FC = () => {
                             {Object.entries(columnAnalysis.distributions.gender).map(([key, value]) => (
                               <div key={key} className="flex justify-between text-sm">
                                 <span className="text-slate-400">{key}</span>
-                                <span className="text-white font-mono">{value} ({Math.round((value as number / columnAnalysis.dataInfo.rows) * 100)}%)</span>
+                                <span className="text-white font-mono">{String(value)} ({Math.round((value as number / columnAnalysis.dataInfo.rows) * 100)}%)</span>
                               </div>
                             ))}
                           </div>
@@ -1294,7 +1285,7 @@ const MLStudioAdvanced: React.FC = () => {
                             {Object.entries(columnAnalysis.distributions.ageGroups).map(([key, value]) => (
                               <div key={key} className="flex justify-between text-sm">
                                 <span className="text-slate-400">{key}</span>
-                                <span className="text-white font-mono">{value} ({Math.round((value as number / columnAnalysis.dataInfo.rows) * 100)}%)</span>
+                                <span className="text-white font-mono">{String(value)} ({Math.round((value as number / columnAnalysis.dataInfo.rows) * 100)}%)</span>
                               </div>
                             ))}
                           </div>
@@ -1309,7 +1300,7 @@ const MLStudioAdvanced: React.FC = () => {
                             {Object.entries(columnAnalysis.distributions.incomeGroups).map(([key, value]) => (
                               <div key={key} className="flex justify-between text-sm">
                                 <span className="text-slate-400">{key}</span>
-                                <span className="text-white font-mono">{value} ({Math.round((value as number / columnAnalysis.dataInfo.rows) * 100)}%)</span>
+                                <span className="text-white font-mono">{String(value)} ({Math.round((value as number / columnAnalysis.dataInfo.rows) * 100)}%)</span>
                               </div>
                             ))}
                           </div>
@@ -1404,13 +1395,13 @@ const MLStudioAdvanced: React.FC = () => {
                         <th key={i} className="text-left p-4 font-semibold text-indigo-300 min-w-[120px] border-r border-slate-700/20 last:border-r-0 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <span className="truncate">{col}</span>
-                            {columnAnalysis && columnAnalysis[i] && (
+                            {columnAnalysis && (
                               <span className={`inline-block px-2 py-0.5 rounded text-xs flex-shrink-0 ${
-                                columnAnalysis[i].type === 'numeric' 
+                                columnAnalysis.columnTypes?.numeric?.includes(col) 
                                   ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
                                   : 'bg-green-500/20 text-green-300 border border-green-500/30'
                               }`}>
-                                {columnAnalysis[i].type}
+                                {columnAnalysis.columnTypes?.numeric?.includes(col) ? 'numeric' : 'categorical'}
                               </span>
                             )}
                           </div>
@@ -1630,8 +1621,8 @@ const MLStudioAdvanced: React.FC = () => {
                             setIsValidating(false);
                             
                             // Calculate real insights
-                            const avgIncome = columnAnalysis?.find(c => c.name === 'income')?.mean || 67500;
-                            const avgSpending = columnAnalysis?.find(c => c.name === 'spending_score')?.mean || 75.5;
+                            const avgIncome = columnAnalysis?.featureStats?.income?.mean || 67500;
+                            const avgSpending = columnAnalysis?.featureStats?.spending_score?.mean || 75.5;
                             
                             setChatMessages(prev => [...prev, {
                               type: 'ai',
