@@ -348,7 +348,7 @@ const MLStudioAdvanced: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-950 text-white relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 font-sans text-sm relative">
       <style>{`
         @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(50px, -50px); } }
         @keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); } 50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); } }
@@ -362,179 +362,234 @@ const MLStudioAdvanced: React.FC = () => {
         .text-gradient-rainbow { background: linear-gradient(135deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
       `}</style>
 
-      {/* Professional Background Pattern */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293710_1px,transparent_1px),linear-gradient(to_bottom,#1f293710_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-        <div className="absolute w-[800px] h-[800px] rounded-full bg-slate-800/10 blur-[150px] -top-64 -left-64" />
-        <div className="absolute w-[600px] h-[600px] rounded-full bg-slate-700/10 blur-[150px] -bottom-48 -right-48" />
+      {/* Clean Simple Background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900" />
       </div>
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-2xl bg-slate-950/80 border-b border-indigo-500/20 relative">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between flex-wrap gap-6">
-            <div className="flex items-center gap-4">
-              <Logo href="/home" size="md" showText={false} />
-              <div>
-                <h1 className="text-2xl font-bold text-gradient">ML Studio</h1>
-                <p className="text-xs text-indigo-300 uppercase tracking-wider">AI-Powered Analytics</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {[{ step: 1, label: 'Setup', key: 'setup' }, { step: 2, label: 'Validate', key: 'validate' }, { step: 3, label: 'Configure', key: 'configure' }].map((item, idx) => (
-                <React.Fragment key={item.key}>
-                  <button
-                    onClick={() => {
-                      if (item.key === 'setup' || (item.key === 'validate' && uploadedFile) || (item.key === 'configure' && dataPreview)) {
-                        setCurrentStep(item.key as any);
-                      }
-                    }}
-                    disabled={item.key === 'validate' && !uploadedFile || item.key === 'configure' && !dataPreview}
-                    className={`px-4 py-2 rounded-lg transition-all duration-300 ${
-                      currentStep === item.key
-                        ? 'bg-gradient-to-r from-indigo-500 to-pink-500 shadow-lg shadow-indigo-500/50'
-                        : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                    } disabled:opacity-40 disabled:cursor-not-allowed`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-white/20">{item.step}</span>
-                      <span className="text-sm font-medium">{item.label}</span>
-                    </div>
-                  </button>
-                  {idx < 2 && <div className={`w-8 h-0.5 transition-all ${(idx === 0 && uploadedFile) || (idx === 1 && dataPreview) ? 'bg-gradient-to-r from-indigo-500 to-pink-500' : 'bg-white/10'}`} />}
-                </React.Fragment>
-              ))}
-            </div>
+      {/* Enhanced Navigation */}
+      <nav className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-8 bg-transparent">
+        <div className="flex items-center gap-3">
+          <Logo href="/home" size="md" />
+          <div>
+            <h1 className="text-2xl font-bold text-gradient">ML Studio</h1>
+            <p className="text-xs text-indigo-300 uppercase tracking-wider">AI-Powered Analytics</p>
           </div>
         </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push('/home')}
+            className="px-4 py-2 rounded-lg text-white font-medium text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all"
+          >
+            Back
+          </button>
+        </div>
+      </nav>
 
-        {/* Back Button in Upper Right Corner */}
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 right-6 px-4 py-2 rounded-lg text-white font-medium text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all"
-        >
-          Back
-        </button>
-      </header>
+      {/* Step Navigation */}
+      <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md rounded-xl shadow-xl border border-slate-700/50 p-2">
+        <div className="flex items-center gap-2">
+          {[{ step: 1, label: 'Setup', key: 'setup' }, { step: 2, label: 'Validate', key: 'validate' }, { step: 3, label: 'Configure', key: 'configure' }].map((item, idx) => (
+            <React.Fragment key={item.key}>
+              <button
+                onClick={() => {
+                  if (item.key === 'setup' || (item.key === 'validate' && uploadedFile) || (item.key === 'configure' && dataPreview)) {
+                    setCurrentStep(item.key as any);
+                  }
+                }}
+                disabled={item.key === 'validate' && !uploadedFile || item.key === 'configure' && !dataPreview}
+                className={`px-6 py-3 rounded-lg transition-all duration-300 font-medium ${
+                  currentStep === item.key
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
+                    : 'bg-slate-800/50 text-gray-400 hover:bg-slate-700/50 hover:text-gray-300'
+                } disabled:opacity-40 disabled:cursor-not-allowed`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs">{item.step}</span>
+                  <span className="text-sm">{item.label}</span>
+                </div>
+              </button>
+              {idx < 2 && <div className={`w-8 h-0.5 transition-all ${(idx === 0 && uploadedFile) || (idx === 1 && dataPreview) ? 'bg-gradient-to-r from-indigo-500 to-purple-500' : 'bg-white/10'}`} />}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-12">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-12">
         {selectedProject && (
-          <div className="mb-6 p-3 rounded-lg bg-indigo-700/10 border border-indigo-500/20">
+          <div className="mb-8 p-4 rounded-xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 backdrop-blur-sm">
             <div className="text-sm text-indigo-100">Opening ML workspace for: <span className="font-semibold text-white">{selectedProject.name}</span></div>
           </div>
         )}
         {currentStep === 'setup' && (
           <div className="animate-slide space-y-8">
-            <div className="text-center space-y-4 mb-12">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/30">
+            {/* Header Section */}
+            <div className="text-center space-y-6 mb-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 backdrop-blur-sm">
                 <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
                 <span className="text-sm text-indigo-300 font-medium">AI-Powered Machine Learning</span>
               </div>
               <h2 className="text-5xl md:text-6xl font-bold text-gradient-rainbow">Build Intelligent Models</h2>
-              <p className="text-xl text-gray-400 max-w-2xl mx-auto">Describe your goal and upload your data. Let AI guide you through the entire pipeline.</p>
+              <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">Describe your goal and upload your data. Let AI guide you through the entire pipeline.</p>
+              
+              {/* Progress Indicators */}
+              <div className="flex justify-center items-center gap-4 mt-8">
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${hasGoal ? 'bg-green-500/20 border border-green-500/40' : 'bg-slate-800/50 border border-slate-600/30'}`}>
+                  <div className={`w-3 h-3 rounded-full transition-colors ${hasGoal ? 'bg-green-500' : 'bg-slate-500'}`} />
+                  <span className="text-sm font-medium">Goal Defined</span>
+                </div>
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${hasDataset ? 'bg-green-500/20 border border-green-500/40' : 'bg-slate-800/50 border border-slate-600/30'}`}>
+                  <div className={`w-3 h-3 rounded-full transition-colors ${hasDataset ? 'bg-green-500' : 'bg-slate-500'}`} />
+                  <span className="text-sm font-medium">Dataset Ready</span>
+                </div>
+              </div>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-8">
-              {/* Query Section */}
+            <div className="grid lg:grid-cols-2 gap-12">
+              {/* Goal Definition Section */}
               <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
                     <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <div><h3 className="text-xl font-bold">Define Your Goal</h3><p className="text-sm text-gray-400">What do you want to predict or analyze?</p></div>
-                </div>
-
-                <div className="group backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6 hover:border-indigo-500/40 transition-all">
-                  <textarea 
-                    placeholder="Example: I want to predict which customers are likely to churn in the next 3 months..." 
-                    value={userQuery} 
-                    onChange={(e) => setUserQuery(e.target.value)} 
-                    className="w-full h-48 bg-transparent border-none outline-none text-white placeholder-gray-500 resize-none" 
-                  />
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {['Predict customer churn', 'Forecast sales', 'Classify transactions'].map((p) => (
-                      <button key={p} onClick={() => setUserQuery(p)} className="px-3 py-1.5 text-xs rounded-full bg-white/5 border border-white/10 hover:bg-indigo-500/20 hover:border-indigo-500/50 transition-all">{p}</button>
-                    ))}
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">Define Your Goal</h3>
+                    <p className="text-slate-400">What do you want to predict or analyze?</p>
                   </div>
                 </div>
 
+                <div className="group relative rounded-2xl p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-indigo-400/50 hover:shadow-2xl hover:shadow-indigo-500/25 transition-all duration-300">
+                  {/* Background glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                  
+                  <div className="relative z-10">
+                    <textarea 
+                      placeholder="Example: I want to predict which customers are likely to churn in the next 3 months based on their usage patterns and demographics..." 
+                      value={userQuery} 
+                      onChange={(e) => setUserQuery(e.target.value)} 
+                      className="w-full h-40 bg-transparent border-none outline-none text-white placeholder-slate-500 resize-none text-sm leading-relaxed" 
+                    />
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {['Predict customer churn', 'Forecast sales revenue', 'Classify transactions', 'Detect fraud'].map((p) => (
+                        <button 
+                          key={p} 
+                          onClick={() => setUserQuery(p)} 
+                          className="px-3 py-1.5 text-xs rounded-full bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 hover:border-indigo-500/50 transition-all text-indigo-300 hover:text-indigo-200"
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* ML Task Types */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { 
                       icon: <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>, 
                       title: 'Classification', 
-                      example: 'Yes/No' 
+                      example: 'Yes/No'
                     }, 
                     { 
                       icon: <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>, 
                       title: 'Regression', 
-                      example: '$100+' 
+                      example: '$100+'
                     }, 
                     { 
                       icon: <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>, 
                       title: 'Clustering', 
-                      example: 'A, B, C' 
+                      example: 'A, B, C'
                     }
                   ].map((item) => (
-                    <div key={item.title} className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-xl p-4 hover:border-indigo-500/40 hover:-translate-y-1 transition-all cursor-pointer group">
-                      <div className="mb-2 group-hover:scale-110 transition-transform">{item.icon}</div>
-                      <h4 className="text-sm font-semibold mb-1">{item.title}</h4>
-                      <code className="text-xs text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">{item.example}</code>
+                    <div key={item.title} className="group relative rounded-xl p-4 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-indigo-400/50 hover:shadow-xl hover:shadow-indigo-500/25 transition-all duration-300 hover:-translate-y-1 cursor-pointer overflow-hidden">
+                      {/* Background glow effect */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
+                      
+                      <div className="relative z-10">
+                        <div className="mb-3 group-hover:scale-110 transition-transform duration-300">{item.icon}</div>
+                        <h4 className="text-sm font-semibold mb-2 text-white">{item.title}</h4>
+                        <code className="text-xs text-indigo-300 bg-indigo-500/10 px-2 py-1 rounded border border-indigo-500/20">{item.example}</code>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Upload Section */}
+              {/* Dataset Upload Section */}
               <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-orange-600 flex items-center justify-center shadow-lg shadow-pink-500/30">
                     <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
                   </div>
-                  <div><h3 className="text-xl font-bold">Upload Dataset</h3><p className="text-sm text-gray-400">CSV or Excel</p></div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">Upload Dataset</h3>
+                    <p className="text-slate-400">CSV or Excel files supported</p>
+                  </div>
                 </div>
 
-                <div className={`backdrop-blur-2xl bg-slate-900/60 border rounded-2xl p-12 text-center cursor-pointer transition-all ${dragActive ? 'border-indigo-500 bg-indigo-500/10 scale-105' : 'border-indigo-500/20 hover:border-indigo-500/40'} ${isProcessing ? 'pointer-events-none' : ''}`} onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} onClick={() => !isProcessing && fileInputRef.current?.click()}>
+                <div className={`group relative rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-pink-400/50 hover:shadow-2xl hover:shadow-pink-500/25 ${dragActive ? 'border-pink-500 bg-pink-500/10 scale-105' : ''} ${isProcessing ? 'pointer-events-none' : ''}`} onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} onClick={() => !isProcessing && fileInputRef.current?.click()}>
+                  {/* Background glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                  
                   <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={(e) => e.target.files?.[0] && processFile(e.target.files[0])} className="hidden" />
-                  {isProcessing ? (
-                    <div className="space-y-4">
-                      <div className="relative w-20 h-20 mx-auto">
-                        <div className="absolute inset-0 rounded-full border-4 border-indigo-500/30" />
-                        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-500" style={{ animation: 'spin 1s linear infinite' }} />
+                  
+                  <div className="relative z-10">
+                    {isProcessing ? (
+                      <div className="space-y-4">
+                        <div className="relative w-20 h-20 mx-auto">
+                          <div className="absolute inset-0 rounded-full border-4 border-pink-500/30" />
+                          <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-pink-500" style={{ animation: 'spin 1s linear infinite' }} />
+                        </div>
+                        <p className="text-slate-400 font-medium">Processing your data...</p>
                       </div>
-                      <p className="text-gray-400 font-medium">Processing...</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="relative inline-block mb-6">
-                        <div className="absolute inset-0 bg-indigo-500 rounded-full blur-xl opacity-50" style={{ animation: 'pulse-ring 2s ease-out infinite' }} />
-                        <svg className="w-16 h-16 text-indigo-400 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                      </div>
-                      <h4 className="text-lg font-semibold mb-2">Drop your file here</h4>
-                      <p className="text-sm text-gray-400 mb-4">or click to browse</p>
-                      <div className="flex gap-2 justify-center">{['CSV', 'XLSX', 'XLS'].map((f) => <span key={f} className="px-3 py-1 text-xs rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-medium">{f}</span>)}</div>
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <div className="relative inline-block mb-6">
+                          <div className="absolute inset-0 bg-pink-500 rounded-full blur-xl opacity-50" style={{ animation: 'pulse-ring 2s ease-out infinite' }} />
+                          <svg className="w-16 h-16 text-pink-400 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          </svg>
+                        </div>
+                        <h4 className="text-lg font-semibold mb-2 text-white">Drop your file here</h4>
+                        <p className="text-sm text-slate-400 mb-6">or click to browse and select</p>
+                        <div className="flex gap-2 justify-center">
+                          {['CSV', 'XLSX', 'XLS'].map((f) => (
+                            <span key={f} className="px-3 py-1.5 text-xs rounded-full bg-pink-500/10 border border-pink-500/30 text-pink-300 font-medium">
+                              {f}
+                            </span>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {uploadedFile && (
-                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/50 rounded-xl p-4 animate-slide">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center"><svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
+                  <div className="group relative rounded-xl p-4 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-green-500/50 hover:border-green-400/60 transition-all duration-300 animate-slide overflow-hidden">
+                    {/* Success glow effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/5 opacity-60 rounded-xl" />
+                    
+                    <div className="relative z-10 flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/30">
+                        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">{uploadedFile.name}</p>
-                        <p className="text-xs text-gray-400">{(uploadedFile.size / 1024).toFixed(2)} KB • {uploadedFile.uploadTime}</p>
+                        <p className="font-semibold truncate text-white">{uploadedFile.name}</p>
+                        <p className="text-xs text-slate-400">{(uploadedFile.size / 1024).toFixed(2)} KB • Uploaded at {uploadedFile.uploadTime}</p>
                       </div>
                       <Button 
                         onClick={(e) => { e.stopPropagation(); setUploadedFile(null); setDataPreview(null); setChatMessages([]); setActualFile(null); setValidationResult(null); }} 
                         variant="outline" 
                         size="sm"
+                        className="border-slate-600 hover:border-slate-500 hover:bg-slate-700/50"
                       >
                         Change
                       </Button>
@@ -542,37 +597,57 @@ const MLStudioAdvanced: React.FC = () => {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-xl p-4 hover:border-indigo-500/40 hover:-translate-y-1 transition-all">
-                    <svg className="w-5 h-5 text-indigo-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <h4 className="text-sm font-semibold mb-1">Supported</h4>
-                    <p className="text-xs text-gray-400">CSV, Excel formats</p>
+                {/* Feature Cards */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="group relative rounded-xl p-4 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-indigo-400/50 hover:shadow-xl hover:shadow-indigo-500/25 transition-all duration-300 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
+                    <div className="relative z-10">
+                      <svg className="w-5 h-5 text-indigo-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <h4 className="text-sm font-semibold mb-1 text-white">Supported Formats</h4>
+                      <p className="text-xs text-slate-400">CSV, Excel (XLSX/XLS)</p>
+                    </div>
                   </div>
-                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-xl p-4 hover:border-indigo-500/40 hover:-translate-y-1 transition-all">
-                    <svg className="w-5 h-5 text-pink-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                    <h4 className="text-sm font-semibold mb-1">Secure</h4>
-                    <p className="text-xs text-gray-400">Never stored</p>
+                  <div className="group relative rounded-xl p-4 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-pink-400/50 hover:shadow-xl hover:shadow-pink-500/25 transition-all duration-300 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
+                    <div className="relative z-10">
+                      <svg className="w-5 h-5 text-pink-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      <h4 className="text-sm font-semibold mb-1 text-white">Privacy First</h4>
+                      <p className="text-xs text-slate-400">Data never stored permanently</p>
+                    </div>
                   </div>
                 </div>
 
-                <Button
-                  onClick={async () => {
-                    if (!canProceedFromSetup || isProcessing || isValidating) return;
-                    setCurrentStep('validate');
-                    await validateWithAPI();
-                  }}
-                  disabled={!canProceedFromSetup || isProcessing || isValidating}
-                  variant="secondary"
-                  size="lg"
-                  className="w-full"
-                  icon={
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  }
-                >
-                  Proceed & Validate
-                </Button>
+                {/* Action Button */}
+                <div className="mt-8">
+                  <Button
+                    onClick={async () => {
+                      if (!canProceedFromSetup || isProcessing || isValidating) return;
+                      setCurrentStep('validate');
+                      await validateWithAPI();
+                    }}
+                    disabled={!canProceedFromSetup || isProcessing || isValidating}
+                    size="lg"
+                    className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-4 rounded-2xl shadow-xl hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105 border border-indigo-400/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-xl"
+                    icon={
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    }
+                  >
+                    {isValidating ? 'Validating...' : 'Proceed & Validate Dataset'}
+                  </Button>
+                  {!canProceedFromSetup && (
+                    <p className="text-center text-sm text-slate-400 mt-2">
+                      {!hasGoal && !hasDataset ? 'Please define your goal and upload a dataset' : 
+                       !hasGoal ? 'Please define your ML goal above' : 
+                       'Please upload a dataset to continue'}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -580,34 +655,43 @@ const MLStudioAdvanced: React.FC = () => {
 
         {currentStep === 'validate' && dataPreview && (
           <div className="animate-slide space-y-8">
-            <div className="flex justify-between items-start flex-wrap gap-4">
-              <div><h2 className="text-3xl font-bold text-gradient mb-2">Dataset Preview</h2><p className="text-gray-400">File: {uploadedFile?.name}</p></div>
+            {/* Header Section */}
+            <div className="flex justify-between items-start flex-wrap gap-6">
+              <div>
+                <h2 className="text-4xl font-bold text-gradient mb-2">Dataset Validation</h2>
+                <p className="text-slate-400">Analyzing: <span className="text-white font-medium">{uploadedFile?.name}</span></p>
+              </div>
               <Button 
                 onClick={() => { setCurrentStep('setup'); setUploadedFile(null); setDataPreview(null); setChatMessages([]); setUserQuery(''); setActualFile(null); setValidationResult(null); }} 
-                variant="danger" 
+                variant="outline" 
                 size="md"
+                className="border-slate-600 hover:border-slate-500 hover:bg-slate-700/50"
                 icon={<span>↻</span>}
               >
                 Start Over
               </Button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
                 {
                   icon: <svg className="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
                   label: 'Rows',
                   value: validationResult?.dataset_summary?.rows?.toLocaleString() || dataPreview.rowCount.toLocaleString(),
+                  color: 'blue'
                 },
                 {
                   icon: <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
                   label: 'Columns',
                   value: validationResult?.dataset_summary?.columns || dataPreview.columnCount,
+                  color: 'green'
                 },
                 {
                   icon: <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>,
                   label: 'Size',
                   value: validationResult?.dataset_summary?.file_size_mb ? `${validationResult.dataset_summary.file_size_mb} MB` : dataPreview.fileSize,
+                  color: 'purple'
                 },
                 {
                   icon: <svg className="w-8 h-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
@@ -620,20 +704,20 @@ const MLStudioAdvanced: React.FC = () => {
                   ) : (
                     validationResult?.satisfaction_score ? `${validationResult.satisfaction_score}%` : 'Pending'
                   ),
+                  color: 'yellow'
                 }
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6 hover:border-indigo-500/40 hover:-translate-y-1 transition-all group"
+                  className="group relative rounded-2xl p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-indigo-400/50 hover:shadow-2xl hover:shadow-indigo-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden"
                 >
-                  <div className="mb-2">{stat.icon}</div>
-                  <p className="text-sm text-gray-400 mb-1">{stat.label}</p>
-                  <div className="text-2xl font-bold">
-                    {typeof stat.value === 'string' || typeof stat.value === 'number' ? (
-                      stat.value
-                    ) : (
-                      stat.value
-                    )}
+                  {/* Background glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                  
+                  <div className="relative z-10">
+                    <div className="mb-4 group-hover:scale-110 transition-transform duration-300">{stat.icon}</div>
+                    <p className="text-sm text-slate-400 mb-2 font-medium">{stat.label}</p>
+                    <div className="text-2xl font-bold text-white">{stat.value}</div>
                   </div>
                 </div>
               ))}
