@@ -359,7 +359,17 @@ const MLStudioAdvanced: React.FC = () => {
         .animate-glow { animation: glow 3s ease-in-out infinite; }
         .animate-slide { animation: slideIn 0.5s ease-out; }
         .text-gradient { background: linear-gradient(135deg, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .text-gradient-rainbow { background: linear-gradient(135deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .text-gradient-rainbow { 
+          background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7, #ec4899, #f43f5e, #f97316, #f59e0b); 
+          -webkit-background-clip: text; 
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          display: inline-block;
+          line-height: 1.2;
+          padding: 0.1em 0;
+          letter-spacing: -0.01em;
+          font-weight: 900;
+        }
       `}</style>
 
       {/* Clean Simple Background */}
@@ -425,12 +435,18 @@ const MLStudioAdvanced: React.FC = () => {
         {currentStep === 'setup' && (
           <div className="animate-slide space-y-8">
             {/* Header Section */}
-            <div className="text-center space-y-6 mb-12">
+            <div className="text-center space-y-12 mb-16">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 backdrop-blur-sm">
                 <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
                 <span className="text-sm text-indigo-300 font-medium">AI-Powered Machine Learning</span>
               </div>
-              <h2 className="text-5xl md:text-6xl font-bold text-gradient-rainbow">Build Intelligent Models</h2>
+              
+              <div className="mt-16">
+                <h2 className="text-5xl md:text-6xl font-bold text-gradient-rainbow leading-relaxed">
+                  Build Intelligent Models
+                </h2>
+              </div>
+              
               <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">Describe your goal and upload your data. Let AI guide you through the entire pipeline.</p>
               
               {/* Progress Indicators */}
