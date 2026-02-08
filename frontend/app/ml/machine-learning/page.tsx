@@ -1677,29 +1677,7 @@ ${JSON.stringify(fallbackResults, null, 2)}
                   </div>
                 )}
 
-                {/* Feature Cards */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="group relative rounded-xl p-4 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-indigo-400/50 hover:shadow-xl hover:shadow-indigo-500/25 transition-all duration-300 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-                    <div className="relative z-10">
-                      <svg className="w-5 h-5 text-indigo-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <h4 className="text-sm font-semibold mb-1 text-white">Supported Formats</h4>
-                      <p className="text-xs text-slate-400">CSV, Excel (XLSX/XLS)</p>
-                    </div>
-                  </div>
-                  <div className="group relative rounded-xl p-4 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-pink-400/50 hover:shadow-xl hover:shadow-pink-500/25 transition-all duration-300 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-                    <div className="relative z-10">
-                      <svg className="w-5 h-5 text-pink-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      <h4 className="text-sm font-semibold mb-1 text-white">Privacy First</h4>
-                      <p className="text-xs text-slate-400">Data never stored permanently</p>
-                    </div>
-                  </div>
-                </div>
+
 
                 {/* Action Button */}
                 <div className="mt-8">
@@ -2851,53 +2829,23 @@ ${JSON.stringify(fallbackResults, null, 2)}
                   
                   {/* Key Metrics Grid */}
                   <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="bg-slate-700/40 rounded-lg p-4 border border-slate-600/30">
-                      <h5 className="text-blue-300 font-semibold mb-3">Dataset Size</h5>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Rows:</span>
-                          <span className="text-white font-mono">{validationResult.dataset_summary?.rows?.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Columns:</span>
-                          <span className="text-white font-mono">{validationResult.dataset_summary?.columns}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">File Size:</span>
-                          <span className="text-white font-mono">{validationResult.dataset_summary?.file_size_mb} MB</span>
-                        </div>
+                  <div className="bg-slate-700/40 rounded-lg p-4 border border-slate-600/30">
+                    <h5 className="text-blue-300 font-semibold mb-3">Dataset Overview</h5>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Rows:</span>
+                        <span className="text-white font-mono">{validationResult.dataset_summary?.rows?.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Columns:</span>
+                        <span className="text-white font-mono">{validationResult.dataset_summary?.columns}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Score:</span>
+                        <span className="text-white font-mono">{validationResult.satisfaction_score}/100</span>
                       </div>
                     </div>
-
-                    <div className="bg-slate-700/40 rounded-lg p-4 border border-slate-600/30">
-                      <h5 className="text-green-300 font-semibold mb-3">Validation Score</h5>
-                      <div className="text-center">
-                        <div className="text-3xl font-bold text-white mb-2">
-                          {validationResult.satisfaction_score}/100
-                        </div>
-                        <div className="w-full bg-slate-600/50 rounded-full h-3 mb-2">
-                          <div 
-                            className="bg-gradient-to-r from-green-400 to-emerald-500 h-3 rounded-full transition-all duration-1000" 
-                            style={{width: `${validationResult.satisfaction_score}%`}}
-                          ></div>
-                        </div>
-                        <div className="text-xs text-slate-400">Quality Assessment</div>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-700/40 rounded-lg p-4 border border-slate-600/30">
-                      <h5 className="text-purple-300 font-semibold mb-3">Task Analysis</h5>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <span className="text-slate-400">Task Type:</span>
-                          <div className="text-white font-medium mt-1">{validationResult.goal_understanding?.interpreted_task || 'Auto-detected'}</div>
-                        </div>
-                        <div>
-                          <span className="text-slate-400">Target Column:</span>
-                          <div className="text-emerald-300 font-mono mt-1">{validationResult.goal_understanding?.target_column_guess || 'To be determined'}</div>
-                        </div>
-                      </div>
-                    </div>
+                  </div>
 
                     <div className="bg-slate-700/40 rounded-lg p-4 border border-slate-600/30">
                       <h5 className="text-orange-300 font-semibold mb-3">Confidence Level</h5>
@@ -3017,35 +2965,7 @@ ${JSON.stringify(fallbackResults, null, 2)}
                   </div>
                 )}
 
-                {/* Full Raw Response Section */}
-                <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
-                  <details className="group">
-                    <summary className="cursor-pointer p-3 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 transition-all border border-slate-700/30">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                          </svg>
-                          <span className="font-medium text-white">View Complete Raw API Response</span>
-                        </div>
-                        <svg className="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </summary>
-                    <div className="mt-4 bg-slate-900/50 rounded-lg p-4 border border-slate-600/30">
-                      <div className="mb-3 flex items-center gap-2 text-sm text-slate-400">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Complete validation response from OwnQuesta ML Agent
-                      </div>
-                      <div className="bg-slate-800/50 rounded p-4 font-mono text-xs overflow-x-auto max-h-96 overflow-y-auto">
-                        <pre className="text-green-300 whitespace-pre-wrap">{JSON.stringify(validationResult, null, 2)}</pre>
-                      </div>
-                    </div>
-                  </details>
-                </div>
+
               </div>
             )}
           </div>
@@ -3091,74 +3011,11 @@ ${JSON.stringify(fallbackResults, null, 2)}
                   </div>
                 )}
 
-                {/* Dataset Summary Card */}
-                {validationResult.dataset_summary && (
-                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
-                    <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                      <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                      Dataset Summary
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-slate-800/50 rounded-xl p-4">
-                        <p className="text-sm text-gray-400 mb-1">Rows</p>
-                        <p className="text-2xl font-bold text-indigo-300">{validationResult.dataset_summary.rows?.toLocaleString()}</p>
-                      </div>
-                      <div className="bg-slate-800/50 rounded-xl p-4">
-                        <p className="text-sm text-gray-400 mb-1">Columns</p>
-                        <p className="text-2xl font-bold text-pink-300">{validationResult.dataset_summary.columns}</p>
-                      </div>
-                      <div className="bg-slate-800/50 rounded-xl p-4">
-                        <p className="text-sm text-gray-400 mb-1">File Size</p>
-                        <p className="text-2xl font-bold text-cyan-300">{validationResult.dataset_summary.file_size_mb} MB</p>
-                      </div>
-                      <div className="bg-slate-800/50 rounded-xl p-4">
-                        <p className="text-sm text-gray-400 mb-1">Score</p>
-                        <p className="text-2xl font-bold text-green-300">{validationResult.satisfaction_score}/100</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
-                {/* Goal Understanding */}
-                {validationResult.goal_understanding && (
-                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-green-500/30 rounded-2xl p-6">
-                    <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                      <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Goal Understanding
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Task Type:</span>
-                        <span className="font-semibold text-indigo-300">{validationResult.goal_understanding.interpreted_task}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Target Column:</span>
-                        <span className="font-semibold text-pink-300">{validationResult.goal_understanding.target_column_guess}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Confidence:</span>
-                        <span className="font-semibold text-green-300">{(validationResult.goal_understanding.confidence * 100).toFixed(0)}%</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
-                {/* Full JSON Response (Collapsible) */}
-                <details className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-6">
-                  <summary className="text-xl font-bold cursor-pointer hover:text-indigo-300 transition-colors flex items-center gap-2">
-                    <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    View Full API Response
-                  </summary>
-                  <div className="mt-4 bg-slate-800/50 rounded-xl p-4 font-mono text-xs overflow-x-auto">
-                    <pre className="text-green-300">{JSON.stringify(validationResult, null, 2)}</pre>
-                  </div>
-                </details>
+
+
+
               </div>
             )}
           </div>
