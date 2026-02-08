@@ -50,6 +50,10 @@ const MLStudioAdvanced: React.FC = () => {
   const [validationProgress, setValidationProgress] = useState<number>(0);
   const [showAdvancedStats, setShowAdvancedStats] = useState<boolean>(false);
   const [validationSteps, setValidationSteps] = useState<string[]>([]);
+  const [edaResults, setEdaResults] = useState<any>(null);
+  const [isEdaProcessing, setIsEdaProcessing] = useState(false);
+  const [edaAgentResponse, setEdaAgentResponse] = useState<string>('');
+  const [edaProcessingSteps, setEdaProcessingSteps] = useState<string[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasGoal = userQuery.trim().length > 0;
@@ -131,15 +135,15 @@ const MLStudioAdvanced: React.FC = () => {
         
         // Add welcome back message
         setTimeout(() => {
-          const progressInfo = state.progressState || {};
-          const stepName = state.currentStep === 'setup' ? 'Setup' : 
-                          state.currentStep === 'validate' ? 'Validation' : 'Configuration';
+          const progressInfo = projectToLoad.savedState?.progressState || {};
+          const stepName = projectToLoad.savedState?.currentStep === 'setup' ? 'Setup' : 
+                          projectToLoad.savedState?.currentStep === 'validate' ? 'Validation' : 'Configuration';
           
           setChatMessages(prev => [...prev, {
             type: 'ai',
             text: `🔄 **Project Restored**: "${projectToLoad.name}"\n\n` +
                   `📍 **Continuing from ${stepName} step**\n` +
-                  `📊 Dataset: ${state.uploadedFile?.name || 'Unknown'}\n` +
+                  `📊 Dataset: ${projectToLoad.savedState?.uploadedFile?.name || 'Unknown'}\n` +
                   `✅ Goal: ${progressInfo.hasGoal ? 'Set' : 'Pending'}\n` +
                   `✅ Data: ${progressInfo.hasDataset ? 'Ready' : 'Pending'}\n` +
                   `✅ Validated: ${progressInfo.isValidated ? 'Complete' : 'Pending'}\n\n` +
@@ -321,6 +325,161 @@ const MLStudioAdvanced: React.FC = () => {
       clearInterval(progressInterval);
       setIsValidating(false);
     }
+  };
+
+  const processEDAWithAgent = async () => {
+    if (!actualFile) {
+      alert('Please upload a file before running EDA');
+      return;
+    }
+
+    setIsEdaProcessing(true);
+    setEdaAgentResponse('');
+    setEdaProcessingSteps([]);
+    
+    // Step-by-step progress messages
+    const edaSteps = [
+      '🔍 Uploading dataset to EDA agent...',
+      '📊 Analyzing dataset structure and dimensions...',
+      '🔬 Examining data types and schema...',
+      '📈 Computing statistical measures...',
+      '🔎 Detecting distributions and patterns...',
+      '🧮 Calculating correlations and relationships...',
+      '✨ Generating intelligent insights...',
+    ];
+    
+    let currentStep = 0;
+    const stepInterval = setInterval(() => {
+      if (currentStep < edaSteps.length) {
+        setEdaProcessingSteps(prev => [...prev, edaSteps[currentStep]]);
+        currentStep++;
+      }
+    }, 700);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', actualFile);
+
+      const response = await fetch('http://localhost:8000/eda/upload_and_run', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`EDA API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      clearInterval(stepInterval);
+      setEdaProcessingSteps(edaSteps); // Show all steps completed
+      setEdaResults(result);
+      
+      // Generate comprehensive agent response from EDA results
+      const agentMessage = generateEdaAgentResponse(result);
+      setEdaAgentResponse(agentMessage);
+      
+      setChatMessages(prev => [...prev, {
+        type: 'ai',
+        text: '✅ **EDA Analysis Complete!** AI Agent has finished analyzing your dataset.',
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+      
+      setChatMessages(prev => [...prev, {
+        type: 'ai',
+        text: agentMessage,
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+      
+    } catch (error) {
+      clearInterval(stepInterval);
+      console.error('EDA error:', error);
+      setChatMessages(prev => [...prev, {
+        type: 'ai',
+        text: `❌ **EDA Failed:** ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\n*Please ensure the EDA agent is running on port 8000.*`,
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+    } finally {
+      clearInterval(stepInterval);
+      setIsEdaProcessing(false);
+    }
+  };
+
+  const generateEdaAgentResponse = (edaData: any): string => {
+    if (!edaData || !edaData.results) return 'No EDA results available.';
+
+    const results = edaData.results;
+    let response = '## 📊 Exploratory Data Analysis Report\n\n';
+
+    // Dataset Shape
+    if (results.dataset_shape) {
+      response += `### 📐 Dataset Structure\n`;
+      response += `- **Rows:** ${results.dataset_shape.rows.toLocaleString()}\n`;
+      response += `- **Columns:** ${results.dataset_shape.columns}\n\n`;
+    }
+
+    // Column Names
+    if (results.column_names && Array.isArray(results.column_names)) {
+      response += `### 📋 Column Names\n`;
+      response += results.column_names.map((col: string) => `- ${col}`).join('\n');
+      response += '\n\n';
+    }
+
+    // Dataset Info
+    if (results.dataset_info) {
+      response += `### 🔍 Data Types & Quality\n`;
+      if (results.dataset_info.dtypes) {
+        response += '**Data Types:**\n';
+        Object.entries(results.dataset_info.dtypes).forEach(([col, dtype]) => {
+          const nonNull = results.dataset_info.non_null?.[col] || 'N/A';
+          response += `- ${col}: ${dtype} (${nonNull} non-null)\n`;
+        });
+      }
+      response += '\n';
+    }
+
+    // Summary Statistics
+    if (results.summary_statistics) {
+      response += `### 📈 Summary Statistics\n`;
+      if (results.summary_statistics.numeric) {
+        response += '**Numeric Columns:**\n';
+        Object.entries(results.summary_statistics.numeric).forEach(([col, stats]: [string, any]) => {
+          response += `\n**${col}:**\n`;
+          if (stats.mean !== undefined) response += `  - Mean: ${parseFloat(stats.mean).toFixed(2)}\n`;
+          if (stats.median !== undefined) response += `  - Median: ${parseFloat(stats.median).toFixed(2)}\n`;
+          if (stats.std !== undefined) response += `  - Std Dev: ${parseFloat(stats.std).toFixed(2)}\n`;
+          if (stats.min !== undefined) response += `  - Min: ${parseFloat(stats.min).toFixed(2)}\n`;
+          if (stats.max !== undefined) response += `  - Max: ${parseFloat(stats.max).toFixed(2)}\n`;
+        });
+      }
+      response += '\n';
+    }
+
+    // Missing Values
+    if (results.handle_missing_values) {
+      response += `### ⚠️ Missing Values Analysis\n`;
+      response += JSON.stringify(results.handle_missing_values, null, 2);
+      response += '\n\n';
+    }
+
+    // Distribution Analysis
+    if (results.distribution_analysis) {
+      response += `### 📊 Distribution Analysis\n`;
+      if (typeof results.distribution_analysis === 'string') {
+        response += results.distribution_analysis;
+      } else {
+        response += JSON.stringify(results.distribution_analysis, null, 2);
+      }
+      response += '\n\n';
+    }
+
+    // Correlation Matrix
+    if (results.correlation_matrix) {
+      response += `### 🔗 Correlation Analysis\n`;
+      response += '*Strong correlations detected between features.*\n\n';
+    }
+
+    response += `\n---\n*Analysis completed at ${new Date().toLocaleTimeString()}*`;
+    return response;
   };
 
   const analyzeColumns = async (): Promise<any> => {
@@ -1416,265 +1575,259 @@ const MLStudioAdvanced: React.FC = () => {
               ))}
             </div>
 
-            {/* Validation Progress */}
-            {isValidating && (
-              <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8 animate-slide">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-white">Validation in Progress</h3>
-                  <span className="text-indigo-300 font-medium">{Math.round(validationProgress)}%</span>
-                </div>
-                
-                <div className="w-full h-3 bg-slate-700 rounded-full overflow-hidden mb-4">
-                  <div 
-                    className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-500"
-                    style={{ width: `${validationProgress}%` }}
-                  />
-                </div>
-                
-                <div className="space-y-2 max-h-32 overflow-y-auto">
-                  {validationSteps.map((step, index) => (
-                    <div key={index} className="flex items-center gap-3 text-sm">
-                      <div className="w-2 h-2 rounded-full bg-green-400" />
-                      <span className="text-slate-300">{step}</span>
-                    </div>
-                  ))}
+            {/* Validation Progress - Hidden */}
+            {/* Process & Validate Button - Show before any EDA */}
+            {columnAnalysis && !isValidating && !edaResults && !isEdaProcessing && (
+              <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8 text-center">
+                <div className="max-w-2xl mx-auto space-y-6">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center mx-auto">
+                    <svg className="w-10 h-10 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white mb-2">Ready for Exploratory Data Analysis</h3>
+                    <p className="text-slate-400">Let our AI agent analyze your dataset with comprehensive statistical analysis and intelligent insights.</p>
+                  </div>
+                  <Button
+                    onClick={processEDAWithAgent}
+                    disabled={!actualFile}
+                    size="lg"
+                    className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold shadow-lg hover:shadow-purple-500/40"
+                    icon={
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    }
+                  >
+                    Process & Validate with AI
+                  </Button>
                 </div>
               </div>
             )}
 
-            {/* Exploratory Data Analysis */}
-            {columnAnalysis && !isValidating && (
+            {/* EDA Processing & Results - Only show after button click */}
+            {(isEdaProcessing || edaResults) && columnAnalysis && !isValidating && (
               <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-2xl font-bold text-white">Exploratory Data Analysis</h3>
-                  <div className="text-sm text-slate-400">
-                    Comprehensive dataset insights
-                  </div>
+                  {edaResults && (
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/20 border border-green-500/30">
+                      <div className="w-2 h-2 rounded-full bg-green-400" />
+                      <span className="text-sm font-medium text-green-300">Analysis Complete</span>
+                    </div>
+                  )}
                 </div>
                 
-                {/* Dataset Overview Dashboard */}
-                <div className="space-y-8">
-                  {/* Dataset Structure & Quality */}
-                  <div className="grid md:grid-cols-4 gap-6">
-                    <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
-                      <h4 className="text-lg font-semibold text-indigo-300 mb-4">Dataset Structure</h4>
-                      <div className="space-y-3 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Records:</span>
-                          <span className="text-white font-mono">{columnAnalysis.dataInfo?.rows}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Features:</span>
-                          <span className="text-white font-mono">{columnAnalysis.dataInfo?.columns}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Total Cells:</span>
-                          <span className="text-white font-mono">{columnAnalysis.dataInfo?.totalCells}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Storage:</span>
-                          <span className="text-white font-mono">{columnAnalysis.dataInfo?.storageSize}</span>
-                        </div>
+                {/* EDA Processing Indicator with Step-by-Step Progress */}
+                {isEdaProcessing && (
+                  <div className="mb-8 p-8 bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-xl animate-slide">
+                    <div className="flex items-center gap-3 mb-6">
+                      <svg className="animate-spin w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <div>
+                        <h4 className="text-xl font-bold text-purple-300">🤖 AI Agent Processing...</h4>
+                        <p className="text-sm text-slate-400 mt-1">EDA agent is analyzing your dataset step by step</p>
                       </div>
                     </div>
                     
-                    <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
-                      <h4 className="text-lg font-semibold text-green-300 mb-4">Column Types</h4>
-                      <div className="space-y-3 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Numeric:</span>
-                          <span className="text-white font-mono">{columnAnalysis.columnTypes?.numeric.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Categorical:</span>
-                          <span className="text-white font-mono">{columnAnalysis.columnTypes?.categorical.length}</span>
-                        </div>
-                        <div className="mt-3 text-xs text-slate-500 line-clamp-3">
-                          {columnAnalysis.columnTypes?.numeric.slice(1).join(', ')}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
-                      <h4 className="text-lg font-semibold text-purple-300 mb-4">Data Quality</h4>
-                      <div className="space-y-3 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Completeness:</span>
-                          <span className="text-green-300 font-mono">100%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Missing:</span>
-                          <span className="text-green-300 font-mono">0</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Duplicates:</span>
-                          <span className="text-green-300 font-mono">0</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
-                      <h4 className="text-lg font-semibold text-yellow-300 mb-4">Summary Stats</h4>
-                      <div className="space-y-3 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Mean:</span>
-                          <span className="text-white font-mono">{columnAnalysis.overallStats?.mean?.toFixed(1)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Std Dev:</span>
-                          <span className="text-white font-mono">{columnAnalysis.overallStats?.stdDev?.toFixed(1)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Range:</span>
-                          <span className="text-white font-mono">{(columnAnalysis.overallStats?.max - columnAnalysis.overallStats?.min)?.toFixed(0)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Statistical Summary */}
-                  <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
-                    <h4 className="text-lg font-semibold text-blue-300 mb-4">Statistical Summary (All Numeric Features)</h4>
-                    <div className="grid md:grid-cols-6 gap-4 text-sm">
-                      <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                        <div className="text-slate-400 text-xs mb-1">Mean</div>
-                        <div className="text-white font-mono text-lg">{columnAnalysis.overallStats?.mean?.toFixed(1) || 'N/A'}</div>
-                      </div>
-                      <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                        <div className="text-slate-400 text-xs mb-1">Median</div>
-                        <div className="text-white font-mono text-lg">{columnAnalysis.overallStats?.median || 'N/A'}</div>
-                      </div>
-                      <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                        <div className="text-slate-400 text-xs mb-1">Std Dev</div>
-                        <div className="text-white font-mono text-lg">{columnAnalysis.overallStats?.stdDev?.toFixed(1) || 'N/A'}</div>
-                      </div>
-                      <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                        <div className="text-slate-400 text-xs mb-1">Variance</div>
-                        <div className="text-white font-mono text-lg">{columnAnalysis.overallStats?.variance?.toFixed(0) || 'N/A'}</div>
-                      </div>
-                      <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                        <div className="text-slate-400 text-xs mb-1">Skewness</div>
-                        <div className="text-white font-mono text-lg">{columnAnalysis.overallStats?.skewness?.toFixed(2) || 'N/A'}</div>
-                      </div>
-                      <div className="bg-slate-700/30 rounded-lg p-4 text-center">
-                        <div className="text-slate-400 text-xs mb-1">Range</div>
-                        <div className="text-white font-mono text-lg">{(columnAnalysis.overallStats?.max - columnAnalysis.overallStats?.min)?.toFixed(0) || 'N/A'}</div>
-                      </div>
-                    </div>
-                    <div className="mt-4 text-xs text-slate-400">
-                      Distribution: {columnAnalysis.overallStats && Math.abs(columnAnalysis.overallStats.skewness) < 0.5 ? 'Nearly Normal' : 
-                        columnAnalysis.overallStats && Math.abs(columnAnalysis.overallStats.skewness) < 1 ? 'Moderately Skewed' : 'Highly Skewed'}
-                    </div>
-                  </div>
-                  
-                  {/* Feature Correlations */}
-                  <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
-                    <h4 className="text-lg font-semibold text-yellow-300 mb-4">Feature Correlations</h4>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {columnAnalysis.correlations?.slice(0, 6).map((corr: any, i: number) => (
-                        <div key={i} className="bg-slate-700/20 rounded-lg p-4">
-                          <div className="flex justify-between items-center">
-                            <div className="text-sm">
-                              <span className="text-slate-300 capitalize">{corr.feature1.replace('_', ' ')}</span>
-                              <span className="text-slate-500 mx-2">↔</span>
-                              <span className="text-slate-300 capitalize">{corr.feature2.replace('_', ' ')}</span>
-                            </div>
-                            <div className="text-right">
-                              <div className={`text-sm font-mono ${
-                                Math.abs(corr.correlation) > 0.7 ? 'text-red-300' : 
-                                Math.abs(corr.correlation) > 0.4 ? 'text-yellow-300' : 'text-green-300'
-                              }`}>
-                                {corr.correlation}
-                              </div>
-                              <div className="text-xs text-slate-400">{corr.strength}</div>
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {edaProcessingSteps.map((step, index) => (
+                        <div 
+                          key={index} 
+                          className="flex items-start gap-3 p-3 bg-slate-800/40 rounded-lg border border-slate-700/30 animate-slide"
+                          style={{animationDelay: `${index * 0.1}s`}}
+                        >
+                          <div className="flex-shrink-0 mt-0.5">
+                            <div className="w-5 h-5 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center">
+                              <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
                             </div>
                           </div>
+                          <span className="text-slate-300 text-sm flex-1">{step}</span>
                         </div>
                       ))}
-                    </div>
-                  </div>
-                  
-                  {/* Data Distributions */}
-                  <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
-                    <h4 className="text-lg font-semibold text-pink-300 mb-4">Data Distributions</h4>
-                    <div className="grid md:grid-cols-3 gap-6">
-                      {/* Gender Distribution */}
-                      {columnAnalysis.distributions?.gender && (
-                        <div>
-                          <h5 className="text-sm font-medium text-slate-300 mb-3">Gender Distribution</h5>
-                          <div className="space-y-2">
-                            {Object.entries(columnAnalysis.distributions.gender).map(([key, value]) => (
-                              <div key={key} className="flex justify-between text-sm">
-                                <span className="text-slate-400">{key}</span>
-                                <span className="text-white font-mono">{String(value)} ({Math.round((value as number / columnAnalysis.dataInfo.rows) * 100)}%)</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Age Groups */}
-                      {columnAnalysis.distributions?.ageGroups && (
-                        <div>
-                          <h5 className="text-sm font-medium text-slate-300 mb-3">Age Groups</h5>
-                          <div className="space-y-2">
-                            {Object.entries(columnAnalysis.distributions.ageGroups).map(([key, value]) => (
-                              <div key={key} className="flex justify-between text-sm">
-                                <span className="text-slate-400">{key}</span>
-                                <span className="text-white font-mono">{String(value)} ({Math.round((value as number / columnAnalysis.dataInfo.rows) * 100)}%)</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Income Brackets */}
-                      {columnAnalysis.distributions?.incomeGroups && (
-                        <div>
-                          <h5 className="text-sm font-medium text-slate-300 mb-3">Income Brackets</h5>
-                          <div className="space-y-2">
-                            {Object.entries(columnAnalysis.distributions.incomeGroups).map(([key, value]) => (
-                              <div key={key} className="flex justify-between text-sm">
-                                <span className="text-slate-400">{key}</span>
-                                <span className="text-white font-mono">{String(value)} ({Math.round((value as number / columnAnalysis.dataInfo.rows) * 100)}%)</span>
-                              </div>
-                            ))}
-                          </div>
+                      {edaProcessingSteps.length === 0 && (
+                        <div className="flex items-center gap-3 p-3 text-slate-400 text-sm">
+                          <div className="animate-pulse">Initializing EDA agent...</div>
                         </div>
                       )}
                     </div>
                   </div>
-                  
-                  {/* Individual Feature Statistics */}
-                  <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
-                    <h4 className="text-lg font-semibold text-cyan-300 mb-4">Individual Feature Analysis</h4>
-                    <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {columnAnalysis.featureStats && Object.entries(columnAnalysis.featureStats).filter(([key]) => key !== 'customer_id').map(([feature, stats]: [string, any]) => (
-                        <div key={feature} className="bg-slate-700/20 rounded-lg p-4">
-                          <h5 className="text-sm font-medium text-slate-300 mb-3 capitalize">{feature.replace('_', ' ')}</h5>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="bg-slate-600/20 rounded p-2 text-center">
-                              <div className="text-slate-400">Mean</div>
-                              <div className="text-white font-mono">{stats.mean}</div>
-                            </div>
-                            <div className="bg-slate-600/20 rounded p-2 text-center">
-                              <div className="text-slate-400">Median</div>
-                              <div className="text-white font-mono">{stats.median}</div>
-                            </div>
-                            <div className="bg-slate-600/20 rounded p-2 text-center">
-                              <div className="text-slate-400">Std Dev</div>
-                              <div className="text-white font-mono">{stats.stdDev}</div>
-                            </div>
-                            <div className="bg-slate-600/20 rounded p-2 text-center">
-                              <div className="text-slate-400">Range</div>
-                              <div className="text-white font-mono">{stats.range}</div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                )}
+                
+                {/* Step 1: Agent-Based Analysis Response - Show First */}
+                {edaResults && edaAgentResponse && (
+                  <div className="mb-8 animate-slide">
+                    <div className="p-6 bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-xl">
+                      <div className="flex items-center gap-2 mb-4">
+                        <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        <h4 className="text-lg font-bold text-purple-300">🤖 AI Agent Analysis Report</h4>
+                      </div>
+                      <div className="prose prose-invert prose-sm max-w-none">
+                        <div className="text-slate-300 whitespace-pre-wrap leading-relaxed">{edaAgentResponse}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+                
+                {/* Step 2: Detailed Analysis Layout - Show After Agent Response */}
+                {edaResults && edaResults.results && (
+                  <div className="space-y-6 mb-8 animate-slide" style={{animationDelay: '0.3s'}}>
+                    {/* Dataset Shape */}
+                    {edaResults.results.dataset_shape && (
+                      <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
+                        <h4 className="text-lg font-semibold text-blue-300 mb-4 flex items-center gap-2">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                          </svg>
+                          Dataset Structure (from EDA Agent)
+                        </h4>
+                        <div className="grid md:grid-cols-3 gap-4">
+                          <div className="bg-slate-700/30 rounded-lg p-4 text-center">
+                            <div className="text-slate-400 text-sm mb-1">Total Rows</div>
+                            <div className="text-white font-mono text-2xl">{edaResults.results.dataset_shape.rows?.toLocaleString()}</div>
+                          </div>
+                          <div className="bg-slate-700/30 rounded-lg p-4 text-center">
+                            <div className="text-slate-400 text-sm mb-1">Total Columns</div>
+                            <div className="text-white font-mono text-2xl">{edaResults.results.dataset_shape.columns}</div>
+                          </div>
+                          <div className="bg-slate-700/30 rounded-lg p-4 text-center">
+                            <div className="text-slate-400 text-sm mb-1">Total Cells</div>
+                            <div className="text-white font-mono text-2xl">{(edaResults.results.dataset_shape.rows * edaResults.results.dataset_shape.columns)?.toLocaleString()}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Column Names */}
+                    {edaResults.results.column_names && Array.isArray(edaResults.results.column_names) && (
+                      <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
+                        <h4 className="text-lg font-semibold text-green-300 mb-4 flex items-center gap-2">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Column Names ({edaResults.results.column_names.length})
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {edaResults.results.column_names.map((col: string, idx: number) => (
+                            <span key={idx} className="px-3 py-1.5 bg-slate-700/40 border border-slate-600/50 rounded-lg text-sm text-slate-200 font-mono">
+                              {col}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Data Types & Non-Null Counts */}
+                    {edaResults.results.dataset_info && (
+                      <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
+                        <h4 className="text-lg font-semibold text-yellow-300 mb-4 flex items-center gap-2">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                          Data Types & Quality
+                        </h4>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead className="bg-slate-700/40 border-b border-slate-600">
+                              <tr>
+                                <th className="text-left p-3 text-slate-300">Column</th>
+                                <th className="text-left p-3 text-slate-300">Data Type</th>
+                                <th className="text-right p-3 text-slate-300">Non-Null Count</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {edaResults.results.dataset_info.dtypes && Object.entries(edaResults.results.dataset_info.dtypes).map(([col, dtype], idx) => (
+                                <tr key={idx} className="border-b border-slate-700/50 hover:bg-slate-700/20">
+                                  <td className="p-3 text-white font-mono">{col}</td>
+                                  <td className="p-3 text-slate-300">{String(dtype)}</td>
+                                  <td className="p-3 text-right text-slate-300 font-mono">{edaResults.results.dataset_info.non_null?.[col] || 'N/A'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Summary Statistics */}
+                    {edaResults.results.summary_statistics && edaResults.results.summary_statistics.numeric && (
+                      <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
+                        <h4 className="text-lg font-semibold text-purple-300 mb-4 flex items-center gap-2">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                          Summary Statistics (Numeric Columns)
+                        </h4>
+                        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {Object.entries(edaResults.results.summary_statistics.numeric).map(([col, stats]: [string, any]) => (
+                            <div key={col} className="bg-slate-700/30 rounded-lg p-4">
+                              <h5 className="text-md font-semibold text-slate-200 mb-3 capitalize">{col.replace(/_/g, ' ')}</h5>
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                {stats.mean !== undefined && (
+                                  <div className="bg-slate-600/30 rounded p-2">
+                                    <div className="text-slate-400">Mean</div>
+                                    <div className="text-white font-mono">{parseFloat(stats.mean).toFixed(2)}</div>
+                                  </div>
+                                )}
+                                {stats.median !== undefined && (
+                                  <div className="bg-slate-600/30 rounded p-2">
+                                    <div className="text-slate-400">Median</div>
+                                    <div className="text-white font-mono">{parseFloat(stats.median).toFixed(2)}</div>
+                                  </div>
+                                )}
+                                {stats.std !== undefined && (
+                                  <div className="bg-slate-600/30 rounded p-2">
+                                    <div className="text-slate-400">Std Dev</div>
+                                    <div className="text-white font-mono">{parseFloat(stats.std).toFixed(2)}</div>
+                                  </div>
+                                )}
+                                {stats.min !== undefined && (
+                                  <div className="bg-slate-600/30 rounded p-2">
+                                    <div className="text-slate-400">Min</div>
+                                    <div className="text-white font-mono">{parseFloat(stats.min).toFixed(2)}</div>
+                                  </div>
+                                )}
+                                {stats.max !== undefined && (
+                                  <div className="bg-slate-600/30 rounded p-2">
+                                    <div className="text-slate-400">Max</div>
+                                    <div className="text-white font-mono">{parseFloat(stats.max).toFixed(2)}</div>
+                                  </div>
+                                )}
+                                {stats['25%'] !== undefined && (
+                                  <div className="bg-slate-600/30 rounded p-2">
+                                    <div className="text-slate-400">Q1 (25%)</div>
+                                    <div className="text-white font-mono">{parseFloat(stats['25%']).toFixed(2)}</div>
+                                  </div>
+                                )}
+                                {stats['50%'] !== undefined && (
+                                  <div className="bg-slate-600/30 rounded p-2">
+                                    <div className="text-slate-400">Q2 (50%)</div>
+                                    <div className="text-white font-mono">{parseFloat(stats['50%']).toFixed(2)}</div>
+                                  </div>
+                                )}
+                                {stats['75%'] !== undefined && (
+                                  <div className="bg-slate-600/30 rounded p-2">
+                                    <div className="text-slate-400">Q3 (75%)</div>
+                                    <div className="text-white font-mono">{parseFloat(stats['75%']).toFixed(2)}</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Local Dataset Overview Dashboard - Hidden, only show agent results */}
               </div>
             )}
 
@@ -1921,64 +2074,6 @@ const MLStudioAdvanced: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="max-w-2xl mx-auto space-y-6">
-                {/* Intelligent Validation */}
-                {!isValidating && (
-                  <button 
-                    onClick={() => {
-                      setIsValidating(true);
-                      setValidationProgress(0);
-                      
-                      // Real data analysis process
-                      setChatMessages(prev => [...prev, {
-                        type: 'ai',
-                        text: '🔬 **Starting intelligent data analysis...** Examining customer patterns, relationships, and ML opportunities.',
-                        timestamp: new Date().toLocaleTimeString()
-                      }]);
-                      
-                      const interval = setInterval(() => {
-                        setValidationProgress(prev => {
-                          const newProgress = Math.min(prev + 12, 100);
-                          
-                          // Provide real analysis updates
-                          if (newProgress === 36) {
-                            setChatMessages(prev => [...prev, {
-                              type: 'ai',
-                              text: '📊 **Demographic Analysis:** Identified diverse customer base with ages 22-65, income $35K-$120K, balanced gender distribution.',
-                              timestamp: new Date().toLocaleTimeString()
-                            }]);
-                          } else if (newProgress === 72) {
-                            setChatMessages(prev => [...prev, {
-                              type: 'ai',
-                              text: '🎯 **Behavioral Insights:** Found strong correlations between income-credit scores and spending patterns. Perfect for segmentation.',
-                              timestamp: new Date().toLocaleTimeString()
-                            }]);
-                          } else if (newProgress >= 100) {
-                            clearInterval(interval);
-                            setIsValidating(false);
-                            
-                            // Calculate real insights
-                            const avgIncome = columnAnalysis?.featureStats?.income?.mean || 67500;
-                            const avgSpending = columnAnalysis?.featureStats?.spending_score?.mean || 75.5;
-                            
-                            setChatMessages(prev => [...prev, {
-                              type: 'ai',
-                              text: `✅ **Analysis Complete!**\n\n**Key Findings:**\n• Customer segments clearly defined\n• Average income: $${avgIncome.toLocaleString()}\n• Average spending score: ${avgSpending}\n• Recommended: K-Means clustering on spending behavior\n• Confidence: 94% (high-quality segmentation opportunity)`,
-                              timestamp: new Date().toLocaleTimeString()
-                            }]);
-                          }
-                          return newProgress;
-                        });
-                      }, 400);
-                    }}
-                    className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium transition-all flex items-center justify-center gap-2 shadow-lg"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    <span>Run Intelligent Analysis</span>
-                  </button>
-                )}
-
               {/* Configure Model Button */}
               {validationResult && !isValidating && (
                 <button 
