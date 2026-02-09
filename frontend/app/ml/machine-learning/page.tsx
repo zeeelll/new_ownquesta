@@ -186,6 +186,38 @@ const MLStudioAdvanced: React.FC = () => {
     setDragActive(e.type === 'dragenter' || e.type === 'dragover');
   };
 
+  // Basic local column analysis (fallback) - infers numeric vs categorical from dataPreview
+  const analyzeColumns = async () => {
+    if (!dataPreview) return { dataInfo: { rows: 0, columns: 0 }, columnTypes: { numeric: [], categorical: [] } };
+
+    const cols = dataPreview.columns || [];
+    const rows = dataPreview.rows || [];
+    const numeric: string[] = [];
+    const categorical: string[] = [];
+
+    for (let c = 0; c < cols.length; c++) {
+      let foundNumeric = false;
+      for (let r = 0; r < rows.length; r++) {
+        const val = rows[r][c];
+        if (val === null || val === undefined || String(val).trim() === '') continue;
+        const cleaned = String(val).replace(/,/g, '');
+        const num = Number(cleaned);
+        if (!Number.isNaN(num) && isFinite(num)) {
+          foundNumeric = true;
+        } else {
+          foundNumeric = false;
+        }
+        break;
+      }
+      if (foundNumeric) numeric.push(cols[c]); else categorical.push(cols[c]);
+    }
+
+    return {
+      dataInfo: { rows: dataPreview.rowCount || rows.length, columns: cols.length },
+      columnTypes: { numeric, categorical }
+    };
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -233,9 +265,10 @@ const MLStudioAdvanced: React.FC = () => {
       });
     }, 800);
     
+    let columnStats: any = null;
     try {
       // Analyze columns locally first
-      const columnStats = await analyzeColumns();
+      columnStats = await analyzeColumns();
       setColumnAnalysis(columnStats);
 
       setChatMessages(prev => [...prev, {
@@ -712,68 +745,24 @@ ${JSON.stringify(fallbackResults, null, 2)}
       response += '\n';
     }
 
-    // Summary Statistics
-    if (results.summary_statistics) {
-      response += `### 📈 Summary Statistics\n`;
-      if (results.summary_statistics.numeric) {
-        response += '**Numeric Columns:**\n';
-        Object.entries(results.summary_statistics.numeric).forEach(([col, stats]: [string, any]) => {
-          response += `\n**${col}:**\n`;
-          if (stats.mean !== undefined) response += `  - Mean: ${parseFloat(stats.mean).toFixed(2)}\n`;
-          if (stats.median !== undefined) response += `  - Median: ${parseFloat(stats.median).toFixed(2)}\n`;
-          if (stats.std !== undefined) response += `  - Std Dev: ${parseFloat(stats.std).toFixed(2)}\n`;
-          if (stats.min !== undefined) response += `  - Min: ${parseFloat(stats.min).toFixed(2)}\n`;
-          if (stats.max !== undefined) response += `  - Max: ${parseFloat(stats.max).toFixed(2)}\n`;
-        });
-      }
-      response += '\n';
-    }
+            // Dataset stats removed per request
+    const generateComprehensiveDemoEDA = async () => {
+      const columns = dataPreview?.columns || [];
+      const rows = dataPreview?.rows || [];
+      const colAnalysis = await analyzeColumns();
+      const numericColumns = colAnalysis?.columnTypes?.numeric || [];
+      const categoricalColumns = colAnalysis?.columnTypes?.categorical || [];
 
-    // Missing Values
-    if (results.handle_missing_values) {
-      response += `### ⚠️ Missing Values Analysis\n`;
-      response += JSON.stringify(results.handle_missing_values, null, 2);
-      response += '\n\n';
-    }
-
-    // Distribution Analysis
-    if (results.distribution_analysis) {
-      response += `### 📊 Distribution Analysis\n`;
-      if (typeof results.distribution_analysis === 'string') {
-        response += results.distribution_analysis;
-      } else {
-        response += JSON.stringify(results.distribution_analysis, null, 2);
-      }
-      response += '\n\n';
-    }
-
-    // Correlation Matrix
-    if (results.correlation_matrix) {
-      response += `### 🔗 Correlation Analysis\n`;
-      response += '*Strong correlations detected between features.*\n\n';
-    }
-
-    response += `\n---\n*Analysis completed at ${new Date().toLocaleTimeString()}*`;
-    return response;
-  };
-
-  const analyzeColumns = async (): Promise<any> => {
-    if (!dataPreview) return null;
-    
-    const rows = dataPreview.rows;
-    const columns = dataPreview.columns;
-    
-    // Extract all data for analysis
-    const numericColumns = ['customer_id', 'age', 'income', 'credit_score', 'spending_score', 'purchase_frequency'];
-    const categoricalColumns = ['gender'];
-    
-    // Extract numeric data
-    const numericData: Record<string, number[]> = {};
-    numericColumns.forEach((col, idx) => {
-      if (idx < columns.length) {
-        numericData[col] = rows.map(r => parseFloat(r[idx]) || 0).filter(val => !isNaN(val));
-      }
-    });
+      const numericData: Record<string, number[]> = {};
+      numericColumns.forEach(col => {
+        const idx = columns.indexOf(col);
+        if (idx === -1) return;
+        numericData[col] = rows.map(r => {
+          const v = r[idx];
+          const n = Number(String(v).replace(/,/g, ''));
+          return Number.isNaN(n) ? null : n;
+        }).filter((x: any) => x !== null) as number[];
+      });
     
     // Calculate comprehensive statistics
     const calculateOverallStats = () => {
@@ -1829,35 +1818,7 @@ ${JSON.stringify(fallbackResults, null, 2)}
             </div>
 
             {/* Validation Progress - Hidden */}
-            {/* Process & Validate Button - Show before any EDA */}
-            {columnAnalysis && !isValidating && !edaResults && !isEdaProcessing && (
-              <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8 text-center">
-                <div className="max-w-2xl mx-auto space-y-6">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center mx-auto">
-                    <svg className="w-10 h-10 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-white mb-2">Ready for Exploratory Data Analysis</h3>
-                    <p className="text-slate-400">Let our AI agent analyze your dataset with comprehensive statistical analysis and intelligent insights.</p>
-                  </div>
-                  <Button
-                    onClick={processEDAWithAgent}
-                    disabled={!actualFile}
-                    size="lg"
-                    className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold shadow-lg hover:shadow-purple-500/40"
-                    icon={
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    }
-                  >
-                    Process & Validate with AI
-                  </Button>
-                </div>
-              </div>
-            )}
+            {/* Validation CTA removed per request */}
 
             {/* EDA Processing & Results - Only show after button click */}
             {(isEdaProcessing || edaResults) && columnAnalysis && !isValidating && (

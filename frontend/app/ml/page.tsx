@@ -579,7 +579,7 @@ const MLPage: React.FC = () => {
                   </div>
                   Dataset Statistics
                 </h3>
-                
+
                 <div className="space-y-4">
                   <div className="stat-box bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-400/20 rounded-lg p-4 hover:bg-blue-500/20 transition-all duration-300">
                     <div className="flex items-center justify-between">
@@ -600,6 +600,7 @@ const MLPage: React.FC = () => {
                       <div className="stat-icon cols">
                         <svg className="w-6 h-6 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
                       </div>
                       <div className="stat-info text-right">
                         <div className="stat-label text-white/70 text-sm">Total Columns</div>
@@ -621,20 +622,19 @@ const MLPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-                  </div>
-                </div>
 
-                <div className="stat-box">
-                  <div className="stat-icon health">
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div className="stat-info">
-                    <div className="stat-label">Data Quality</div>
-                    <div className="stat-value">87%</div>
+                  <div className="stat-box bg-gradient-to-r from-yellow-400/10 to-amber-400/10 border border-yellow-400/20 rounded-lg p-4 hover:bg-yellow-400/10 transition-all duration-300">
+                    <div className="flex items-center justify-between">
+                      <div className="stat-icon health">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div className="stat-info text-right">
+                        <div className="stat-label text-white/70 text-sm">Data Quality</div>
+                        <div className="stat-value text-2xl font-bold text-white">87%</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
