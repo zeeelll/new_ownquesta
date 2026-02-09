@@ -745,8 +745,10 @@ ${JSON.stringify(fallbackResults, null, 2)}
       response += '\n';
     }
 
-            // Dataset stats removed per request
-    const generateComprehensiveDemoEDA = async () => {
+    return response;
+  };
+
+  const generateComprehensiveDemoEDA = async () => {
       const columns = dataPreview?.columns || [];
       const rows = dataPreview?.rows || [];
       const colAnalysis = await analyzeColumns();
@@ -1668,34 +1670,130 @@ ${JSON.stringify(fallbackResults, null, 2)}
 
 
 
-                {/* Action Button */}
-                <div className="mt-8">
-                  <Button
-                    onClick={async () => {
-                      if (!canProceedFromSetup || isProcessing || isValidating) return;
-                      setCurrentStep('validate');
-                      await validateWithAPI();
-                    }}
-                    disabled={!canProceedFromSetup || isProcessing || isValidating}
-                    size="lg"
-                    className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-4 rounded-2xl shadow-xl hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105 border border-indigo-400/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-xl"
-                    icon={
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    }
-                  >
-                    {isValidating ? 'Validating...' : 'Proceed & Validate Dataset'}
-                  </Button>
-                  {!canProceedFromSetup && (
-                    <p className="text-center text-sm text-slate-400 mt-2">
-                      {!hasGoal && !hasDataset ? 'Please define your goal and upload a dataset' : 
-                       !hasGoal ? 'Please define your ML goal above' : 
-                       'Please upload a dataset to continue'}
-                    </p>
-                  )}
+              </div>
+            </div>
+
+            {/* Data Upload and Preview Section */}
+            {uploadedFile && dataPreview && (
+              <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-2xl font-bold text-white">Data Sample Preview</h3>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setViewMode('first');
+                        updatePreviewRows('first');
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm transition-all ${
+                        viewMode === 'first'
+                          ? 'bg-indigo-500 text-white shadow-lg'
+                          : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      First 5
+                    </button>
+                    <button
+                      onClick={() => {
+                        setViewMode('last');
+                        updatePreviewRows('last');
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm transition-all ${
+                        viewMode === 'last'
+                          ? 'bg-indigo-500 text-white shadow-lg'
+                          : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      Last 5
+                    </button>
+                    <button
+                      onClick={() => {
+                        setViewMode('all');
+                        updatePreviewRows('all');
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm transition-all ${
+                        viewMode === 'all'
+                          ? 'bg-indigo-500 text-white shadow-lg'
+                          : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      View All
+                    </button>
+                  </div>
+                </div>
+                <div className={`overflow-x-auto rounded-xl border border-slate-700/30 shadow-lg ${viewMode === 'all' ? 'max-h-[500px] overflow-y-auto' : ''}`}>
+                  <table className="w-full text-sm bg-slate-800/30 min-w-[800px]">
+                    <thead className="sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10">
+                      <tr className="border-b border-slate-600/30">
+                        {dataPreview.columns.map((col, i) => (
+                          <th key={i} className="text-left p-4 font-semibold text-indigo-300 min-w-[120px] border-r border-slate-700/20 last:border-r-0 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <span className="truncate">{col}</span>
+                              {columnAnalysis && (
+                                <span className={`inline-block px-2 py-0.5 rounded text-xs flex-shrink-0 ${
+                                  columnAnalysis.columnTypes?.numeric?.includes(col) 
+                                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
+                                    : 'bg-green-500/20 text-green-300 border border-green-500/30'
+                                }`}>
+                                  {columnAnalysis.columnTypes?.numeric?.includes(col) ? 'numeric' : 'categorical'}
+                                </span>
+                              )}
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dataPreview.rows.map((row, i) => (
+                        <tr key={i} className="border-b border-slate-700/20 hover:bg-slate-800/40 transition-colors">
+                          {row.map((cell, j) => (
+                            <td key={j} className="p-4 text-gray-300 border-r border-slate-700/10 last:border-r-0 min-w-[120px]">
+                              <span className="block truncate max-w-[150px]" title={cell}>
+                                {cell}
+                              </span>
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-6 flex justify-between items-center">
+                  <p className="text-sm text-gray-500">
+                    Showing {viewMode === 'all' ? 'all' : viewMode === 'last' ? 'last' : 'first'} {viewMode === 'all' ? dataPreview.rowCount.toLocaleString() : Math.min(5, dataPreview.rowCount)} of {dataPreview.rowCount.toLocaleString()} rows
+                  </p>
+                  <div className="text-sm text-gray-400">
+                    {dataPreview.columnCount} columns • {dataPreview.fileSize}
+                  </div>
                 </div>
               </div>
+            )}
+
+            {/* Action Button - Moved to bottom */}
+            <div className="mt-8">
+              <Button
+                onClick={async () => {
+                  if (!canProceedFromSetup || isProcessing || isValidating) return;
+                  setCurrentStep('validate');
+                  await validateWithAPI();
+                }}
+                disabled={!canProceedFromSetup || isProcessing || isValidating}
+                size="lg"
+                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-4 rounded-2xl shadow-xl hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105 border border-indigo-400/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-xl"
+                icon={
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                }
+              >
+                {isValidating ? 'Validating...' : 'Proceed & Validate Dataset'}
+              </Button>
+              {!canProceedFromSetup && (
+                <p className="text-center text-sm text-slate-400 mt-2">
+                  {!hasGoal && !hasDataset ? 'Please define your goal and upload a dataset' : 
+                   !hasGoal ? 'Please define your ML goal above' : 
+                   'Please upload a dataset to continue'}
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -1731,8 +1829,8 @@ ${JSON.stringify(fallbackResults, null, 2)}
             {/* Header Section */}
             <div className="flex justify-between items-start flex-wrap gap-6">
               <div>
-                <h2 className="text-4xl font-bold text-gradient mb-2">Dataset Validation</h2>
-                <p className="text-slate-400">Analyzing: <span className="text-white font-medium">{uploadedFile?.name}</span></p>
+                <h2 className="text-4xl font-bold text-gradient mb-2">ML Goal & Validation</h2>
+                <p className="text-slate-400">Validating your machine learning objective and dataset compatibility</p>
                 {validationResult && !isValidating && (
                   <div className="mt-3 flex items-center gap-4">
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30">
@@ -1745,6 +1843,33 @@ ${JSON.stringify(fallbackResults, null, 2)}
                   </div>
                 )}
               </div>
+
+              {/* ML Goal Display Section */}
+              <div className="backdrop-blur-2xl bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-indigo-500/20 rounded-xl p-6 min-w-[400px]">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-white">Your ML Goal</h3>
+                </div>
+                <div className="bg-slate-800/40 rounded-lg p-4 border border-slate-700/30">
+                  <p className="text-white leading-relaxed">
+                    {userQuery.trim() || 'No specific goal defined - will auto-detect best approach'}
+                  </p>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-slate-800/30 rounded p-3">
+                    <span className="text-slate-400 block">Dataset:</span>
+                    <span className="text-white font-medium">{uploadedFile?.name || 'Unknown'}</span>
+                  </div>
+                  <div className="bg-slate-800/30 rounded p-3">
+                    <span className="text-slate-400 block">Status:</span>
+                    <span className="text-green-300 font-medium">Ready for Analysis</span>
+                  </div>
+                </div>
+              </div>
               <Button 
                 onClick={() => { setCurrentStep('setup'); setUploadedFile(null); setDataPreview(null); setChatMessages([]); setUserQuery(''); setActualFile(null); setValidationResult(null); setColumnAnalysis(null); setValidationProgress(0); setValidationSteps([]); }} 
                 variant="outline" 
@@ -1756,66 +1881,7 @@ ${JSON.stringify(fallbackResults, null, 2)}
               </Button>
             </div>
 
-            {/* Enhanced Statistics Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-8 mb-8">
-              {[
-                {
-                  icon: <svg className="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
-                  label: 'Rows',
-                  value: validationResult?.dataset_summary?.rows?.toLocaleString() || dataPreview.rowCount.toLocaleString(),
-                  color: 'blue',
-                  subtext: 'Total records'
-                },
-                {
-                  icon: <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
-                  label: 'Columns',
-                  value: validationResult?.dataset_summary?.columns || dataPreview.columnCount,
-                  color: 'green',
-                  subtext: columnAnalysis ? `${columnAnalysis.columnTypes?.numeric?.length || 0} numeric, ${columnAnalysis.columnTypes?.categorical?.length || 0} categorical` : 'Customer features'
-                },
-                {
-                  icon: <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>,
-                  label: 'Size',
-                  value: validationResult?.dataset_summary?.file_size_mb ? `${validationResult.dataset_summary.file_size_mb} MB` : dataPreview.fileSize,
-                  color: 'purple',
-                  subtext: 'File size'
-                },
-                {
-                  icon: <svg className="w-8 h-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-                  label: 'Quality',
-                  value: isValidating ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-yellow-400 to-green-400 transition-all duration-500"
-                          style={{ width: `${validationProgress}%` }}
-                        />
-                      </div>
-                      <span className="text-xs">{Math.round(validationProgress)}%</span>
-                    </div>
-                  ) : (
-                    validationResult?.satisfaction_score ? `${validationResult.satisfaction_score}%` : 'Pending'
-                  ),
-                  color: 'yellow',
-                  subtext: isValidating ? 'Analyzing...' : 'Data quality score'
-                }
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="group relative rounded-2xl p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-indigo-400/50 hover:shadow-2xl hover:shadow-indigo-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden"
-                >
-                  {/* Background glow effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
-                  
-                  <div className="relative z-10">
-                    <div className="mb-4 group-hover:scale-110 transition-transform duration-300">{stat.icon}</div>
-                    <p className="text-sm text-slate-400 mb-1 font-medium">{stat.label}</p>
-                    <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
-                    <p className="text-xs text-slate-500">{stat.subtext}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+
 
             {/* Validation Progress - Hidden */}
             {/* Validation CTA removed per request */}
@@ -2496,97 +2562,7 @@ ${JSON.stringify(fallbackResults, null, 2)}
               </div>
             )}
 
-            <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-white">Data Sample Preview</h3>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setViewMode('first');
-                      updatePreviewRows('first');
-                    }}
-                    className={`px-4 py-2 rounded-lg text-sm transition-all ${
-                      viewMode === 'first'
-                        ? 'bg-indigo-500 text-white shadow-lg'
-                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    First 5
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewMode('last');
-                      updatePreviewRows('last');
-                    }}
-                    className={`px-4 py-2 rounded-lg text-sm transition-all ${
-                      viewMode === 'last'
-                        ? 'bg-indigo-500 text-white shadow-lg'
-                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    Last 5
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewMode('all');
-                      updatePreviewRows('all');
-                    }}
-                    className={`px-4 py-2 rounded-lg text-sm transition-all ${
-                      viewMode === 'all'
-                        ? 'bg-indigo-500 text-white shadow-lg'
-                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    View All
-                  </button>
-                </div>
-              </div>
-              <div className={`overflow-x-auto rounded-xl border border-slate-700/30 shadow-lg ${viewMode === 'all' ? 'max-h-[500px] overflow-y-auto' : ''}`}>
-                <table className="w-full text-sm bg-slate-800/30 min-w-[800px]">
-                  <thead className="sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10">
-                    <tr className="border-b border-slate-600/30">
-                      {dataPreview.columns.map((col, i) => (
-                        <th key={i} className="text-left p-4 font-semibold text-indigo-300 min-w-[120px] border-r border-slate-700/20 last:border-r-0 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <span className="truncate">{col}</span>
-                            {columnAnalysis && (
-                              <span className={`inline-block px-2 py-0.5 rounded text-xs flex-shrink-0 ${
-                                columnAnalysis.columnTypes?.numeric?.includes(col) 
-                                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
-                                  : 'bg-green-500/20 text-green-300 border border-green-500/30'
-                              }`}>
-                                {columnAnalysis.columnTypes?.numeric?.includes(col) ? 'numeric' : 'categorical'}
-                              </span>
-                            )}
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dataPreview.rows.map((row, i) => (
-                      <tr key={i} className="border-b border-slate-700/20 hover:bg-slate-800/40 transition-colors">
-                        {row.map((cell, j) => (
-                          <td key={j} className="p-4 text-gray-300 border-r border-slate-700/10 last:border-r-0 min-w-[120px]">
-                            <span className="block truncate max-w-[150px]" title={cell}>
-                              {cell}
-                            </span>
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-6 flex justify-between items-center">
-                <p className="text-sm text-gray-500">
-                  Showing {viewMode === 'all' ? 'all' : viewMode === 'last' ? 'last' : 'first'} {viewMode === 'all' ? dataPreview.rowCount.toLocaleString() : Math.min(5, dataPreview.rowCount)} of {dataPreview.rowCount.toLocaleString()} rows
-                </p>
-                <div className="text-sm text-gray-400">
-                  {dataPreview.columnCount} columns • {dataPreview.fileSize}
-                </div>
-              </div>
-            </div>
+
 
             {/* Enhanced ML Agent Assistant - Vertical Chat Interface */}
             <div className="fixed right-8 top-1/2 transform -translate-y-1/2 w-[400px] h-[760px] backdrop-blur-2xl bg-slate-900/95 border border-indigo-500/30 rounded-2xl p-6 z-50 shadow-2xl">
