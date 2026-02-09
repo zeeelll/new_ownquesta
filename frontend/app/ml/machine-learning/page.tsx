@@ -1191,76 +1191,78 @@ ${JSON.stringify(fallbackResults, null, 2)}
     reader.readAsText(file);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!userQuery.trim()) return;
+
+    const userMessage = userQuery;
+    setUserQuery(''); // Clear input immediately
 
     setChatMessages(prev => [...prev, {
       type: 'user',
-      text: userQuery,
+      text: userMessage,
       timestamp: new Date().toLocaleTimeString()
     }]);
-    
-    // Analyze real data to provide intelligent responses
-    const analyzeDataForResponse = () => {
-      const query = userQuery.toLowerCase();
-      
-      if (query.includes('pattern') || query.includes('insight') || query.includes('analysis')) {
-        // Real analysis of customer data
-        const avgAge = columnAnalysis?.featureStats?.age?.mean || 35.2;
-        const avgIncome = columnAnalysis?.featureStats?.income?.mean || 67500;
-        const avgCredit = columnAnalysis?.featureStats?.credit_score?.mean || 705;
-        const genderDistribution = dataPreview?.rows.reduce((acc, row) => {
-          acc[row[2]] = (acc[row[2]] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>) || {};
-        
-        return `🔍 **Real Customer Data Analysis:**\n\n• Average customer age: ${avgAge.toFixed(1)} years\n• Average income: $${avgIncome.toLocaleString()}\n• Average credit score: ${avgCredit}\n• Gender split: ${Object.entries(genderDistribution).map(([k,v]) => `${k}: ${v}`).join(', ')}\n• Income range: $35K - $120K indicates diverse customer base\n• Credit scores 580-850 show varied financial profiles`;
+
+    // Add thinking indicator
+    setChatMessages(prev => [...prev, {
+      type: 'ai',
+      text: '🤖 Thinking...',
+      timestamp: new Date().toLocaleTimeString()
+    }]);
+
+    try {
+      // Build context from current session
+      const context = {
+        hasDataset: Boolean(uploadedFile && dataPreview),
+        datasetName: uploadedFile?.name,
+        rowCount: dataPreview?.rowCount,
+        columnCount: dataPreview?.columnCount,
+        mlGoal: userMessage,
+        columns: dataPreview?.columns,
+        validationResult: validationResult ? 'completed' : 'not_run',
+      };
+
+      // Call ML Assistant API
+      const response = await fetch('/api/ml/assistant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          context: JSON.stringify(context),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
       }
+
+      const data = await response.json();
+
+      // Remove thinking indicator and add real response
+      setChatMessages(prev => {
+        const filtered = prev.filter(msg => msg.text !== '🤖 Thinking...');
+        return [...filtered, {
+          type: 'ai',
+          text: data.reply || data.fallback_response || 'No response received',
+          timestamp: new Date().toLocaleTimeString()
+        }];
+      });
+
+    } catch (error) {
+      console.error('ML Assistant error:', error);
       
-      if (query.includes('segment') || query.includes('cluster') || query.includes('group')) {
-        // Real segmentation analysis
-        const highSpenders = dataPreview?.rows.filter(row => parseInt(row[5]) > 80).length || 0;
-        const lowSpenders = dataPreview?.rows.filter(row => parseInt(row[5]) < 70).length || 0;
-        
-        return `🎯 **Customer Segmentation Insights:**\n\n• High spenders (80+ score): ${highSpenders} customers\n• Low spenders (<70 score): ${lowSpenders} customers\n• Recommended segments:\n  - Premium customers (high income + high spending)\n  - Budget-conscious (lower income + moderate spending)\n  - High-potential (high income + low spending)\n\n*Best target: spending_score for behavioral segmentation*`;
-      }
-      
-      if (query.includes('predict') || query.includes('target') || query.includes('model')) {
-        // Real prediction recommendations
-        const spendingRange = dataPreview?.rows.map(row => parseInt(row[5])) || [];
-        const minSpend = Math.min(...spendingRange);
-        const maxSpend = Math.max(...spendingRange);
-        
-        return `🚀 **ML Model Recommendations:**\n\n**Primary Target: spending_score**\n• Range: ${minSpend}-${maxSpend} (good variance)\n• Use case: Customer value prediction\n\n**Alternative Targets:**\n• purchase_frequency - predict buying behavior\n• credit_score - financial risk assessment\n\n**Recommended Algorithm:** K-Means Clustering\n• Optimal for customer segmentation\n• Works well with mixed numeric/categorical data`;
-      }
-      
-      if (query.includes('quality') || query.includes('clean') || query.includes('missing')) {
-        // Real data quality analysis
-        const totalRecords = dataPreview?.rowCount || 20;
-        const completeRecords = dataPreview?.rows.filter(row => row.every(cell => cell && cell.trim())).length || 20;
-        const qualityScore = Math.round((completeRecords / totalRecords) * 100);
-        
-        return `✅ **Data Quality Report:**\n\n• Completeness: ${qualityScore}% (${completeRecords}/${totalRecords} complete records)\n• No missing values detected\n• All columns have consistent data types\n• Age values realistic (22-65 years)\n• Income values reasonable ($35K-$120K)\n• Credit scores within valid range (580-850)\n\n**Status: Ready for ML training**`;
-      }
-      
-      if (query.includes('correlation') || query.includes('relationship')) {
-        // Real correlation analysis
-        return `📊 **Feature Relationships:**\n\n• **Income ↔ Credit Score**: Strong positive correlation\n• **Age ↔ Income**: Moderate positive correlation\n• **Spending Score ↔ Income**: Moderate correlation\n• **Purchase Frequency ↔ Spending**: High correlation\n\n**Key Insight:** Higher income customers tend to have better credit scores and higher spending patterns.`;
-      }
-      
-      // Default intelligent response
-      return `🤖 **AI Analysis Available:**\n\nI can analyze your customer data for:\n• **Patterns** - demographic and behavioral insights\n• **Segmentation** - customer grouping strategies\n• **Predictions** - ML model recommendations\n• **Quality** - data completeness assessment\n• **Correlations** - feature relationships\n\nWhat would you like me to analyze?`;
-    };
-    
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, {
-        type: 'ai',
-        text: analyzeDataForResponse(),
-        timestamp: new Date().toLocaleTimeString()
-      }]);
-    }, 800);
-    
-    setUserQuery('');
+      // Remove thinking indicator and add error message
+      setChatMessages(prev => {
+        const filtered = prev.filter(msg => msg.text !== '🤖 Thinking...');
+        return [...filtered, {
+          type: 'ai',
+          text: `⚠️ Unable to connect to ML Assistant service. Please ensure the ownquesta_agents service is running.\n\nTo start the service:\n1. Open terminal in ownquesta_agents folder\n2. Run: python main.py\n3. Verify at: http://localhost:8000`,
+          timestamp: new Date().toLocaleTimeString()
+        }];
+      });
+    }
   };
 
   const analyzeDataForResponse = () => {
