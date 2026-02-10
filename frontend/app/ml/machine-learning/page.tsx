@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '../../components/Button';
 import Logo from '../../components/Logo';
+import ValidationAgenticAI from '../components/ValidationAgenticUI';
 
 interface DataFile {
   name: string;
@@ -356,20 +357,42 @@ const MLStudioAdvanced: React.FC = () => {
       formData.append('goal', resolvedGoal);
       formData.append('file', actualFile);
 
-      const response = await fetch('http://localhost:8000/ml-validation/validate', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-        },
-        body: formData,
-        signal: AbortSignal.timeout(30000) // 30 second timeout
-      });
+      // Primary: try multipart upload endpoint
+      let result: any = null;
+      try {
+        const response = await fetch('http://localhost:8000/validation/validate', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+          },
+          body: formData,
+          signal: AbortSignal.timeout(30000) // 30 second timeout
+        });
 
-      if (!response.ok) {
-        throw new Error(`ML Validation API Error: ${response.status} ${response.statusText}`);
+        if (response.ok) {
+          const json = await response.json();
+          // support both wrapped and unwrapped responses
+          result = json.result || json;
+        } else {
+          // Try JSON analyze endpoint as a fallback
+          console.warn('Multipart validation failed, attempting JSON analyze fallback');
+          const fileText = await actualFile.text();
+          const payload = { csv_text: fileText, goal: resolvedGoal };
+          const alt = await fetch('http://localhost:8000/validation/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(30000)
+          });
+
+          if (!alt.ok) throw new Error(`Both validation endpoints failed: ${response.status} / ${alt.status}`);
+          const j2 = await alt.json();
+          result = j2.result || j2;
+        }
+      } catch (err) {
+        // Rethrow to be handled by outer catch block
+        throw err;
       }
-
-      const result = await response.json();
       clearInterval(progressInterval);
       setValidationProgress(100);
       setValidationSteps(progressSteps);
@@ -1837,6 +1860,11 @@ ${JSON.stringify(fallbackResults, null, 2)}
               </div>
 
               {/* ML Goal Display Section removed per request */}
+            </div>
+
+            {/* Mount Validation Agent UI */}
+            <div className="mt-6">
+              <ValidationAgenticAI />
             </div>
 
 
