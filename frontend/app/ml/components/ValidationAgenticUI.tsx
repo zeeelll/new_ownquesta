@@ -432,20 +432,20 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
   return (
     <div className="relative h-full">
       <div className="pr-0 lg:pr-96 h-full">
-        <div className="w-full bg-white p-6 overflow-y-auto">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-lg flex items-center justify-between shadow-lg">
+        <div className="w-full bg-neutral-900 p-6 overflow-y-auto text-white">
+          <div className="bg-gradient-to-r from-indigo-700 to-purple-600 text-white p-4 rounded-lg flex items-center justify-between shadow-lg">
             <div className="flex items-center gap-3">
               <BarChart3 size={20} />
               <div>
                 <h4 className="font-semibold text-sm">Dataset Analysis Dashboard</h4>
-                <p className="text-xs text-blue-100">
+                <p className="text-xs text-indigo-100">
                   {edaResults ? `${edaResults.shape?.rows?.toLocaleString() || 'N/A'} rows • ${edaResults.shape?.columns || 'N/A'} features` : 'Ready for analysis'}
                 </p>
               </div>
             </div>
             {edaResults?.validationChecks?.readinessScore && (
               <div className="text-right">
-                <div className="text-xs text-blue-100">Quality Score</div>
+                <div className="text-xs text-indigo-100">Quality Score</div>
                 <div className="text-lg font-bold">{edaResults.validationChecks.readinessScore}/100</div>
               </div>
             )}
@@ -453,9 +453,9 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
 
           <div className="mt-6">
             {!edaResults ? (
-              <div className="text-center text-gray-400 py-12">
-                <Brain size={48} className="mx-auto mb-4 text-blue-400" />
-                <h3 className="font-semibold text-lg text-gray-600 mb-2">Ready for Intelligent Analysis</h3>
+                <div className="text-center text-gray-400 py-12">
+                <Brain size={48} className="mx-auto mb-4 text-purple-400" />
+                <h3 className="font-semibold text-lg text-white mb-2">Ready for Intelligent Analysis</h3>
                 <p className="font-medium">Upload a CSV dataset to begin comprehensive analysis</p>
                 <p className="text-sm mt-2">I'll provide insights, answer questions, and recommend best practices</p>
               </div>
@@ -463,26 +463,26 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
               <div className="space-y-6">
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
                     <div className="flex items-center gap-2 mb-2">
-                      <FileText size={16} className="text-blue-600" />
-                      <span className="font-semibold text-sm text-gray-700">Dataset Size</span>
+                      <FileText size={16} className="text-indigo-600" />
+                      <span className="font-semibold text-sm text-white">Dataset Size</span>
                     </div>
-                    <p className="text-lg font-bold text-blue-700">
+                    <p className="text-lg font-bold text-indigo-700">
                       {edaResults.shape?.rows?.toLocaleString() || '0'} rows
                     </p>
-                    <p className="text-sm text-gray-600">{edaResults.shape?.columns || 0} features</p>
+                    <p className="text-sm text-white">{edaResults.shape?.columns || 0} features</p>
                   </div>
                   
-                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
                     <div className="flex items-center gap-2 mb-2">
-                      <AlertCircle size={16} className="text-green-600" />
-                      <span className="font-semibold text-sm text-gray-700">Data Quality</span>
+                      <AlertCircle size={16} className="text-purple-600" />
+                      <span className="font-semibold text-sm text-white">Data Quality</span>
                     </div>
-                    <p className="text-lg font-bold text-green-700">
+                    <p className="text-lg font-bold text-purple-700">
                       {edaResults.validationChecks?.dataQuality || 'Unknown'}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       Missing: {edaResults.validationChecks?.missingDataLevel || 'Unknown'}
                     </p>
                   </div>
@@ -490,19 +490,19 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
 
                 {/* Feature Breakdown */}
                 {(edaResults.numericColumns?.length > 0 || edaResults.objectColumns?.length > 0) && (
-                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                    <h5 className="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2">
-                      <Code size={16} className="text-purple-600" />
+                  <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                    <h5 className="font-semibold text-sm text-white mb-3 flex items-center gap-2">
+                      <Code size={16} className="text-indigo-600" />
                       Feature Types
                     </h5>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-purple-600 font-medium">Numeric: </span>
-                        <span className="text-gray-700">{edaResults.numericColumns?.length || 0}</span>
+                        <span className="text-indigo-600 font-medium">Numeric: </span>
+                        <span className="text-white">{edaResults.numericColumns?.length || 0}</span>
                       </div>
                       <div>
-                        <span className="text-purple-600 font-medium">Categorical: </span>
-                        <span className="text-gray-700">{edaResults.objectColumns?.length || 0}</span>
+                        <span className="text-indigo-600 font-medium">Categorical: </span>
+                        <span className="text-white">{edaResults.objectColumns?.length || 0}</span>
                       </div>
                     </div>
                   </div>
@@ -510,15 +510,15 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
 
                 {/* Recommendations */}
                 {edaResults.recommendations?.length > 0 && (
-                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                    <h5 className="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2">
-                      <Lightbulb size={16} className="text-yellow-600" />
+                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                    <h5 className="font-semibold text-sm text-white mb-3 flex items-center gap-2">
+                      <Lightbulb size={16} className="text-purple-600" />
                       Key Recommendations
                     </h5>
-                    <ul className="text-sm text-gray-700 space-y-1">
+                    <ul className="text-sm text-white space-y-1">
                       {edaResults.recommendations.slice(0, 3).map((rec: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-yellow-600 font-bold">•</span>
+                          <span className="text-purple-600 font-bold">•</span>
                           <span>{rec}</span>
                         </li>
                       ))}
@@ -528,21 +528,21 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
 
                 {/* Quick Questions */}
                 {edaResults && (
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h5 className="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2">
-                      <MessageCircle size={16} className="text-gray-600" />
+                  <div className="bg-neutral-800 p-4 rounded-lg border border-gray-700">
+                    <h5 className="font-semibold text-sm text-white mb-3 flex items-center gap-2">
+                      <MessageCircle size={16} className="text-purple-600" />
                       Quick Questions
                     </h5>
                     <div className="flex flex-wrap gap-2">
-                      {quickQuestions.slice(0, 3).map((question, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleQuickQuestion(question)}
-                          className="px-3 py-1 text-xs bg-white border border-gray-300 rounded-full hover:bg-blue-50 hover:border-blue-300 transition-colors"
-                        >
-                          {question}
-                        </button>
-                      ))}
+                        {quickQuestions.slice(0, 3).map((question, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleQuickQuestion(question)}
+                            className="px-3 py-1 text-xs bg-purple-50 text-purple-700 rounded-full hover:bg-purple-100 transition-colors"
+                          >
+                            {question}
+                          </button>
+                        ))}
                     </div>
                   </div>
                 )}
@@ -553,10 +553,10 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
       </div>
 
       {collapsed ? (
-        <button 
+                <button 
           aria-label="Open Validation Chat" 
           onClick={() => setCollapsed(false)} 
-          className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-l-xl px-4 py-3 z-50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-indigo-700 to-purple-600 text-white rounded-l-xl px-4 py-3 z-50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
         >
           <div className="flex items-center gap-2">
             <Brain size={20} />
@@ -564,13 +564,13 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
           </div>
         </button>
       ) : (
-        <div className="fixed right-4 top-16 bottom-6 w-96 bg-white shadow-2xl rounded-xl z-50 flex flex-col overflow-hidden border border-gray-100">
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white p-4 flex items-center justify-between">
+        <div className="fixed right-4 top-16 bottom-6 w-96 bg-neutral-900 shadow-2xl rounded-xl z-50 flex flex-col overflow-hidden border border-gray-700 text-white">
+          <div className="bg-gradient-to-r from-indigo-700 via-purple-600 to-pink-500 text-white p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Brain size={22} className="animate-pulse" />
               <div>
                 <div className="font-bold text-sm">Intelligent Validation Agent</div>
-                <div className="text-xs text-blue-100">Chat • Ask • Analyze • Learn</div>
+                <div className="text-xs text-indigo-100">Chat • Ask • Analyze • Learn</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -595,10 +595,10 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
               <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm ${
                   msg.type === 'user' 
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white' 
+                    ? 'bg-gradient-to-r from-indigo-700 to-purple-600 text-white' 
                     : msg.type === 'system'
-                    ? 'bg-gradient-to-r from-yellow-100 to-orange-100 border border-yellow-200 text-gray-800'
-                    : 'bg-white shadow-md border border-gray-200 text-gray-800'
+                    ? 'bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-gray-800'
+                    : 'bg-neutral-900 shadow-md border border-gray-700 text-white'
                 }`}>
                   <div className="text-sm whitespace-pre-wrap leading-relaxed">
                     {msg.content.split('**').map((part: string, i: number) => 
@@ -608,18 +608,18 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
                   
                   {msg.suggestions && (
                     <div className="mt-3 pt-3 border-t border-gray-200">
-                      <div className="flex flex-wrap gap-1">
-                        {msg.suggestions.map((suggestion: string, i: number) => (
-                          <button
-                            key={i}
-                            onClick={() => handleQuickQuestion(suggestion)}
-                            className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
-                          >
-                            {suggestion}
-                          </button>
-                        ))}
+                        <div className="flex flex-wrap gap-1">
+                          {msg.suggestions.map((suggestion: string, i: number) => (
+                            <button
+                              key={i}
+                              onClick={() => handleQuickQuestion(suggestion)}
+                              className="px-2 py-1 text-xs bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
+                            >
+                              {suggestion}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
                   )}
                 </div>
               </div>
@@ -627,11 +627,11 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
             
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-white shadow-md border border-gray-200 rounded-2xl px-4 py-3">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="bg-neutral-900 shadow-md border border-gray-700 rounded-2xl px-4 py-3">
+                    <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     <span className="text-sm text-gray-500 ml-2">Thinking...</span>
                   </div>
                 </div>
@@ -643,14 +643,14 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
 
           {/* Quick action buttons when dataset is loaded */}
           {edaResults && (
-            <div className="px-4 py-2 bg-gray-50 border-t border-gray-200">
+            <div className="px-4 py-2 bg-neutral-800 border-t border-gray-700">
               <div className="flex gap-1 overflow-x-auto">
                 {quickQuestions.slice(0, 3).map((question, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleQuickQuestion(question)}
                     disabled={isTyping || isProcessing}
-                    className="flex-shrink-0 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors disabled:opacity-50"
+                    className="flex-shrink-0 px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-colors disabled:opacity-50"
                   >
                     {question}
                   </button>
@@ -659,13 +659,13 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
             </div>
           )}
 
-          <div className="border-t border-gray-200 p-3 bg-white">
+          <div className="border-t border-gray-700 p-3 bg-neutral-800 text-white">
             <div className="flex gap-2 mb-3 justify-between items-center">
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => fileInputRef.current?.click()} 
                   disabled={isProcessing}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all disabled:opacity-50 shadow-sm"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-700 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-indigo-800 hover:to-purple-700 transition-all disabled:opacity-50 shadow-sm"
                 >
                   <Upload size={14} /> 
                   Upload CSV
@@ -674,8 +674,8 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
               </div>
               
               {edaResults && (
-                <div className="text-xs text-gray-500 flex items-center gap-1">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <div className="text-xs text-gray-300 flex items-center gap-1">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
                   Dataset loaded
                 </div>
               )}
@@ -688,18 +688,18 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
                 onKeyPress={e => e.key === 'Enter' && !e.shiftKey && handleSendMessage()} 
                 placeholder={edaResults ? "Ask about your data..." : "Upload CSV first, then ask questions..."} 
                 disabled={isTyping || isProcessing}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 text-sm" 
+                className="flex-1 px-3 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 text-sm text-white placeholder-gray-400 bg-neutral-800" 
               />
               <button 
                 onClick={handleSendMessage} 
                 disabled={!input.trim() || isTyping || isProcessing}
-                className="px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
+                className="px-3 py-2 bg-gradient-to-r from-indigo-700 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
               >
                 <Send size={14} />
               </button>
             </div>
             
-            <div className="text-xs text-gray-400 mt-2 text-center">
+            <div className="text-xs text-gray-300 mt-2 text-center">
               {awaitingGoal ? "Describe your analysis goal..." : "Press Enter to send, Shift+Enter for new line"}
             </div>
           </div>
