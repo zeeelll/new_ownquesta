@@ -453,7 +453,7 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
 
           <div className="mt-6">
             {!edaResults ? (
-                <div className="text-center text-gray-400 py-12">
+                <div className="text-center text-gray-300 py-12">
                 <Brain size={48} className="mx-auto mb-4 text-purple-400" />
                 <h3 className="font-semibold text-lg text-white mb-2">Ready for Intelligent Analysis</h3>
                 <p className="font-medium">Upload a CSV dataset to begin comprehensive analysis</p>
@@ -463,18 +463,18 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
               <div className="space-y-6">
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                  <div className="bg-neutral-800 p-4 rounded-lg border border-gray-700">
                     <div className="flex items-center gap-2 mb-2">
-                      <FileText size={16} className="text-indigo-600" />
+                      <FileText size={16} className="text-indigo-300" />
                       <span className="font-semibold text-sm text-white">Dataset Size</span>
                     </div>
-                    <p className="text-lg font-bold text-indigo-700">
+                    <p className="text-lg font-bold text-white">
                       {edaResults.shape?.rows?.toLocaleString() || '0'} rows
                     </p>
                     <p className="text-sm text-white">{edaResults.shape?.columns || 0} features</p>
                   </div>
                   
-                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <div className="bg-neutral-800 p-4 rounded-lg border border-gray-700">
                     <div className="flex items-center gap-2 mb-2">
                       <AlertCircle size={16} className="text-purple-600" />
                       <span className="font-semibold text-sm text-white">Data Quality</span>
@@ -490,9 +490,9 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
 
                 {/* Feature Breakdown */}
                 {(edaResults.numericColumns?.length > 0 || edaResults.objectColumns?.length > 0) && (
-                  <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                  <div className="bg-neutral-800 p-4 rounded-lg border border-gray-700">
                     <h5 className="font-semibold text-sm text-white mb-3 flex items-center gap-2">
-                      <Code size={16} className="text-indigo-600" />
+                      <Code size={16} className="text-indigo-300" />
                       Feature Types
                     </h5>
                     <div className="grid grid-cols-2 gap-4 text-sm">
@@ -510,7 +510,7 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
 
                 {/* Recommendations */}
                 {edaResults.recommendations?.length > 0 && (
-                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <div className="bg-neutral-800 p-4 rounded-lg border border-gray-700">
                     <h5 className="font-semibold text-sm text-white mb-3 flex items-center gap-2">
                       <Lightbulb size={16} className="text-purple-600" />
                       Key Recommendations
@@ -538,7 +538,7 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
                           <button
                             key={idx}
                             onClick={() => handleQuickQuestion(question)}
-                            className="px-3 py-1 text-xs bg-purple-50 text-purple-700 rounded-full hover:bg-purple-100 transition-colors"
+                            className="px-3 py-1 text-xs bg-neutral-700 text-white rounded-full hover:bg-neutral-600 transition-colors"
                           >
                             {question}
                           </button>
@@ -590,30 +590,30 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-white">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-neutral-800 to-neutral-900">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm ${
                   msg.type === 'user' 
                     ? 'bg-gradient-to-r from-indigo-700 to-purple-600 text-white' 
                     : msg.type === 'system'
-                    ? 'bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-gray-800'
+                    ? 'bg-neutral-800 border border-gray-700 text-white'
                     : 'bg-neutral-900 shadow-md border border-gray-700 text-white'
                 }`}>
                   <div className="text-sm whitespace-pre-wrap leading-relaxed">
                     {msg.content.split('**').map((part: string, i: number) => 
-                      i % 2 === 0 ? part : <strong key={i} className={msg.type === 'user' ? 'text-white' : 'text-gray-900'}>{part}</strong>
+                      i % 2 === 0 ? part : <strong key={i} className={msg.type === 'user' ? 'text-white' : 'text-white'}>{part}</strong>
                     )}
                   </div>
                   
                   {msg.suggestions && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
+                    <div className="mt-3 pt-3 border-t border-gray-700">
                         <div className="flex flex-wrap gap-1">
                           {msg.suggestions.map((suggestion: string, i: number) => (
                             <button
                               key={i}
                               onClick={() => handleQuickQuestion(suggestion)}
-                              className="px-2 py-1 text-xs bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
+                              className="px-2 py-1 text-xs bg-neutral-700 text-white rounded-lg hover:bg-neutral-600 transition-colors"
                             >
                               {suggestion}
                             </button>
@@ -632,7 +632,7 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
                     <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                     <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <span className="text-sm text-gray-500 ml-2">Thinking...</span>
+                    <span className="text-sm text-gray-300 ml-2">Thinking...</span>
                   </div>
                 </div>
               </div>
@@ -650,7 +650,7 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
                     key={idx}
                     onClick={() => handleQuickQuestion(question)}
                     disabled={isTyping || isProcessing}
-                    className="flex-shrink-0 px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-colors disabled:opacity-50"
+                    className="flex-shrink-0 px-2 py-1 text-xs bg-neutral-700 text-white rounded-full hover:bg-neutral-600 transition-colors disabled:opacity-50"
                   >
                     {question}
                   </button>
