@@ -1864,7 +1864,19 @@ ${JSON.stringify(fallbackResults, null, 2)}
 
             {/* Mount Validation Agent UI */}
             <div className="mt-6">
-              <ValidationAgenticAI />
+              <ValidationAgenticAI 
+                onResult={(res) => {
+                  setEdaResults(res);
+                  // Add agent message to page chat
+                  if (res && (res.agent_answer || res.recommendations || res.insights)) {
+                    const text = res.agent_answer || (Array.isArray(res.recommendations) ? res.recommendations.join('\n') : JSON.stringify(res.recommendations));
+                    setChatMessages(prev => [...prev, { type: 'ai', text, timestamp: new Date().toLocaleTimeString() }]);
+                  }
+                }}
+                onAgentMessage={(text) => {
+                  setChatMessages(prev => [...prev, { type: 'ai', text, timestamp: new Date().toLocaleTimeString() }]);
+                }}
+              />
             </div>
 
 

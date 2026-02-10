@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import './ml.css';
 import Logo from '../components/Logo';
 import Button from '../components/Button';
+import ValidationAgenticAI from './components/ValidationAgenticUI';
 
 interface DataFile {
   name: string;
@@ -549,9 +550,9 @@ const MLPage: React.FC = () => {
                   <svg className="w-6 h-6 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  Dataset Preview & Validation
+                  Intelligent Dataset Validation & Analysis
                 </h2>
-                <p>File: {uploadedFile?.name}</p>
+                <p className="text-lg text-white/90 font-medium">File: {uploadedFile?.name} | AI-Powered Analysis Available</p>
               </div>
               <Button 
                 onClick={() => {
@@ -566,6 +567,24 @@ const MLPage: React.FC = () => {
               >
                 Upload Different File
               </Button>
+            </div>
+            
+            {/* Intelligent Validation Agent - Full UI Integration */}
+            <div className="mb-8">
+              <ValidationAgenticAI 
+                onResult={(result) => {
+                  console.log('EDA Result received:', result);
+                  // You can handle the analysis results here if needed
+                  if (result && result.isValid) {
+                    // Maybe auto-proceed to next step if analysis is good
+                    console.log('Analysis validated successfully');
+                  }
+                }}
+                onAgentMessage={(message) => {
+                  console.log('Agent message:', message);
+                  // Handle agent messages if needed
+                }}
+              />
             </div>
 
             <div className="validate-grid grid grid-cols-1 lg:grid-cols-3 gap-8">
