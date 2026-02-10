@@ -1833,54 +1833,10 @@ ${JSON.stringify(fallbackResults, null, 2)}
               <div>
                 <h2 className="text-4xl font-bold text-gradient mb-2">ML Goal & Validation</h2>
                 <p className="text-slate-400">Validating your machine learning objective and dataset compatibility</p>
-                {validationResult && !isValidating && (
-                  <div className="mt-3 flex items-center gap-4">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30">
-                      <div className="w-2 h-2 rounded-full bg-green-400" />
-                      <span className="text-sm font-medium text-green-300">Validation Complete</span>
-                    </div>
-                    <span className="text-sm text-slate-400">
-                      Quality Score: <span className="font-semibold text-white">{validationResult.satisfaction_score}%</span>
-                    </span>
-                  </div>
-                )}
+                {/* Small validation status removed per request */}
               </div>
 
-              {/* ML Goal Display Section */}
-              <div className="backdrop-blur-2xl bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-indigo-500/20 rounded-xl p-6 min-w-[400px]">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Your ML Goal</h3>
-                </div>
-                <div className="bg-slate-800/40 rounded-lg p-4 border border-slate-700/30">
-                  <p className="text-white leading-relaxed">
-                    {userQuery.trim() || 'No specific goal defined - will auto-detect best approach'}
-                  </p>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                  <div className="bg-slate-800/30 rounded p-3">
-                    <span className="text-slate-400 block">Dataset:</span>
-                    <span className="text-white font-medium">{uploadedFile?.name || 'Unknown'}</span>
-                  </div>
-                  <div className="bg-slate-800/30 rounded p-3">
-                    <span className="text-slate-400 block">Status:</span>
-                    <span className="text-green-300 font-medium">Ready for Analysis</span>
-                  </div>
-                </div>
-              </div>
-              <Button 
-                onClick={() => { setCurrentStep('setup'); setUploadedFile(null); setDataPreview(null); setChatMessages([]); setUserQuery(''); setActualFile(null); setValidationResult(null); setColumnAnalysis(null); setValidationProgress(0); setValidationSteps([]); }} 
-                variant="outline" 
-                size="md"
-                className="border-slate-600 hover:border-slate-500 hover:bg-slate-700/50"
-                icon={<span>↻</span>}
-              >
-                Start Over
-              </Button>
+              {/* ML Goal Display Section removed per request */}
             </div>
 
 
@@ -2566,169 +2522,11 @@ ${JSON.stringify(fallbackResults, null, 2)}
 
 
 
-            {/* Enhanced ML Agent Assistant - Vertical Chat Interface */}
-            <div className="fixed right-8 top-1/2 transform -translate-y-1/2 w-[400px] h-[760px] backdrop-blur-2xl bg-slate-900/95 border border-indigo-500/30 rounded-2xl p-6 z-50 shadow-2xl">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-indigo-500/20">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    {isValidating && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 animate-pulse" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">ML Assistant</h3>
-                    <p className="text-xs text-slate-400">{isValidating ? 'Analyzing...' : 'Ready to help'}</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setChatMessages([])}
-                  className="p-2 rounded-lg hover:bg-slate-800/50 transition-all text-slate-400 hover:text-white"
-                  title="Clear chat"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="flex flex-col h-full">
-                {/* Chat Messages */}
-                <div className="flex-1 space-y-4 mb-6 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-transparent">
-                  {chatMessages.length === 0 && (
-                    <div className="text-center text-slate-400 mt-8 space-y-4">
-                      <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-indigo-500/20 to-pink-500/20 flex items-center justify-center">
-                        <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="font-medium">AI Data Analyst Ready!</p>
-                        <p className="text-sm text-slate-500 mt-1">Ask me to analyze patterns, correlations, or recommend ML strategies</p>
-                      </div>
-                      
-                      {/* Analytical suggestions */}
-                      <div className="space-y-2">
-                        {['Analyze customer segments', 'Find data correlations', 'Recommend ML approach'].map((suggestion, i) => (
-                          <button
-                            key={i}
-                            onClick={() => {
-                              setUserQuery(suggestion);
-                              handleSendMessage();
-                            }}
-                            className="block w-full text-left px-3 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-all text-sm text-slate-300 hover:text-white border border-slate-700/30 hover:border-slate-600/50"
-                          >
-                            🔬 {suggestion}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {chatMessages.map((msg, i) => (
-                    <div key={i} className={`flex gap-3 ${msg.type === 'user' ? 'justify-end' : 'justify-start'} animate-slide`}>
-                      {msg.type === 'ai' && (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center flex-shrink-0 mt-1">
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      )}
-                      <div className={`max-w-[280px] p-4 rounded-2xl text-sm ${msg.type === 'user' ? 'bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-indigo-500/40 text-white' : 'bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600/50 text-slate-200'}`}>
-                        <p className="leading-relaxed">{renderMessage(msg.text)}</p>
-                        <p className="text-xs text-slate-400 mt-2 opacity-70">{msg.timestamp}</p>
-                      </div>
-                      {msg.type === 'user' && (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center flex-shrink-0 mt-1">
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  <div ref={chatEndRef} />
-                </div>
-                
-                {/* Input Area */}
-                <div className="mt-auto space-y-3">
-                  {/* AI Analysis Actions */}
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { text: 'Analyze customer patterns', icon: '🔍' },
-                      { text: 'Suggest segmentation strategy', icon: '🎯' },
-                      { text: 'Check data correlations', icon: '📊' },
-                      { text: 'Recommend ML model', icon: '🚀' }
-                    ].map((action, i) => (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          setUserQuery(action.text);
-                          handleSendMessage();
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-all text-xs text-slate-300 hover:text-white border border-slate-700/30 hover:border-slate-600/50"
-                      >
-                        {action.icon} {action.text.split(' ').slice(-1)[0]}
-                      </button>
-                    ))}
-                  </div>
-                  
-                  {/* Input */}
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      placeholder="Ask me anything about your dataset..." 
-                      value={userQuery} 
-                      onChange={(e) => setUserQuery(e.target.value)} 
-                      onKeyPress={(e) => e.key === 'Enter' && !isValidating && handleSendMessage()} 
-                      disabled={isValidating}
-                      className="flex-1 px-4 py-3 text-sm rounded-xl bg-slate-800/60 border border-slate-600/50 focus:border-indigo-500/50 outline-none transition-all text-white placeholder-slate-400 disabled:opacity-50" 
-                    />
-                    <button 
-                      onClick={handleSendMessage} 
-                      disabled={!userQuery.trim() || isValidating} 
-                      className="px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                    </button>
-                  </div>
-                  
-                  {/* Status indicator */}
-                  <div className="text-xs text-center text-slate-500">
-                    {isValidating ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-                        Processing your request...
-                      </span>
-                    ) : (
-                      'AI assistant ready'
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* ML Assistant UI removed per request */}
 
             {/* Action Buttons */}
             <div className="max-w-2xl mx-auto space-y-6">
-              {/* Configure Model Button */}
-              {validationResult && !isValidating && (
-                <button 
-                  onClick={() => setCurrentStep('configure')} 
-                  className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 font-semibold shadow-lg shadow-indigo-500/50 hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2 group"
-                >
-                  <span>Next: Configure Model</span>
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </button>
-              )}
+              {/* Configure Model CTA removed per request */}
 
               {/* Validation in Progress */}
               {isValidating && (
@@ -2742,171 +2540,8 @@ ${JSON.stringify(fallbackResults, null, 2)}
               )}
             </div>
 
-            {/* Enhanced ML Validation Results Dashboard */}
-            {validationResult && !isValidating && (
-              <div className="space-y-8">
-                
-                {/* Validation Overview Dashboard */}
-                <div className="bg-gradient-to-r from-green-800/40 to-emerald-700/30 rounded-xl p-6 border border-emerald-500/40 animate-slide">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-2xl font-bold text-white flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      ML Validation Complete
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <div className="px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/30">
-                        <span className="text-sm font-medium text-green-300">
-                          Score: {validationResult.satisfaction_score || 'N/A'}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Key Metrics Grid */}
-                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-slate-700/40 rounded-lg p-4 border border-slate-600/30">
-                    <h5 className="text-blue-300 font-semibold mb-3">Dataset Overview</h5>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Rows:</span>
-                        <span className="text-white font-mono">{validationResult.dataset_summary?.rows?.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Columns:</span>
-                        <span className="text-white font-mono">{validationResult.dataset_summary?.columns}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Score:</span>
-                        <span className="text-white font-mono">{validationResult.satisfaction_score}/100</span>
-                      </div>
-                    </div>
-                  </div>
-
-                    <div className="bg-slate-700/40 rounded-lg p-4 border border-slate-600/30">
-                      <h5 className="text-orange-300 font-semibold mb-3">Confidence Level</h5>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-white mb-2">
-                          {validationResult.goal_understanding?.confidence ? 
-                            `${(validationResult.goal_understanding.confidence * 100).toFixed(0)}%` : 
-                            'High'}
-                        </div>
-                        <div className="w-full bg-slate-600/50 rounded-full h-2">
-                          <div 
-                            className="bg-gradient-to-r from-orange-400 to-amber-500 h-2 rounded-full transition-all duration-1000" 
-                            style={{width: `${validationResult.goal_understanding?.confidence ? (validationResult.goal_understanding.confidence * 100) : 85}%`}}
-                          ></div>
-                        </div>
-                        <div className="text-xs text-slate-400">Agent Confidence</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Goal Understanding Section */}
-                {validationResult.goal_understanding && (
-                  <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
-                    <h4 className="text-xl font-bold text-cyan-300 mb-6 flex items-center gap-2">
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      AI Goal Understanding & Task Analysis
-                    </h4>
-                    
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div className="bg-slate-700/30 rounded-lg p-4">
-                          <h5 className="text-slate-300 font-semibold mb-2">Interpreted Task</h5>
-                          <p className="text-white text-lg">{validationResult.goal_understanding.interpreted_task}</p>
-                        </div>
-                        
-                        <div className="bg-slate-700/30 rounded-lg p-4">
-                          <h5 className="text-slate-300 font-semibold mb-2">Recommended Target</h5>
-                          <p className="text-emerald-300 text-lg font-mono">{validationResult.goal_understanding.target_column_guess || 'To be determined'}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-slate-700/30 rounded-lg p-4">
-                        <h5 className="text-slate-300 font-semibold mb-3">Confidence Analysis</h5>
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-slate-400">Task Understanding:</span>
-                            <span className="text-white">{validationResult.goal_understanding.confidence ? `${(validationResult.goal_understanding.confidence * 100).toFixed(0)}%` : '85%'}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-slate-400">Data Quality:</span>
-                            <span className="text-white">{validationResult.satisfaction_score}%</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-slate-400">ML Readiness:</span>
-                            <span className="text-green-300">
-                              {validationResult.satisfaction_score >= 80 ? 'High' : 
-                               validationResult.satisfaction_score >= 60 ? 'Medium' : 'Low'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Agent Answer Section */}
-                {validationResult.agent_answer && (
-                  <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
-                    <h4 className="text-xl font-bold text-indigo-300 mb-6 flex items-center gap-2">
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                      AI Agent Analysis & Recommendations
-                    </h4>
-                    
-                    <div className="bg-slate-700/30 rounded-lg p-5">
-                      <div className="prose prose-invert max-w-none">
-                        <div className="whitespace-pre-wrap text-slate-300 leading-relaxed">
-                          {validationResult.agent_answer}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Optional Questions Section */}
-                {validationResult.optional_questions && validationResult.optional_questions.length > 0 && (
-                  <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
-                    <h4 className="text-xl font-bold text-yellow-300 mb-6 flex items-center gap-2">
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Suggested Questions to Improve Your Model
-                    </h4>
-                    
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {validationResult.optional_questions.map((question: string, idx: number) => (
-                        <div key={idx} className="bg-slate-700/30 rounded-lg p-4 hover:bg-slate-700/50 transition-colors cursor-pointer border border-slate-600/20">
-                          <div className="flex items-start gap-3">
-                            <span className="flex-shrink-0 w-6 h-6 bg-yellow-500/20 text-yellow-300 rounded-full flex items-center justify-center text-sm font-bold">
-                              {idx + 1}
-                            </span>
-                            <p className="text-slate-300 text-sm leading-relaxed">{question}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                      <p className="text-amber-300 text-sm">
-                        💡 <strong>Tip:</strong> Click any question above in the chat to explore it further with the AI agent!
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-
-              </div>
-            )}
+            {/* Validation UI removed per request */}
+            {null}
           </div>
         )}
 
@@ -2952,16 +2587,14 @@ ${JSON.stringify(fallbackResults, null, 2)}
 
 
 
-
-
-
               </div>
             )}
           </div>
         )}
+
       </main>
 
-      <footer className="relative z-10 text-center py-6 text-gray-400 text-sm">💡 Pro Tip: The more details you provide, the better the AI can assist you!</footer>
+      {/* Footer pro-tip removed per request */}
     </div>
   );
 };
