@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '../../components/Button';
 import Logo from '../../components/Logo';
+import ValidationAgentWidget from './ValidationAgentWidget';
 
 interface DataFile {
   name: string;
@@ -1826,6 +1827,20 @@ ${JSON.stringify(fallbackResults, null, 2)}
               )}
             </div>
           </div>
+        )}
+
+        {/* Validation Agent Widget for chat-driven flow (floating right panel) */}
+        {currentStep === 'validate' && (
+          <ValidationAgentWidget
+            actualFile={actualFile}
+            userQuery={userQuery}
+            onStartValidation={async () => await validateWithAPI()}
+            onStartEDA={async () => await processEDAWithAgent()}
+            edaResults={edaResults}
+            validationResult={validationResult}
+            chatMessages={chatMessages}
+            setChatMessages={setChatMessages}
+          />
         )}
 
         {currentStep === 'validate' && !dataPreview && (
