@@ -615,7 +615,7 @@ ${JSON.stringify(demoResults, null, 2)}
       const formData = new FormData();
       formData.append('file', actualFile);
 
-      const response = await fetch('http://localhost:8000/eda/upload_and_run', {
+      const response = await fetch('http://localhost:8000/validation/validate', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -632,7 +632,8 @@ ${JSON.stringify(demoResults, null, 2)}
 
       let result: any;
       try {
-        result = await response.json();
+        const j = await response.json();
+        result = j.result || j;
       } catch (jsonError) {
         throw new Error('Invalid JSON response from EDA service');
       }
@@ -653,7 +654,7 @@ ${JSON.stringify(demoResults, null, 2)}
 ## 📊 Actual Agent Analysis Results:
 
 \`\`\`json
-${JSON.stringify(result.results, null, 2)}
+${JSON.stringify(result.results || result, null, 2)}
 \`\`\`
 
 ---
