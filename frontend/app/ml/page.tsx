@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import './ml.css';
 import Logo from '../components/Logo';
 import Button from '../components/Button';
-import ValidationAgenticAI from './components/ValidationAgenticUI';
 
 interface DataFile {
   name: string;
@@ -569,25 +568,7 @@ const MLPage: React.FC = () => {
               </Button>
             </div>
             
-            {/* Intelligent Validation Agent - Full UI Integration */}
-            <div className="mb-8">
-              <ValidationAgenticAI 
-                initialDataset={{ headers: dataPreview.columns, rows: [] }}
-                initialGoal={selectedTask}
-                onResult={(result) => {
-                  console.log('EDA Result received:', result);
-                  // You can handle the analysis results here if needed
-                  if (result && result.isValid) {
-                    // Maybe auto-proceed to next step if analysis is good
-                    console.log('Analysis validated successfully');
-                  }
-                }}
-                onAgentMessage={(message) => {
-                  console.log('Agent message:', message);
-                  // Handle agent messages if needed
-                }}
-              />
-            </div>
+            {/* Validation agent UI removed per request (no UI added). */}
 
             <div className="validate-grid grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Data Statistics */}

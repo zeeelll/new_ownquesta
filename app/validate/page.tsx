@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ValidatePage() {
   const [file, setFile] = useState<File | null>(null);
   const [mlGoal, setMlGoal] = useState<string>('');
   const [mlValidationResult, setMlValidationResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [sessionCsv, setSessionCsv] = useState<string | null>(null);
+  const [sessionFileName, setSessionFileName] = useState<string | null>(null);
+  const [sessionPreview, setSessionPreview] = useState<{ columns: string[]; rows: string[][] } | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -15,12 +18,61 @@ export default function ValidatePage() {
     }
   };
 
+  useEffect(() => {
+    // Load currentMLSession (small preview) or fallback to latest saved project with full file content
+    try {
+      const raw = localStorage.getItem('currentMLSession');
+      if (raw) {
+        const session = JSON.parse(raw);
+        if (session.uploadedFile) setSessionFileName(session.uploadedFile.name || null);
+        if (session.dataPreview && Array.isArray(session.dataPreview.rows)) {
+          const headers = (session.dataPreview.columns || []).join(',');
+          const rows = (session.dataPreview.rows || []).map((r: any[]) => r.join(','));
+          const csv = [headers, ...rows].join('\n');
+          setSessionCsv(csv);
+          // lightweight preview
+          setSessionPreview({ columns: session.dataPreview.columns || [], rows: session.dataPreview.rows || [] });
+        }
+        if (session.userQuery) setMlGoal(session.userQuery);
+        return;
+      }
+
+      const rawProjects = localStorage.getItem('userProjects');
+      if (rawProjects) {
+        const projects = JSON.parse(rawProjects);
+        if (Array.isArray(projects) && projects.length > 0) {
+          const recent = projects[0];
+          const saved = recent.savedState;
+          if (saved) {
+            if (saved.actualFile && saved.actualFile.content) {
+              setSessionCsv(saved.actualFile.content);
+              setSessionFileName(saved.actualFile.name || recent.dataset || recent.name || null);
+              // parse preview from saved content: take header + first 5 rows
+              try {
+                const lines = String(saved.actualFile.content).split('\n').filter((l: string) => l.trim());
+                const cols = lines[0]?.split(',').map((c: string) => c.trim()) || [];
+                const rows = lines.slice(1, 6).map((r: string) => r.split(',').map((c: string) => c.trim()));
+                setSessionPreview({ columns: cols, rows });
+              } catch (e) {
+                // ignore parse errors
+              }
+            }
+            if (saved.userQuery) setMlGoal(saved.userQuery);
+            else if (recent.taskType) setMlGoal(recent.taskType || '');
+          }
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
   const handleMlValidation = async () => {
-    if (!file) {
+    if (!file && !sessionCsv) {
       alert('Please select a file first');
       return;
     }
-    
+
     if (!mlGoal.trim()) {
       alert('Please enter your machine learning goal');
       return;
@@ -29,17 +81,30 @@ export default function ValidatePage() {
     setLoading(true);
     setMlValidationResult(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('goal', mlGoal.trim());
-
     try {
-      const response = await fetch('/api/ml/validate', {
-        method: 'POST',
-        body: formData,
-      });
+      let result: any = null;
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('goal', mlGoal.trim());
 
-      const result = await response.json();
+        const response = await fetch('/api/ml/validate', {
+          method: 'POST',
+          body: formData,
+        });
+
+        result = await response.json();
+      } else if (sessionCsv) {
+        const payload = { csv_text: sessionCsv, goal: { type: 'supervised', target: mlGoal.trim() } };
+        const response = await fetch('/api/ml/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        result = await response.json();
+      }
+
       setMlValidationResult(result);
     } catch (error) {
       console.error('ML Validation error:', error);
@@ -72,6 +137,36 @@ export default function ValidatePage() {
               className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none p-2"
             />
             {file && <p className="text-sm text-gray-600 mt-2">Selected: {file.name}</p>}
+            {!file && sessionFileName && (
+              <div className="mt-2">
+                <p className="text-sm text-gray-600">Using dataset from Setup: <strong>{sessionFileName}</strong></p>
+                {sessionPreview && (
+                  <div className="mt-3 bg-gray-50 p-3 rounded text-sm text-gray-700">
+                    <div className="font-medium mb-2">Preview (first {sessionPreview.rows.length} rows)</div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full table-auto text-left text-xs">
+                        <thead>
+                          <tr>
+                            {sessionPreview.columns.map((c, i) => (
+                              <th key={i} className="px-2 py-1 font-medium border-b">{c}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sessionPreview.rows.map((r, ri) => (
+                            <tr key={ri} className="border-b">
+                              {r.map((cell, ci) => (
+                                <td key={ci} className="px-2 py-2">{cell}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           <div>
@@ -80,18 +175,18 @@ export default function ValidatePage() {
             </label>
             <textarea
               id="ml-goal"
-              value={mlGoal}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMlGoal(e.target.value)}
-              placeholder="e.g., I want to predict customer churn based on usage patterns"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              rows={3}
-              disabled={!file || loading}
+                value={mlGoal}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMlGoal(e.target.value)}
+                placeholder="e.g., I want to predict customer churn based on usage patterns"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                rows={3}
+                disabled={(!file && !sessionCsv) || loading}
             />
           </div>
           
           <button
             onClick={handleMlValidation}
-            disabled={!file || !mlGoal.trim() || loading}
+              disabled={(!file && !sessionCsv) || !mlGoal.trim() || loading}
             className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 font-semibold flex items-center gap-2 shadow-lg"
           >
             {loading ? (

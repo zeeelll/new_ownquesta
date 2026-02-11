@@ -4,10 +4,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '../../components/Button';
 import Logo from '../../components/Logo';
-import ValidationAgenticAI from '../components/ValidationAgenticUI';
-
-// Validation API base (can be proxied via Next API route)
-const VALIDATION_API_BASE = process.env.NEXT_PUBLIC_ML_VALIDATION_URL || process.env.NEXT_PUBLIC_API_URL || 'https://ownquestaagents-production.up.railway.app';
 
 interface DataFile {
   name: string;
@@ -1865,24 +1861,7 @@ ${JSON.stringify(fallbackResults, null, 2)}
               {/* ML Goal Display Section removed per request */}
             </div>
 
-            {/* Mount Validation Agent UI */}
-            <div className="mt-6">
-              <ValidationAgenticAI 
-                initialDataset={{ headers: dataPreview.columns, rows: dataPreview.rows }}
-                initialGoal={userQuery || selectedTask}
-                onResult={(res) => {
-                  setEdaResults(res);
-                  // Add agent message to page chat
-                  if (res && (res.agent_answer || res.recommendations || res.insights)) {
-                    const text = res.agent_answer || (Array.isArray(res.recommendations) ? res.recommendations.join('\n') : JSON.stringify(res.recommendations));
-                    setChatMessages(prev => [...prev, { type: 'ai', text, timestamp: new Date().toLocaleTimeString() }]);
-                  }
-                }}
-                onAgentMessage={(text) => {
-                  setChatMessages(prev => [...prev, { type: 'ai', text, timestamp: new Date().toLocaleTimeString() }]);
-                }}
-              />
-            </div>
+            {/* Validation agent UI removed per request (no UI added). */}
 
 
 
