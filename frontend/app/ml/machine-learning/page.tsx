@@ -60,6 +60,8 @@ const MLStudioAdvanced: React.FC = () => {
   const hasDataset = Boolean(uploadedFile && actualFile && dataPreview);
   const canProceedFromSetup = hasGoal && hasDataset;
 
+ 
+
   // Load project from dashboard if project ID is provided
   useEffect(() => {
     const projectId = searchParams?.get('projectId');
@@ -1426,6 +1428,10 @@ ${JSON.stringify(fallbackResults, null, 2)}
         )}
         {currentStep === 'setup' && (
           <div className="animate-slide space-y-8">
+            {/* Small session pill (matches other ML pages) */}
+            <div className="inline-block bg-gradient-to-r from-indigo-700 to-purple-600 text-white/95 px-4 py-2 rounded-full text-sm shadow-md mb-2">
+              Opening ML workspace for: <span className="font-semibold">{selectedProject?.name || 'first'}</span>
+            </div>
             {/* Header Section */}
             <div className="text-center space-y-4 mb-16">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 backdrop-blur-sm">
@@ -1855,7 +1861,36 @@ ${JSON.stringify(fallbackResults, null, 2)}
               <div>
                 <h2 className="text-4xl font-bold text-gradient mb-2">ML Goal & Validation</h2>
                 <p className="text-slate-400">Validating your machine learning objective and dataset compatibility</p>
-                {/* Small validation status removed per request */}
+                {/* Display uploaded dataset name and user goal (restores from project if needed) */}
+                <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-2">
+                  <div
+                    title={uploadedFile?.name || selectedProject?.savedState?.uploadedFile?.name || 'No dataset uploaded'}
+                    onClick={() => setCurrentStep('setup')}
+                    className="inline-flex cursor-pointer items-center bg-gradient-to-r from-white/3 to-white/2 border border-white/10 rounded-full px-3 py-1 text-sm text-white/90 hover:shadow-lg transition">
+                    <svg className="w-4 h-4 mr-2 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M8 3h8v4H8z" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <strong className="mr-2 text-white/95">Dataset</strong>
+                    <span className="text-white/80 truncate max-w-[28rem]">{uploadedFile?.name || selectedProject?.savedState?.uploadedFile?.name || 'No dataset uploaded'}</span>
+                    
+                  </div>
+
+                  <div
+                    title={userQuery || selectedProject?.savedState?.userQuery || selectedTask || 'No goal set'}
+                    onClick={() => setCurrentStep('setup')}
+                    className="inline-flex cursor-pointer items-center bg-gradient-to-r from-white/3 to-white/2 border border-white/10 rounded-full px-3 py-1 text-sm text-white/90 hover:shadow-lg transition">
+                    <svg className="w-4 h-4 mr-2 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M12 20h9" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M16 4H2v12h14V4z" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <strong className="mr-2 text-white/95">Goal</strong>
+                    <span className="text-white/80 truncate max-w-[28rem]">{userQuery || selectedProject?.savedState?.userQuery || selectedTask || 'No goal set'}</span>
+                    
+                  </div>
+
+                  
+                </div>
               </div>
 
               {/* ML Goal Display Section removed per request */}
