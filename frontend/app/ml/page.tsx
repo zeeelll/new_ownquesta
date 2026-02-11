@@ -572,6 +572,8 @@ const MLPage: React.FC = () => {
             {/* Intelligent Validation Agent - Full UI Integration */}
             <div className="mb-8">
               <ValidationAgenticAI 
+                initialDataset={{ headers: dataPreview.columns, rows: [] }}
+                initialGoal={selectedTask}
                 onResult={(result) => {
                   console.log('EDA Result received:', result);
                   // You can handle the analysis results here if needed

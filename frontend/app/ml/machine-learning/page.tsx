@@ -6,6 +6,9 @@ import Button from '../../components/Button';
 import Logo from '../../components/Logo';
 import ValidationAgenticAI from '../components/ValidationAgenticUI';
 
+// Validation API base (can be proxied via Next API route)
+const VALIDATION_API_BASE = process.env.NEXT_PUBLIC_ML_VALIDATION_URL || process.env.NEXT_PUBLIC_API_URL || 'https://ownquestaagents-production.up.railway.app';
+
 interface DataFile {
   name: string;
   size: number;
@@ -623,12 +626,12 @@ ${JSON.stringify(demoResults, null, 2)}
       });
 
       clearInterval(stepInterval);
-      
+
       if (!response.ok) {
         throw new Error(`EDA endpoint error: ${response.status} - ${response.statusText}`);
       }
 
-      let result;
+      let result: any;
       try {
         result = await response.json();
       } catch (jsonError) {
@@ -638,7 +641,7 @@ ${JSON.stringify(demoResults, null, 2)}
       // Successful real analysis
       setEdaProcessingSteps(edaSteps);
       setEdaResults(result);
-      
+
       // Display the actual raw response from EDA agent
       const actualAgentResponse = `## 🤖 OwnQuesta EDA Agent Response
 
@@ -656,7 +659,7 @@ ${JSON.stringify(result.results, null, 2)}
 
 ---
 *Raw response from OwnQuesta EDA Agent at ${new Date().toLocaleTimeString()}*`;
-      
+
       setEdaAgentResponse(actualAgentResponse);
       
       setChatMessages(prev => [...prev, {
@@ -1865,6 +1868,8 @@ ${JSON.stringify(fallbackResults, null, 2)}
             {/* Mount Validation Agent UI */}
             <div className="mt-6">
               <ValidationAgenticAI 
+                initialDataset={{ headers: dataPreview.columns, rows: dataPreview.rows }}
+                initialGoal={userQuery || selectedTask}
                 onResult={(res) => {
                   setEdaResults(res);
                   // Add agent message to page chat

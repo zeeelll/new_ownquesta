@@ -3,12 +3,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Send, Code, FileText, Loader2, Brain, BarChart3, MessageCircle, Lightbulb, AlertCircle } from 'lucide-react';
 
+// Validation agent base URL (configurable in environment)
+const AGENT_BASE = process.env.NEXT_PUBLIC_VALIDATION_AGENT_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
 type Props = {
   onResult?: (res: any) => void;
   onAgentMessage?: (text: string) => void;
+  initialDataset?: any;
+  initialGoal?: string;
 };
 
-const ValidationAgenticAI: React.FC<Props> = ({ onResult, onAgentMessage }) => {
+const ValidationAgenticAI: React.FC<Props> = ({ onResult, onAgentMessage, initialDataset, initialGoal }) => {
   const [messages, setMessages] = useState<any[]>([
     { type: 'agent', content: "👋 Hello! I'm your **Intelligent Validation Agent**. Upload a CSV dataset and I'll provide comprehensive analysis and answer all your questions!" }
   ]);
@@ -33,6 +38,21 @@ const ValidationAgenticAI: React.FC<Props> = ({ onResult, onAgentMessage }) => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, edaResults]);
+
+  // When the component mounts and an initial dataset/goal is provided by the page,
+  // prompt the user to start the ML validation process using that dataset and goal.
+  useEffect(() => {
+    if (initialDataset || initialGoal) {
+      // Avoid duplicate prompts if already prompted
+      const hasPrompted = (messages || []).some(m => m.meta?.autoPrompt);
+      if (!hasPrompted) {
+        const dsName = initialDataset?.name || (initialDataset?.headers ? `dataset with ${initialDataset.headers.length} columns` : 'your dataset');
+        const goalText = initialGoal || 'an analysis goal';
+        setMessages(prev => [...prev, { type: 'agent', content: `I see ${dsName} and your selected goal is: ${goalText}. Would you like me to start the ML validation process now?`, suggestions: ['Start Validation', 'Not Now'], meta: { autoPrompt: true } }]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const parseCSV = (text: string) => {
     try {
@@ -100,7 +120,7 @@ const ValidationAgenticAI: React.FC<Props> = ({ onResult, onAgentMessage }) => {
     if (!edaResults) return "Please upload and analyze a dataset first.";
     
     try {
-      const response = await fetch('http://127.0.0.1:8000/validation/question', {
+      const response = await fetch(`${AGENT_BASE}/validation/question`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -114,11 +134,35 @@ const ValidationAgenticAI: React.FC<Props> = ({ onResult, onAgentMessage }) => {
         return data.answer || "I couldn't generate an answer for that question.";
       }
     } catch (error) {
-      console.log('Agent offline, using local analysis');
+      console.warn('Agent question endpoint unreachable at', AGENT_BASE, error);
+      setMessages(prev => [...prev, { type: 'agent', content: `⚠️ Validation service unreachable at ${AGENT_BASE}. Using local analysis fallback.` }]);
     }
     
     // Fallback local analysis
     return generateLocalAnswer(question);
+  };
+
+  const handleSuggestionClick = async (suggestion: string, msg?: any) => {
+    if (suggestion === 'Start Validation') {
+      const initial = initialDataset || null;
+      const goal = initialGoal || null;
+      if (initial) {
+        // If initial dataset has no rows, run the enhanced local EDA fallback
+        if (!initial.rows || initial.rows.length === 0) {
+          await performEnhancedLocalEDA(initial, { description: goal || 'User selected task' });
+        } else {
+          await performAdvancedAnalysis(initial, { description: goal || 'User selected task' });
+        }
+        return;
+      }
+
+      // If no initial dataset provided, prompt the user to upload
+      setMessages(prev => [...prev, { type: 'agent', content: 'Please upload a CSV dataset using the Upload button so I can start validation.' }]);
+      return;
+    }
+
+    // Default fallback: treat suggestion as a quick question
+    await handleQuickQuestion(suggestion);
   };
 
   const generateLocalAnswer = (question: string) => {
@@ -331,7 +375,7 @@ const ValidationAgenticAI: React.FC<Props> = ({ onResult, onAgentMessage }) => {
     try {
       // Try backend analysis first
       const csv = datasetToCSV(data);
-      const res = await fetch('http://127.0.0.1:8000/validation/analyze', {
+      const res = await fetch(`${AGENT_BASE}/validation/analyze`, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ csv_text: csv, goal })
@@ -352,7 +396,8 @@ const ValidationAgenticAI: React.FC<Props> = ({ onResult, onAgentMessage }) => {
         return;
       }
     } catch (error) {
-      console.log('Backend unavailable, using enhanced local analysis');
+      console.warn('Validation analyze endpoint unreachable at', AGENT_BASE, error);
+      setMessages(prev => [...prev, { type: 'agent', content: `⚠️ Validation service unreachable at ${AGENT_BASE}. Running local analysis fallback.` }]);
     }
 
     // Enhanced local fallback
@@ -612,7 +657,7 @@ ${results.recommendations?.slice(0, 3).map((rec: string) => `• ${rec}`).join('
                           {msg.suggestions.map((suggestion: string, i: number) => (
                             <button
                               key={i}
-                              onClick={() => handleQuickQuestion(suggestion)}
+                              onClick={() => handleSuggestionClick(suggestion, msg)}
                               className="px-2 py-1 text-xs bg-neutral-700 text-white rounded-lg hover:bg-neutral-600 transition-colors"
                             >
                               {suggestion}
