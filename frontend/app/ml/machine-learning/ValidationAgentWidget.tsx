@@ -237,17 +237,31 @@ export default function ValidationAgentWidget({
           <div className="flex flex-col bg-[#0f1724] border border-slate-700/40 rounded-xl shadow-lg overflow-hidden" style={{ height: "85vh", minHeight: 560 }}>
         <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-br from-[#071228] to-[#071029] border-b border-slate-700/30">
           <div className="flex items-center gap-3">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 text-indigo-400" aria-hidden>
-              <path d="M12 3C9.79 3 8 4.79 8 7v1H6a2 2 0 00-2 2v3a5 5 0 005 5h1v1a2 2 0 002 2h2a2 2 0 002-2v-1h1a5 5 0 005-5v-3a2 2 0 00-2-2h-2V7c0-2.21-1.79-4-4-4h-2z" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M8 11h8" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" />
+            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" className="w-9 h-9" aria-hidden>
+              <defs>
+                <linearGradient id="headerGradientBest" x1="0" x2="1">
+                  <stop offset="0" stopColor="#7c3aed" />
+                  <stop offset="1" stopColor="#06b6d4" />
+                </linearGradient>
+                <filter id="headerGlowBest" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="3" result="b" />
+                  <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+              </defs>
+              <rect width="48" height="48" rx="10" fill="url(#headerGradientBest)" />
+              <g filter="url(#headerGlowBest)" opacity="0.95">
+                <path d="M16 22c0-5 4-8 8-8s8 3 8 8-4 8-8 8-8-3-8-8z" fill="rgba(255,255,255,0.06)" />
+              </g>
+              <path d="M20 20c1.2-2 3-3 4-3s2.8 1 4 3c0 0 .6 1.2.6 2.6 0 2-1.6 3.6-3.6 3.6H19c-1.8 0-3.6-1.6-3.6-3.6 0-1.2.5-2.2 1.2-2.6z" fill="#fff" opacity="0.06" />
+              <path d="M19 18c.8-1.4 2-2.2 3-2.2s2.2.8 3 2.2" stroke="#fff" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" opacity="0.98" />
             </svg>
             <div className="flex flex-col leading-tight">
-              <div className="text-sm font-semibold text-white">Chatbot</div>
+              <div className="text-sm font-semibold text-white">Validation Agent</div>
               <div className="text-xs text-slate-400">AI Data Scientist</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => setVisible(false)} title="Close Chatbot" aria-label="Close Chatbot" className="p-2 rounded text-slate-300 hover:bg-slate-800/40 transition-colors"> 
+            <button onClick={() => setVisible(false)} title="Close Validation Agent" aria-label="Close Validation Agent" className="p-2 rounded text-slate-300 hover:bg-slate-800/40 transition-colors"> 
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -262,8 +276,20 @@ export default function ValidationAgentWidget({
                 <div key={i} className={`flex items-end gap-3 ${m.type === "user" ? "justify-end" : "justify-start"}`}>
                   {m.type === "ai" && (
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-700 to-slate-600 text-white flex items-center justify-center mr-2 flex-shrink-0 ring-1 ring-slate-800 overflow-hidden">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" aria-hidden>
-                        <path d="M12 3C9.79 3 8 4.79 8 7v1H6a2 2 0 00-2 2v3a5 5 0 005 5h1v1a2 2 0 002 2h2a2 2 0 002-2v-1h1a5 5 0 005-5v-3a2 2 0 00-2-2h-2V7c0-2.21-1.79-4-4-4h-2z" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" aria-hidden>
+                        <defs>
+                          <linearGradient id="avatarGradientBest" x1="0" x2="1">
+                            <stop offset="0" stopColor="#8b5cf6" />
+                            <stop offset="1" stopColor="#06b6d4" />
+                          </linearGradient>
+                          <filter id="avatarGlowBest" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        </defs>
+                        <rect width="36" height="36" rx="18" fill="url(#avatarGradientBest)" />
+                        <g filter="url(#avatarGlowBest)">
+                          <path d="M12.5 15.5c0-3 2-4.8 4.5-4.8s4.5 1.8 4.5 4.8S19 20.3 16.5 20.3 12.5 18.5 12.5 15.5z" fill="rgba(255,255,255,0.06)" />
+                        </g>
+                        <circle cx="14.5" cy="15.5" r="0.9" fill="#fff" />
+                        <circle cx="20" cy="15.5" r="0.9" fill="#fff" />
                       </svg>
                     </div>
                   )}
@@ -296,11 +322,23 @@ export default function ValidationAgentWidget({
 
       {!visible && (
         <div className="fixed right-2 bottom-20 z-[70]">
-          <button onClick={() => setVisible(true)} title="Open Chatbot" aria-label="Open Chatbot" className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg flex items-center justify-center shadow-lg ring-1 ring-slate-800/60">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" aria-hidden>
-              <path d="M12 3C9.79 3 8 4.79 8 7v1H6a2 2 0 00-2 2v3a5 5 0 005 5h1v1a2 2 0 002 2h2a2 2 0 002-2v-1h1a5 5 0 005-5v-3a2 2 0 00-2-2h-2V7c0-2.21-1.79-4-4-4h-2z" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+            <button onClick={() => setVisible(true)} title="Open Validation Agent" aria-label="Open Validation Agent" className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg flex items-center justify-center shadow-lg ring-1 ring-slate-800/60">
+              <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" aria-hidden>
+                <defs>
+                  <linearGradient id="openGradientBest" x1="0" x2="1">
+                    <stop offset="0" stopColor="#7c3aed" />
+                    <stop offset="1" stopColor="#06b6d4" />
+                  </linearGradient>
+                  <filter id="openGlowBest" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                </defs>
+                <rect width="36" height="36" rx="9" fill="url(#openGradientBest)" />
+                <g filter="url(#openGlowBest)">
+                  <path d="M13 15c0-3.2 2.3-5.2 5-5.2s5 2 5 5.2-2.3 5.2-5 5.2-5-2-5-5.2z" fill="rgba(255,255,255,0.06)" />
+                </g>
+                <circle cx="15.5" cy="15" r="1.2" fill="#fff" />
+                <circle cx="20" cy="15" r="1.2" fill="#fff" />
+              </svg>
+            </button>
         </div>
       )}
     </>
