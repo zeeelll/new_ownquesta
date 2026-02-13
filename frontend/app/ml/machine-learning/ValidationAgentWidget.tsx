@@ -246,7 +246,7 @@ export default function ValidationAgentWidget({
           </div>
         </div>
 
-        <div className="p-1 h-full overflow-hidden">
+        <div className="p-3 h-full overflow-hidden">
           <div className="flex flex-col h-full">
             <div className="flex-1 overflow-y-auto pr-2" style={{ maxHeight: "calc(85vh - 160px)" }}>
               {uniqueMessagesForRender(chatMessages || []).slice(-60).map((m, i) => (
@@ -264,9 +264,9 @@ export default function ValidationAgentWidget({
             </div>
 
             <div className="mt-auto space-y-0">
-              <div className="flex gap-2 mb-1">
-                <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendQuestion()} placeholder={'Say "yes" to start ML validation or ask a question...'} className="flex-1 px-3 py-2 rounded bg-[#071029] text-white text-sm outline-none" />
-                <button onClick={sendQuestion} disabled={!input.trim() || isBusy} className="px-3 py-2 bg-indigo-600 text-white rounded flex items-center justify-center" title="Send">
+              <div className="flex gap-3 items-center">
+                <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendQuestion()} placeholder={"Ask a question..."} className="flex-1 px-4 py-3 rounded-xl bg-[#061122] text-white text-sm outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 transition-shadow" />
+                <button onClick={sendQuestion} disabled={!input.trim() || isBusy} className="ml-2 w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-xl flex items-center justify-center shadow-lg transform hover:-translate-y-0.5 transition-all" title="Send">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M22 2L11 13" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>
                 </button>
               </div>
