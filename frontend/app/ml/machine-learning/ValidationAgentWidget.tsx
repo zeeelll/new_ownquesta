@@ -248,15 +248,21 @@ export default function ValidationAgentWidget({
 
         <div className="p-3 h-full overflow-hidden">
           <div className="flex flex-col h-full">
-            <div className="flex-1 overflow-y-auto pr-2" style={{ maxHeight: "calc(85vh - 160px)" }}>
+              <div className="flex-1 overflow-y-auto pr-2 space-y-3" style={{ maxHeight: "calc(85vh - 160px)" }}>
               {uniqueMessagesForRender(chatMessages || []).slice(-60).map((m, i) => (
-                <div key={i} className={`flex ${m.type === "user" ? "justify-end" : "justify-start"}`}>
-                  {m.type === "ai" && <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center mr-2 shrink-0">A</div>}
-                  <div className={`${m.type === "user" ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-200"} max-w-[82%] rounded-lg p-2 text-sm`}>
-                    <div className="text-xs text-slate-400 mb-1">{m.timestamp}</div>
+                <div key={i} className={`flex items-end gap-3 ${m.type === "user" ? "justify-end" : "justify-start"}`}>
+                  {m.type === "ai" && (
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-700 to-slate-600 text-white flex items-center justify-center mr-2 flex-shrink-0 ring-1 ring-slate-800">
+                      <span className="text-sm font-medium">A</span>
+                    </div>
+                  )}
+                  <div className={`${m.type === "user" ? "bg-gradient-to-br from-indigo-600 to-indigo-500 text-white shadow-lg" : "bg-gradient-to-br from-slate-800 to-slate-700 text-slate-100"} max-w-[82%] rounded-2xl p-3 text-sm leading-relaxed relative`}> 
+                    <div className="text-[10px] text-slate-400 mb-1">{m.timestamp}</div>
                     <div className="whitespace-pre-wrap">{m.text}</div>
                   </div>
-                  {m.type === "user" && <div className="w-6" />}
+                  {m.type === "user" && (
+                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">You</div>
+                  )}
                 </div>
               ))}
 
