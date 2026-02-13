@@ -230,18 +230,24 @@ export default function ValidationAgentWidget({
     }
   };
 
-  if (!visible) return null;
-
   return (
-    <div ref={panelRef} className={`fixed right-6 bottom-8 z-[60] transition-transform ${collapsed ? "translate-x-64" : "translate-x-0"}`} style={{ width: 460 }}>
-      <div className="flex flex-col bg-[#0f1724] border border-slate-700/40 rounded-xl shadow-lg overflow-hidden" style={{ height: "85vh", minHeight: 560 }}>
-        <div className="flex items-center justify-between px-3 py-2 bg-[#071029] border-b border-slate-700/30">
-          <div className="flex-1" />
-          <div className="flex-1 flex flex-col items-center">
-            <div className="text-sm font-semibold text-white">Validation Agent</div>
-            <div className="text-xs text-slate-400">AI Data Scientist</div>
+    <>
+      {visible && (
+        <div ref={panelRef} className={`fixed right-6 bottom-8 z-[60] transition-transform ${collapsed ? "translate-x-64" : "translate-x-0"}`} style={{ width: 460 }}>
+          <div className="flex flex-col bg-[#0f1724] border border-slate-700/40 rounded-xl shadow-lg overflow-hidden" style={{ height: "85vh", minHeight: 560 }}>
+        <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-br from-[#071228] to-[#071029] border-b border-slate-700/30">
+          <div className="flex items-center gap-3">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 text-indigo-400" aria-hidden>
+              <path d="M12 3C9.79 3 8 4.79 8 7v1H6a2 2 0 00-2 2v3a5 5 0 005 5h1v1a2 2 0 002 2h2a2 2 0 002-2v-1h1a5 5 0 005-5v-3a2 2 0 00-2-2h-2V7c0-2.21-1.79-4-4-4h-2z" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8 11h8" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div className="flex flex-col leading-tight">
+              <div className="text-sm font-semibold text-white">Chatbot</div>
+              <div className="text-xs text-slate-400">AI Data Scientist</div>
+            </div>
           </div>
-          <div className="flex-1 flex justify-end">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setCollapsed((c) => !c)} title="Minimize" className="p-1 rounded text-slate-300 hover:bg-slate-800/40">—</button>
             <button onClick={() => setVisible(false)} title="Close" className="p-1 rounded text-slate-300 hover:bg-slate-800/40">✕</button>
           </div>
         </div>
@@ -252,8 +258,10 @@ export default function ValidationAgentWidget({
               {uniqueMessagesForRender(chatMessages || []).slice(-60).map((m, i) => (
                 <div key={i} className={`flex items-end gap-3 ${m.type === "user" ? "justify-end" : "justify-start"}`}>
                   {m.type === "ai" && (
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-700 to-slate-600 text-white flex items-center justify-center mr-2 flex-shrink-0 ring-1 ring-slate-800">
-                      <span className="text-sm font-medium">A</span>
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-700 to-slate-600 text-white flex items-center justify-center mr-2 flex-shrink-0 ring-1 ring-slate-800 overflow-hidden">
+                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" aria-hidden>
+                        <path d="M12 3C9.79 3 8 4.79 8 7v1H6a2 2 0 00-2 2v3a5 5 0 005 5h1v1a2 2 0 002 2h2a2 2 0 002-2v-1h1a5 5 0 005-5v-3a2 2 0 00-2-2h-2V7c0-2.21-1.79-4-4-4h-2z" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
                     </div>
                   )}
                   <div className={`${m.type === "user" ? "bg-gradient-to-br from-indigo-600 to-indigo-500 text-white shadow-lg" : "bg-gradient-to-br from-slate-800 to-slate-700 text-slate-100"} max-w-[82%] rounded-2xl p-3 text-sm leading-relaxed relative`}> 
@@ -280,6 +288,18 @@ export default function ValidationAgentWidget({
           </div>
         </div>
       </div>
-    </div>
+        </div>
+      )}
+
+      {!visible && (
+        <div className="fixed right-2 bottom-20 z-[70]">
+          <button onClick={() => setVisible(true)} title="Open Chatbot" className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg flex items-center justify-center shadow-lg ring-1 ring-slate-800/60">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" aria-hidden>
+              <path d="M12 3C9.79 3 8 4.79 8 7v1H6a2 2 0 00-2 2v3a5 5 0 005 5h1v1a2 2 0 002 2h2a2 2 0 002-2v-1h1a5 5 0 005-5v-3a2 2 0 00-2-2h-2V7c0-2.21-1.79-4-4-4h-2z" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </>
   );
 }
