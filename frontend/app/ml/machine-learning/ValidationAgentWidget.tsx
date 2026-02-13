@@ -247,8 +247,11 @@ export default function ValidationAgentWidget({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => setCollapsed((c) => !c)} title="Minimize" className="p-1 rounded text-slate-300 hover:bg-slate-800/40">—</button>
-            <button onClick={() => setVisible(false)} title="Close" className="p-1 rounded text-slate-300 hover:bg-slate-800/40">✕</button>
+            <button onClick={() => setVisible(false)} title="Close Chatbot" aria-label="Close Chatbot" className="p-2 rounded text-slate-300 hover:bg-slate-800/40 transition-colors"> 
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -293,7 +296,7 @@ export default function ValidationAgentWidget({
 
       {!visible && (
         <div className="fixed right-2 bottom-20 z-[70]">
-          <button onClick={() => setVisible(true)} title="Open Chatbot" className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg flex items-center justify-center shadow-lg ring-1 ring-slate-800/60">
+          <button onClick={() => setVisible(true)} title="Open Chatbot" aria-label="Open Chatbot" className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg flex items-center justify-center shadow-lg ring-1 ring-slate-800/60">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" aria-hidden>
               <path d="M12 3C9.79 3 8 4.79 8 7v1H6a2 2 0 00-2 2v3a5 5 0 005 5h1v1a2 2 0 002 2h2a2 2 0 002-2v-1h1a5 5 0 005-5v-3a2 2 0 00-2-2h-2V7c0-2.21-1.79-4-4-4h-2z" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
