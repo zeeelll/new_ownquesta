@@ -50,6 +50,7 @@ const MLStudioAdvanced: React.FC = () => {
   const [dataQuality, setDataQuality] = useState<any>(null);
   const [validationProgress, setValidationProgress] = useState<number>(0);
   const [showAdvancedStats, setShowAdvancedStats] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'eda' | 'insights' | 'qa'>('overview');
   const [validationSteps, setValidationSteps] = useState<string[]>([]);
   const [edaResults, setEdaResults] = useState<any>(null);
   const [isEdaProcessing, setIsEdaProcessing] = useState(false);
@@ -60,6 +61,8 @@ const MLStudioAdvanced: React.FC = () => {
   const hasGoal = userQuery.trim().length > 0;
   const hasDataset = Boolean(uploadedFile && actualFile && dataPreview);
   const canProceedFromSetup = hasGoal && hasDataset;
+
+  
 
  
 
@@ -329,6 +332,8 @@ const MLStudioAdvanced: React.FC = () => {
         };
 
         setValidationResult(mockValidationResult);
+        // show insights/report after fallback mock validation
+        setActiveTab('insights');
         setValidationProgress(100);
         setValidationSteps([
           '⚠️ Local ML validation service not available',
@@ -399,6 +404,8 @@ const MLStudioAdvanced: React.FC = () => {
       setValidationProgress(100);
       setValidationSteps(progressSteps);
       setValidationResult(result);
+      // show insights/report after real validation
+      setActiveTab('insights');
       
       // Enhanced chat response
       setChatMessages(prev => [...prev, {
@@ -480,6 +487,8 @@ const MLStudioAdvanced: React.FC = () => {
       };
 
       setValidationResult(fallbackResult);
+      // show insights/report after fallback validation
+      setActiveTab('insights');
       setValidationSteps([
         '❌ ML validation service encountered an error',
         '🔄 Generating fallback comprehensive analysis...',
@@ -569,6 +578,8 @@ const MLStudioAdvanced: React.FC = () => {
         // Generate demo EDA results
         const demoResults = await generateComprehensiveDemoEDA();
         setEdaResults(demoResults);
+        // show insights after demo EDA
+        setActiveTab('insights');
         
         // Display demo response in actual agent format
         const demoAgentResponse = `## 🤖 OwnQuesta EDA Agent Demo Response
@@ -641,6 +652,8 @@ ${JSON.stringify(demoResults, null, 2)}
       // Successful real analysis
       setEdaProcessingSteps(edaSteps);
       setEdaResults(result);
+      // show insights after real EDA
+      setActiveTab('insights');
 
       // Display the actual raw response from EDA agent
       const actualAgentResponse = `## 🤖 OwnQuesta EDA Agent Response
@@ -695,6 +708,8 @@ ${JSON.stringify(result.results || result, null, 2)}
       
       const fallbackResults = await generateComprehensiveDemoEDA();
       setEdaResults(fallbackResults);
+      // show insights after fallback EDA
+      setActiveTab('insights');
       
       // Display fallback response in actual agent format
       const fallbackAgentResponse = `## 🤖 OwnQuesta EDA Agent Fallback Response

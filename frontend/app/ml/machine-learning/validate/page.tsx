@@ -56,6 +56,42 @@ export default function ValidatePage() {
     }
   };
 
+  // Listen for widget requests (localStorage signal) to open code/insights
+  useEffect(() => {
+    const handleRequest = (raw: string | null) => {
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.what === 'code') {
+          setShowCode(true);
+          setActiveTab('insights');
+        } else if (parsed.what === 'insights') {
+          setShowCode(false);
+          setActiveTab('insights');
+        }
+      } catch (e) {}
+    };
+
+    // Check existing value at mount
+    try {
+      const v = localStorage.getItem('ownquesta_request_show');
+      if (v) {
+        handleRequest(v);
+        localStorage.removeItem('ownquesta_request_show');
+      }
+    } catch (e) {}
+
+    // Also listen for storage events (other tabs)
+    const onStorage = (ev: StorageEvent) => {
+      if (ev.key === 'ownquesta_request_show' && ev.newValue) {
+        handleRequest(ev.newValue);
+        try { localStorage.removeItem('ownquesta_request_show'); } catch (e) {}
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
@@ -159,6 +195,8 @@ export default function ValidatePage() {
 
       if (result && result.eda_result) {
         setEdaResults(result.eda_result);
+        // Open Insights tab when EDA results arrive
+        setActiveTab('insights');
       }
       if (result && result.ml_result) {
         setMlValidationResult(result.ml_result);
