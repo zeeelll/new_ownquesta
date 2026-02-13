@@ -30,6 +30,7 @@ export default function ValidationAgentWidget({
   const [input, setInput] = useState("");
   const [isBusy, setIsBusy] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [visible, setVisible] = useState(true);
   const initialized = useRef(false);
   const promptedRef = useRef<Record<string, boolean>>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -229,19 +230,19 @@ export default function ValidationAgentWidget({
     }
   };
 
+  if (!visible) return null;
+
   return (
     <div ref={panelRef} className={`fixed right-6 bottom-8 z-[60] transition-transform ${collapsed ? "translate-x-64" : "translate-x-0"}`} style={{ width: 460 }}>
       <div className="flex flex-col bg-[#0f1724] border border-slate-700/40 rounded-xl shadow-lg overflow-hidden" style={{ height: "85vh", minHeight: 560 }}>
         <div className="flex items-center justify-between px-3 py-2 bg-[#071029] border-b border-slate-700/30">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-indigo-600 flex items-center justify-center text-white font-bold">VA</div>
-            <div>
-              <div className="text-sm font-semibold text-white">Validation Agent</div>
-              <div className="text-xs text-slate-400">AI Data Scientist</div>
-            </div>
+          <div className="flex-1" />
+          <div className="flex-1 flex flex-col items-center">
+            <div className="text-sm font-semibold text-white">Validation Agent</div>
+            <div className="text-xs text-slate-400">AI Data Scientist</div>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setCollapsed((s) => !s)} title={collapsed ? "Open" : "Collapse"} className="p-1 rounded text-slate-300 hover:bg-slate-800/40">{collapsed ? "▸" : "▾"}</button>
+          <div className="flex-1 flex justify-end">
+            <button onClick={() => setVisible(false)} title="Close" className="p-1 rounded text-slate-300 hover:bg-slate-800/40">✕</button>
           </div>
         </div>
 
