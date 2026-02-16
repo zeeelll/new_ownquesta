@@ -367,7 +367,8 @@ const MLStudioAdvanced: React.FC = () => {
       // Primary: try multipart upload endpoint
       let result: any = null;
       try {
-        const response = await fetch('http://localhost:8000/validation/validate', {
+        console.log('[validate] uploading dataset to proxy /api/ml-validation/validate');
+        const response = await fetch('/api/ml-validation/validate', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -385,14 +386,21 @@ const MLStudioAdvanced: React.FC = () => {
           console.warn('Multipart validation failed, attempting JSON analyze fallback');
           const fileText = await actualFile.text();
           const payload = { csv_text: fileText, goal: resolvedGoal };
-          const alt = await fetch('http://localhost:8000/validation/analyze', {
+          console.log('[validate] attempting fallback proxy /api/ml-validation/analyze');
+          const alt = await fetch('/api/ml-validation/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(payload),
             signal: AbortSignal.timeout(30000)
           });
 
-          if (!alt.ok) throw new Error(`Both validation endpoints failed: ${response.status} / ${alt.status}`);
+          if (!alt.ok) {
+            let altText = '';
+            try { altText = await alt.text(); } catch (e) { altText = ''; }
+            let altInfo = '';
+            try { const p = altText ? JSON.parse(altText) : null; if (p) altInfo = ` proxy_message=${p.message||p.error||''} proxy_target=${p.target||''}`; } catch(e){ altInfo = ` raw_body=${altText}`; }
+            throw new Error(`Both validation endpoints failed: ${response.status} / ${alt.status}.${altInfo}`);
+          }
           const j2 = await alt.json();
           result = j2.result || j2;
         }
@@ -626,7 +634,8 @@ ${JSON.stringify(demoResults, null, 2)}
       const formData = new FormData();
       formData.append('file', actualFile);
 
-      const response = await fetch('http://localhost:8000/validation/validate', {
+      console.log('[EDA] uploading dataset to proxy /api/ml-validation/validate');
+      const response = await fetch('/api/ml-validation/validate', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -638,7 +647,17 @@ ${JSON.stringify(demoResults, null, 2)}
       clearInterval(stepInterval);
 
       if (!response.ok) {
-        throw new Error(`EDA endpoint error: ${response.status} - ${response.statusText}`);
+        // attempt to surface proxy error details (our proxy returns JSON with message/target)
+        let bodyText = '';
+        try { bodyText = await response.text(); } catch (e) { bodyText = ''; }
+        let proxyInfo = '';
+        try {
+          const parsed = bodyText ? JSON.parse(bodyText) : null;
+          if (parsed) proxyInfo = ` proxy_message=${parsed.message||parsed.error||''} proxy_target=${parsed.target||''}`;
+        } catch (e) {
+          proxyInfo = ` raw_body=${bodyText}`;
+        }
+        throw new Error(`EDA endpoint error: ${response.status} - ${response.statusText}.${proxyInfo}`);
       }
 
       let result: any;

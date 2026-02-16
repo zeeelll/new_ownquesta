@@ -7,6 +7,7 @@ export async function POST(req: Request) {
   const target = process.env.NEXT_PUBLIC_ML_VALIDATION_URL?.replace('/ml-validation/validate', '/validation/question') || DEFAULT_TARGET;
 
   try {
+    console.log('[validation/question proxy] forwarding request to target:', target);
     const body = await req.json();
 
     const res = await fetch(target, {
@@ -25,11 +26,12 @@ export async function POST(req: Request) {
     const result = await res.json();
     return NextResponse.json(result);
   } catch (err: any) {
-    console.error('Proxy to validation Q&A service failed:', err);
+    console.error('[validation/question proxy] Proxy to validation Q&A service failed. target=', target, err);
     return NextResponse.json({ 
       answer: 'Sorry, I couldn\'t process your question at the moment. Please try again later.',
       error: 'Proxy error', 
-      message: String(err?.message || err) 
+      message: String(err?.message || err),
+      target
     }, { status: 200 }); // Return 200 to avoid showing errors to user
   }
 }

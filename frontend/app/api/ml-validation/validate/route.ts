@@ -9,6 +9,8 @@ export async function POST(req: Request) {
   const target = process.env.NEXT_PUBLIC_ML_VALIDATION_URL || DEFAULT_TARGET;
 
   try {
+    // log the target for easier debugging when proxying fails
+    console.log('[ml-validation proxy] forwarding request to target:', target);
     // Read raw body as ArrayBuffer and forward along with content-type
     const body = await req.arrayBuffer();
     const contentType = req.headers.get('content-type') || undefined;
@@ -33,7 +35,7 @@ export async function POST(req: Request) {
       headers
     });
   } catch (err: any) {
-    console.error('Proxy to validation service failed:', err);
-    return NextResponse.json({ error: 'Proxy error', message: String(err?.message || err) }, { status: 502 });
+    console.error('[ml-validation proxy] Proxy to validation service failed. target=', target, err);
+    return NextResponse.json({ error: 'Proxy error', message: String(err?.message || err), target }, { status: 502 });
   }
 }
