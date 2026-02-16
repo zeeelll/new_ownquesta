@@ -31,15 +31,25 @@ export default function ValidationAgentWidget({
   const [isBusy, setIsBusy] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [visible, setVisible] = useState(true);
+  const [edaPanelMessages, setEdaPanelMessages] = useState<string[]>([]);
   const initialized = useRef(false);
   const promptedRef = useRef<Record<string, boolean>>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const messagesRef = useRef<HTMLDivElement | null>(null);
+  const endRef = useRef<HTMLDivElement | null>(null);
+  const autoScrollEnabled = useRef(true);
   const lastPayloadRef = useRef<{ fileName?: string | null; goal?: string | null }>({});
 
   // Load persisted chat once
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+      // If user already uploaded a dataset and provided a goal, do not
+      // restore prior chat history — show only concise dataset/goal messages.
+      if (actualFile && userQuery) {
+        initialized.current = true;
+        return;
+      }
       if (raw && !initialized.current) {
         const parsed = JSON.parse(raw) as ChatMessage[];
         if (parsed && parsed.length > 0) {
@@ -97,6 +107,79 @@ export default function ValidationAgentWidget({
     return outReversed.reverse();
   };
 
+  const isEdaMessage = (m: ChatMessage) => {
+    if (!m || !m.text) return false;
+    const txt = m.text;
+    const lower = txt.toLowerCase();
+    if (txt.includes('```')) return true;
+    if (txt.trim().startsWith('{') && txt.length > 120) return true;
+    if (txt.trim().startsWith('[') && txt.length > 120) return true;
+    if (lower.includes('columntypes') || lower.includes('datainfo') || lower.includes('memoryfootprint')) return true;
+    if (lower.includes('eda') && txt.length > 40) return true;
+    if (lower.includes('insight') && txt.length > 40) return true;
+    return false;
+  };
+
+  // Extract EDA / insights messages from chat and forward them to the main page
+  useEffect(() => {
+    try {
+      if (!chatMessages || chatMessages.length === 0) return;
+      const edaMsgs = chatMessages.filter(isEdaMessage);
+      if (edaMsgs.length === 0) return;
+      const edaTexts = edaMsgs.map((m) => m.text);
+      // keep local preview state
+      setEdaPanelMessages((prev) => {
+        const merged = [...prev, ...edaTexts];
+        // dedupe
+        return Array.from(new Set(merged));
+      });
+
+      // remove EDA messages from chat so they don't appear in the widget
+      const nonEda = chatMessages.filter((m) => !isEdaMessage(m));
+      // only update if different
+      if (nonEda.length !== chatMessages.length) {
+        setChatMessages(nonEda);
+      }
+
+      // dispatch to main page so it can render full EDA/insights panel there
+      try {
+        window.dispatchEvent(new CustomEvent("ownquesta_eda_messages", { detail: edaTexts }));
+      } catch (e) {}
+    } catch (e) {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatMessages]);
+
+  // Auto-scroll to bottom when messages change or agent finishes thinking
+  useEffect(() => {
+    try {
+      // only auto-scroll when user has not manually scrolled up
+      if (!autoScrollEnabled.current) return;
+      if (messagesRef.current) {
+        // instant scroll to bottom
+        messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+      } else if (endRef.current) {
+        endRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+      }
+    } catch (e) {}
+  }, [chatMessages, isBusy, visible, collapsed]);
+
+  // attach onScroll handler to detect manual user scrolling (stay up)
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (!el) return;
+    const threshold = 80; // px from bottom considered "at bottom"
+    const handler = () => {
+      try {
+        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - threshold;
+        autoScrollEnabled.current = atBottom;
+      } catch (e) {}
+    };
+    el.addEventListener("scroll", handler, { passive: true });
+    // initialize
+    handler();
+    return () => el.removeEventListener("scroll", handler);
+  }, [messagesRef.current]);
+
   // initial greeting
   useEffect(() => {
     if (!initialized.current) {
@@ -118,11 +201,26 @@ export default function ValidationAgentWidget({
     if (!actualFile || !userQuery) return;
     if (promptedRef.current[key]) return;
     promptedRef.current[key] = true;
-    addChatMessage({
-      type: "ai",
-      text: `I detected a dataset "${actualFile.name}" and goal: "${userQuery}". Would you like me to start the ML validation process now? Reply 'yes' to begin.`,
-      timestamp: new Date().toLocaleTimeString(),
-    });
+
+    // Replace any previous chat with concise, important details only.
+    try {
+      const ts = new Date().toLocaleTimeString();
+      const concise: ChatMessage[] = [
+        { type: "ai", text: `Dataset uploaded: ${actualFile.name}`, timestamp: ts },
+        { type: "ai", text: `Goal: ${userQuery}`, timestamp: ts },
+        { type: "ai", text: `I detected a dataset "${actualFile.name}" and goal: "${userQuery}". Would you like me to start the ML validation process now? Reply 'yes' to begin.`, timestamp: ts },
+      ];
+
+      setChatMessages(concise);
+      // persist that we updated payload
+      lastPayloadRef.current = { fileName: actualFile.name, goal: userQuery };
+    } catch (e) {
+      addChatMessage({
+        type: "ai",
+        text: `I detected a dataset "${actualFile.name}" and goal: "${userQuery}". Would you like me to start the ML validation process now? Reply 'yes' to begin.`,
+        timestamp: new Date().toLocaleTimeString(),
+      });
+    }
   }, [actualFile, userQuery]);
 
   // concise updates on dataset/goal changes
@@ -273,7 +371,7 @@ export default function ValidationAgentWidget({
 
         <div className="p-3 h-full overflow-hidden">
           <div className="flex flex-col h-full">
-              <div className="flex-1 overflow-y-auto pr-2 space-y-3" style={{ maxHeight: "calc(85vh - 160px)" }}>
+              <div ref={messagesRef} className="flex-1 overflow-y-auto pr-2 space-y-3" style={{ maxHeight: "calc(85vh - 160px)" }}>
               {uniqueMessagesForRender(chatMessages || []).slice(-60).map((m, i) => (
                 <div key={i} className={`flex items-end gap-3 ${m.type === "user" ? "justify-end" : "justify-start"}`}>
                   {m.type === "ai" && (
@@ -304,6 +402,8 @@ export default function ValidationAgentWidget({
                   )}
                 </div>
               ))}
+
+              <div ref={endRef} />
 
               {isBusy && <div className="flex items-center gap-2 text-sm text-slate-400"> <div className="w-2 h-2 rounded-full bg-slate-400 animate-pulse" /> Agent is thinking...</div>}
             </div>
