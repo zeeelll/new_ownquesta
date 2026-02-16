@@ -166,8 +166,10 @@ export default function ValidationAgentWidget({
         try { window.dispatchEvent(new CustomEvent("ownquesta_start_validation", { detail: payload })); } catch (e) {}
       } catch (e) {}
 
-      // navigate to validate page (same app)
-      try { window.location.href = "/ml/machine-learning/validate"; } catch (e) {}
+      // Do not force navigation — run in-place handlers so the chat widget
+      // can perform validation without changing the user's current view.
+      // Navigation was previously performed here but caused the main page
+      // to open unexpectedly when users replied 'yes'.
 
       // also attempt in-place handlers
       await onStartEDA();

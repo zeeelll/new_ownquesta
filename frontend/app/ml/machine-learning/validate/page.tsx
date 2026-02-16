@@ -243,7 +243,7 @@ export default function ValidatePage() {
       } else {
         setQuestions(prev => [...prev, {
           question: question,
-          answer: 'Sorry, I couldn\\'t process your question. Please try rephrasing.',
+          answer: 'Sorry, I couldn\'t process your question. Please try rephrasing.',
           timestamp: new Date().toLocaleTimeString()
         }]);
       }
@@ -427,7 +427,7 @@ export default function ValidatePage() {
           <div className="bg-white rounded-lg border p-6">
             <h3 className="text-lg font-semibold mb-4">Feature Correlations</h3>
             <div className="overflow-x-auto">
-              <div className="text-sm text-gray-600 mb-3">Strong correlations (>0.7 or <-0.7):</div>
+              <div className="text-sm text-gray-600 mb-3">Strong correlations (&gt;0.7 or {'<-0.7'}):</div>
               <div className="space-y-2">
                 {Object.entries(edaResults.correlation).map(([col, correlations]: [string, any]) => 
                   Object.entries(correlations).filter(([_, corr]: [string, any]) => 
@@ -624,7 +624,6 @@ for col in numerical_cols:
         </div>
       </div>
     );
-  };
   };
 
   return (
@@ -824,4 +823,4 @@ for col in numerical_cols:
   );
 }
 
-export default ValidatePage;
+
