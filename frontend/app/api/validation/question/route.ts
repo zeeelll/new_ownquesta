@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // Proxy route for validation Q&A functionality
-const DEFAULT_TARGET = 'https://ownquestaagents-production.up.railway.app/validation/question';
+const DEFAULT_TARGET = 'http://localhost:8000/validation/question';
 
 export async function POST(req: Request) {
   const target = process.env.NEXT_PUBLIC_ML_VALIDATION_URL?.replace('/ml-validation/validate', '/validation/question') || DEFAULT_TARGET;

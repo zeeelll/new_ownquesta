@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 
 // Proxy route to forward multipart/form-data POSTs to the ML validation service.
-// Uses NEXT_PUBLIC_ML_VALIDATION_URL if set, otherwise falls back to a stable default.
+// Uses NEXT_PUBLIC_ML_VALIDATION_URL if set, otherwise falls back to a localhost default
+// suitable for development (the real production URL should be provided via env).
 
-const DEFAULT_TARGET = 'https://ownquestaagents-production.up.railway.app/ml-validation/validate';
+const DEFAULT_TARGET = 'http://localhost:8000/validation/validate';
 
 export async function POST(req: Request) {
   const target = process.env.NEXT_PUBLIC_ML_VALIDATION_URL || DEFAULT_TARGET;
@@ -35,7 +36,13 @@ export async function POST(req: Request) {
       headers
     });
   } catch (err: any) {
-    console.error('[ml-validation proxy] Proxy to validation service failed. target=', target, err);
-    return NextResponse.json({ error: 'Proxy error', message: String(err?.message || err), target }, { status: 502 });
+    console.error(`[ml-validation proxy] Proxy to validation service failed. target=${target}`);
+    console.error(err);
+    return NextResponse.json({
+      error: 'Proxy error',
+      message: String(err?.message || err),
+      target: String(target || ''),
+      stack: err?.stack || null
+    }, { status: 502 });
   }
 }

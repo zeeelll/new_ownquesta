@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const DEFAULT_TARGET = 'https://ownquestaagents-production.up.railway.app/validation/analyze';
+const DEFAULT_TARGET = 'http://localhost:8000/validation/analyze';
 
 export async function POST(req: Request) {
   // derive base from NEXT_PUBLIC_ML_VALIDATION_URL if available
@@ -28,7 +28,13 @@ export async function POST(req: Request) {
     const result = await res.json();
     return NextResponse.json(result);
   } catch (err: any) {
-    console.error('[ml-validation analyze proxy] Proxy failed. target=', target, err);
-    return NextResponse.json({ error: 'Proxy error', message: String(err?.message || err), target }, { status: 502 });
+    console.error(`[ml-validation analyze proxy] Proxy failed. target=${target}`);
+    console.error(err);
+    return NextResponse.json({
+      error: 'Proxy error',
+      message: String(err?.message || err),
+      target: String(target || ''),
+      stack: err?.stack || null
+    }, { status: 502 });
   }
 }
