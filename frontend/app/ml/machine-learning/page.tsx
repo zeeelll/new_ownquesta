@@ -364,11 +364,15 @@ const MLStudioAdvanced: React.FC = () => {
       formData.append('goal', resolvedGoal);
       formData.append('file', actualFile);
 
-      // Primary: try multipart upload endpoint
+      // Primary: try multipart upload endpoint using direct validation agent URL
+      const VALIDATION_BASE = (process.env.NEXT_PUBLIC_ML_VALIDATION_URL || '').replace(/\/ml-validation\/validate\/?$/, '') || 'http://localhost:8000';
+      const VALIDATION_VALIDATE_URL = `${VALIDATION_BASE.replace(/\/$/, '')}/validation/validate`;
+      const VALIDATION_ANALYZE_URL = `${VALIDATION_BASE.replace(/\/$/, '')}/validation/analyze`;
+
       let result: any = null;
       try {
-        console.log('[validate] uploading dataset to proxy /api/ml-validation/validate');
-        const response = await fetch('/api/ml-validation/validate', {
+        console.log('[validate] uploading dataset to validation service', VALIDATION_VALIDATE_URL);
+        const response = await fetch(VALIDATION_VALIDATE_URL, {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -386,8 +390,8 @@ const MLStudioAdvanced: React.FC = () => {
           console.warn('Multipart validation failed, attempting JSON analyze fallback');
           const fileText = await actualFile.text();
           const payload = { csv_text: fileText, goal: resolvedGoal };
-          console.log('[validate] attempting fallback proxy /api/ml-validation/analyze');
-          const alt = await fetch('/api/ml-validation/analyze', {
+          console.log('[validate] attempting fallback analyze', VALIDATION_ANALYZE_URL);
+          const alt = await fetch(VALIDATION_ANALYZE_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(payload),
@@ -634,8 +638,10 @@ ${JSON.stringify(demoResults, null, 2)}
       const formData = new FormData();
       formData.append('file', actualFile);
 
-      console.log('[EDA] uploading dataset to proxy /api/ml-validation/validate');
-      const response = await fetch('/api/ml-validation/validate', {
+      const VALIDATION_BASE = (process.env.NEXT_PUBLIC_ML_VALIDATION_URL || '').replace(/\/ml-validation\/validate\/?$/, '') || 'http://localhost:8000';
+      const VALIDATION_VALIDATE_URL = `${VALIDATION_BASE.replace(/\/$/, '')}/validation/validate`;
+      console.log('[EDA] uploading dataset to validation service', VALIDATION_VALIDATE_URL);
+      const response = await fetch(VALIDATION_VALIDATE_URL, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',

@@ -170,38 +170,62 @@ export default function ValidatePage() {
     setDetectedGoal(goal);
 
     try {
-      let result: any = null;
-      if (file) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('goal', mlGoal.trim());
+        // Use direct validation agent URL (runtime-configurable)
+        const VALIDATION_BASE = (process.env.NEXT_PUBLIC_ML_VALIDATION_URL || '').replace(/\/ml-validation\/validate\/?$/, '') || 'http://localhost:8000';
+        const VALIDATION_VALIDATE_URL = `${VALIDATION_BASE.replace(/\/$/, '')}/validation/validate`;
 
-        const response = await fetch('/api/ml-validation/validate', {
-          method: 'POST',
-          body: formData,
-        });
+        let result: any = null;
+        if (file) {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('goal', mlGoal.trim());
 
-        result = await response.json();
-      } else if (sessionCsv) {
-        const payload = { csv_text: sessionCsv, goal: { type: goal.type, target: mlGoal.trim() } };
-        const response = await fetch('/api/ml-validation/validate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+          const response = await fetch(VALIDATION_VALIDATE_URL, {
+            method: 'POST',
+            body: formData,
+          });
 
-        result = await response.json();
+          result = await response.json();
+        } else if (sessionCsv) {
+          const payload = { csv_text: sessionCsv, goal: { type: goal.type, target: mlGoal.trim() } };
+          const response = await fetch(VALIDATION_VALIDATE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          result = await response.json();
+        }
+
+      // Normalize different response shapes from agent
+      // Possible shapes: { eda_result, ml_result } OR { result: <eda>, ml_result } OR { result: <eda>, ml_result: <ml> }
+      let eda: any = null;
+      let ml: any = null;
+
+      if (result) {
+        if (result.eda_result) eda = result.eda_result;
+        else if (result.result) eda = result.result;
+        else if (result.result && result.result.eda) eda = result.result.eda;
+        else if (result.eda) eda = result.eda;
+
+        if (result.ml_result) ml = result.ml_result;
+        else if (result.ml) ml = result.ml;
+        else if (result.result && result.result.ml_result) ml = result.result.ml_result;
       }
 
-      if (result && result.eda_result) {
-        setEdaResults(result.eda_result);
-        // Open Insights tab when EDA results arrive
+      // Fallback: if top-level response seems to be the ML result itself
+      if (!eda && result && result.shape) eda = result;
+      if (!ml && result && result.goal_understanding) ml = result;
+
+      if (eda) {
+        setEdaResults(eda);
         setActiveTab('insights');
       }
-      if (result && result.ml_result) {
-        setMlValidationResult(result.ml_result);
+      if (ml) {
+        setMlValidationResult(ml);
       } else {
-        setMlValidationResult(result);
+        // If no ml block, keep any top-level textual agent answer
+        setMlValidationResult(result ?? null);
       }
     } catch (error) {
       console.error('ML Validation error:', error);
@@ -224,7 +248,10 @@ export default function ValidatePage() {
     setCurrentQuestion('');
 
     try {
-      const response = await fetch('/api/validation/question', {
+      const VALIDATION_BASE = (process.env.NEXT_PUBLIC_ML_VALIDATION_URL || '').replace(/\/ml-validation\/validate\/?$/, '') || 'http://localhost:8000';
+      const VALIDATION_QUESTION_URL = `${VALIDATION_BASE.replace(/\/$/, '')}/validation/question`;
+
+      const response = await fetch(VALIDATION_QUESTION_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -523,6 +550,16 @@ for col in numerical_cols:
                   </div>
                 </div>
               )}
+
+              {/* ML AI Insights (if available) */}
+              {mlValidationResult?.aiInsights && (
+                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg border mt-4">
+                  <h4 className="font-semibold text-yellow-800 mb-2">🎯 ML AI Insights</h4>
+                  <div className="text-gray-700 whitespace-pre-wrap">
+                    {mlValidationResult.aiInsights}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -560,6 +597,47 @@ for col in numerical_cols:
                 {mlValidationResult.user_view_report}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ML Validation Detailed Sections */}
+        {mlValidationResult && (
+          <div className="space-y-4">
+            {mlValidationResult.preprocessingSteps && mlValidationResult.preprocessingSteps.length > 0 && (
+              <div className="bg-white rounded-lg border p-6">
+                <h3 className="text-lg font-semibold mb-3">🧩 Preprocessing Steps</h3>
+                <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700">
+                  {mlValidationResult.preprocessingSteps.map((s: any, i: number) => (
+                    <li key={i}><strong>{s.step || s.type || 'Step'}:</strong> {s.description || s.reason || JSON.stringify(s)}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {mlValidationResult.modelRecommendations && mlValidationResult.modelRecommendations.length > 0 && (
+              <div className="bg-white rounded-lg border p-6">
+                <h3 className="text-lg font-semibold mb-3">🤖 Model Recommendations</h3>
+                <ul className="space-y-2 text-sm text-gray-700">
+                  {mlValidationResult.modelRecommendations.map((m: any, i: number) => (
+                    <li key={i} className="p-2 bg-gray-50 rounded">
+                      <div className="font-medium">{m.algorithm || m.type || 'Model'}</div>
+                      <div className="text-xs text-gray-600">{m.use_case || m.description || ''}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {mlValidationResult.performanceEstimates && (
+              <div className="bg-white rounded-lg border p-6">
+                <h3 className="text-lg font-semibold mb-3">📈 Performance Estimates</h3>
+                <div className="text-sm text-gray-700">
+                  <div>Confidence: {mlValidationResult.performanceEstimates.confidence || 'N/A'}</div>
+                  <div>Expected Accuracy: {mlValidationResult.performanceEstimates.expected_accuracy || 'N/A'}</div>
+                  <div>Data Sufficiency: {mlValidationResult.performanceEstimates.data_sufficiency || 'N/A'}</div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
