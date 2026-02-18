@@ -952,7 +952,7 @@ const MLStudioAdvanced: React.FC = () => {
 
             {/* Continue Previous Project Section */}
             {savedProjects.length > 0 && !selectedProject && (
-              <div className="mb-12 backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8">
+              <div className="mb-12 backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8 shadow-2xl">
                 <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
                   <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1037,6 +1037,8 @@ const MLStudioAdvanced: React.FC = () => {
               </div>
             )}
 
+            {/* Show Goal and Dataset sections only when project is selected or no saved projects */}
+            {(savedProjects.length === 0 || selectedProject) && (
             <div className="grid lg:grid-cols-2 gap-12">
               {/* Goal Definition Section */}
               <div className="space-y-6">
@@ -1192,6 +1194,7 @@ const MLStudioAdvanced: React.FC = () => {
 
               </div>
             </div>
+            )}
 
             {/* Data Upload and Preview Section */}
             {uploadedFile && dataPreview && (
