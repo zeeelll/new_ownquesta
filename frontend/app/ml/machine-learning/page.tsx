@@ -71,8 +71,7 @@ const MLStudioAdvanced: React.FC = () => {
   const checkServiceHealth = async (): Promise<boolean> => {
     try {
       const response = await fetch(VALIDATION_API.health, {
-        method: 'GET',
-        signal: AbortSignal.timeout(3000)
+        method: 'GET'
       });
       return response.ok;
     } catch {
@@ -328,8 +327,7 @@ const MLStudioAdvanced: React.FC = () => {
         try {
           const response = await fetch(VALIDATION_API.validate, {
             method: 'POST',
-            body: formData,
-            signal: AbortSignal.timeout(30000)
+            body: formData
           });
 
           if (response.ok) {
@@ -342,8 +340,7 @@ const MLStudioAdvanced: React.FC = () => {
             const altResponse = await fetch(VALIDATION_API.analyze, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ csv_text: fileText, goal: userQuery.trim() }),
-              signal: AbortSignal.timeout(30000)
+              body: JSON.stringify({ csv_text: fileText, goal: userQuery.trim() })
             });
 
             if (altResponse.ok) {
