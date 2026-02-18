@@ -1197,7 +1197,7 @@ const MLStudioAdvanced: React.FC = () => {
             {uploadedFile && dataPreview && (
               <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-bold text-white">Data Sample Preview</h3>
+                  <h3 className="text-2xl font-bold text-white">Dataset Preview</h3>
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
@@ -1246,18 +1246,7 @@ const MLStudioAdvanced: React.FC = () => {
                       <tr className="border-b border-slate-600/30">
                         {dataPreview.columns.map((col, i) => (
                           <th key={i} className="text-left p-4 font-semibold text-indigo-300 min-w-[120px] border-r border-slate-700/20 last:border-r-0 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <span className="truncate">{col}</span>
-                              {columnAnalysis && (
-                                <span className={`inline-block px-2 py-0.5 rounded text-xs flex-shrink-0 ${
-                                  columnAnalysis.columnTypes?.numeric?.includes(col) 
-                                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
-                                    : 'bg-green-500/20 text-green-300 border border-green-500/30'
-                                }`}>
-                                  {columnAnalysis.columnTypes?.numeric?.includes(col) ? 'numeric' : 'categorical'}
-                                </span>
-                              )}
-                            </div>
+                            <span className="truncate">{col}</span>
                           </th>
                         ))}
                       </tr>
@@ -1276,14 +1265,6 @@ const MLStudioAdvanced: React.FC = () => {
                       ))}
                     </tbody>
                   </table>
-                </div>
-                <div className="mt-6 flex justify-between items-center">
-                  <p className="text-sm text-gray-500">
-                    Showing {viewMode === 'all' ? 'all' : viewMode === 'last' ? 'last' : 'first'} {viewMode === 'all' ? dataPreview.rowCount.toLocaleString() : Math.min(5, dataPreview.rowCount)} of {dataPreview.rowCount.toLocaleString()} rows
-                  </p>
-                  <div className="text-sm text-gray-400">
-                    {dataPreview.columnCount} columns • {dataPreview.fileSize}
-                  </div>
                 </div>
               </div>
             )}
