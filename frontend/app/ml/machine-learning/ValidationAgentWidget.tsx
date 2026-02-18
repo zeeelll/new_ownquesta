@@ -150,9 +150,32 @@ export default function ValidationAgentWidget({
       try {
         window.dispatchEvent(new CustomEvent("ownquesta_eda_messages", { detail: edaTexts }));
       } catch (e) {}
+
+      // Also dispatch full EDA results if available
+      if (edaResults) {
+        try {
+          window.dispatchEvent(new CustomEvent("ownquesta_validation_complete", { 
+            detail: { eda_result: edaResults, ml_result: validationResult } 
+          }));
+        } catch (e) {}
+      }
     } catch (e) {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatMessages]);
+
+  // Dispatch validation results to parent when they change
+  useEffect(() => {
+    if (edaResults || validationResult) {
+      try {
+        window.dispatchEvent(new CustomEvent("ownquesta_validation_complete", { 
+          detail: { eda_result: edaResults, ml_result: validationResult } 
+        }));
+        console.log('Dispatched validation results to main page:', { edaResults, validationResult });
+      } catch (e) {
+        console.error('Failed to dispatch validation results:', e);
+      }
+    }
+  }, [edaResults, validationResult]);
 
   // Auto-scroll to bottom when messages change or agent finishes thinking
   useEffect(() => {

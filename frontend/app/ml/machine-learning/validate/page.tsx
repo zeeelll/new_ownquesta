@@ -1454,82 +1454,275 @@ print("\n🎉 Congratulations! Your model is ready for production use!")`}
         </div>
       )}
 
-      {/* ML Validation Results - Enhanced with Tabs */}
+      {/* ML Validation Results - Show Directly on Page */}
       {(mlValidationResult || edaResults) && !loading && (
         <div className="space-y-6 mb-6">
-          {/* Status Summary */}
-          <div className={`rounded-lg shadow-lg p-6 border-l-4 ${
-            mlValidationResult?.status === 'PROCEED' ? 'bg-green-50 border-green-500' :
-            mlValidationResult?.status === 'PAUSE' ? 'bg-yellow-50 border-yellow-500' :
-            'bg-red-50 border-red-500'
-          }`}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${
-                mlValidationResult?.status === 'PROCEED' ? 'bg-green-100 text-green-700' :
-                mlValidationResult?.status === 'PAUSE' ? 'bg-yellow-100 text-yellow-700' :
-                'bg-red-100 text-red-700'
-              }`}>
-                {mlValidationResult?.status === 'PROCEED' ? '✅' : 
-                 mlValidationResult?.status === 'PAUSE' ? '⚠️' : '❌'}
-              </div>
-              <div>
-                <h3 className={`text-2xl font-bold ${
-                  mlValidationResult?.status === 'PROCEED' ? 'text-green-800' :
-                  mlValidationResult?.status === 'PAUSE' ? 'text-yellow-800' :
-                  'text-red-800'
-                }`}>
-                  {mlValidationResult?.status === 'PROCEED' ? 'Ready to Proceed!' :
-                   mlValidationResult?.status === 'PAUSE' ? 'Needs Attention' :
-                   'Analysis Complete'}
-                </h3>
-                <p className="text-lg font-medium text-gray-600">
-                  Quality Score: {mlValidationResult?.satisfaction_score || 0}/100
-                </p>
-              </div>
+          {/* Exploratory Data Analysis Section */}
+          <div className="bg-white rounded-lg shadow-lg border">
+            <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-slate-50 to-slate-100">
+              <h2 className="text-2xl font-bold text-slate-800">Exploratory Data Analysis</h2>
+              <span className="px-4 py-2 bg-green-500 text-white rounded-full text-sm font-semibold flex items-center gap-2">
+                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                Analysis Complete
+              </span>
             </div>
 
-            {/* Detected Goal */}
-            {detectedGoal && (
-              <div className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
-                <h4 className="font-semibold text-gray-800 mb-2">🎯 Detected Goal: {detectedGoal.description}</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                  {detectedGoal.focus.map((item: string, index: number) => (
-                    <div key={index} className="flex items-center">
-                      <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                      <span>{item}</span>
+            <div className="p-6 space-y-6">
+              {/* Dataset Statistics Overview */}
+              {edaResults && (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 shadow-sm">
+                      <div className="text-3xl font-bold text-blue-600">{edaResults.shape?.rows?.toLocaleString() || 'N/A'}</div>
+                      <div className="text-sm text-gray-600 font-medium mt-1">Rows</div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* AI Analysis */}
-            {mlValidationResult?.agent_answer && (
-              <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <h4 className="font-semibold text-gray-800 mb-2">🤖 AI Agent Analysis:</h4>
-                <div className="prose prose-sm max-w-none">
-                  <div className="whitespace-pre-wrap text-gray-700">
-                    {mlValidationResult.agent_answer}
+                    <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200 shadow-sm">
+                      <div className="text-3xl font-bold text-green-600">{edaResults.shape?.columns || 'N/A'}</div>
+                      <div className="text-sm text-gray-600 font-medium mt-1">Columns</div>
+                    </div>
+                    <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200 shadow-sm">
+                      <div className="text-3xl font-bold text-purple-600">{edaResults.numericColumns?.length || 0}</div>
+                      <div className="text-sm text-gray-600 font-medium mt-1">Numeric Features</div>
+                    </div>
+                    <div className="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200 shadow-sm">
+                      <div className="text-3xl font-bold text-orange-600">{edaResults.objectColumns?.length || 0}</div>
+                      <div className="text-sm text-gray-600 font-medium mt-1">Categorical Features</div>
+                    </div>
                   </div>
+
+                  {/* AI-Powered EDA Insights */}
+                  {edaResults.aiInsights && (
+                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-200">
+                      <h3 className="text-xl font-bold text-indigo-900 mb-4 flex items-center">
+                        <span className="mr-2">🤖</span>
+                        AI-Powered Data Insights
+                      </h3>
+                      <div className="prose prose-sm max-w-none">
+                        <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+                          {edaResults.aiInsights}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Data Quality Insights */}
+                  {edaResults.insights?.dataQuality && edaResults.insights.dataQuality.length > 0 && (
+                    <div className="bg-white rounded-xl border p-6">
+                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <span className="mr-2">✅</span>
+                        Data Quality Assessment
+                      </h3>
+                      <div className="space-y-3">
+                        {edaResults.insights.dataQuality.map((insight: string, index: number) => (
+                          <div key={index} className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500 text-gray-700">
+                            {insight}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* ML Validation Report */}
+              {mlValidationResult && (
+                <div className="space-y-6 mt-8">
+                  {/* Status Banner */}
+                  <div className={`rounded-xl p-6 border-l-4 shadow-lg ${
+                    mlValidationResult?.status === 'PROCEED' ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-500' :
+                    mlValidationResult?.status === 'PAUSE' ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-500' :
+                    'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-500'
+                  }`}>
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className={`w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg ${
+                        mlValidationResult?.status === 'PROCEED' ? 'bg-green-500 text-white' :
+                        mlValidationResult?.status === 'PAUSE' ? 'bg-yellow-500 text-white' :
+                        'bg-blue-500 text-white'
+                      }`}>
+                        {mlValidationResult?.status === 'PROCEED' ? '✅' : 
+                         mlValidationResult?.status === 'PAUSE' ? '⚠️' : '📊'}
+                      </div>
+                      <div>
+                        <h3 className={`text-2xl font-bold ${
+                          mlValidationResult?.status === 'PROCEED' ? 'text-green-800' :
+                          mlValidationResult?.status === 'PAUSE' ? 'text-yellow-800' :
+                          'text-blue-800'
+                        }`}>
+                          {mlValidationResult?.status === 'PROCEED' ? 'Ready to Proceed with ML!' :
+                           mlValidationResult?.status === 'PAUSE' ? 'Dataset Needs Attention' :
+                           'ML Validation Complete'}
+                        </h3>
+                        <p className="text-lg font-medium text-gray-700 mt-1">
+                          Quality Score: <span className="font-bold">{mlValidationResult?.satisfaction_score || 0}/100</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Goal Understanding */}
+                  {mlValidationResult.goal_understanding && (
+                    <div className="bg-white rounded-xl border shadow-sm p-6">
+                      <h3 className="text-xl font-bold text-purple-900 mb-4 flex items-center">
+                        <span className="mr-2">🎯</span>
+                        ML Goal Analysis
+                      </h3>
+                      <div className="grid gap-4">
+                        <div className="bg-purple-50 p-4 rounded-lg">
+                          <p className="text-sm text-gray-600 mb-2">Task Type:</p>
+                          <p className="font-bold text-purple-800 text-xl capitalize">
+                            {mlValidationResult.goal_understanding.interpreted_task}
+                          </p>
+                        </div>
+                        
+                        {mlValidationResult.goal_understanding.target_column_guess && (
+                          <div className="bg-indigo-50 p-4 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-2">Suggested Target Variable:</p>
+                            <p className="font-bold text-indigo-800 text-xl">
+                              {mlValidationResult.goal_understanding.target_column_guess}
+                            </p>
+                          </div>
+                        )}
+                        
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <p className="text-sm text-gray-600 mb-2">Confidence Level:</p>
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 bg-gray-300 rounded-full h-4 overflow-hidden">
+                              <div 
+                                className="bg-gradient-to-r from-blue-500 to-indigo-600 h-4 rounded-full transition-all duration-300"
+                                style={{width: `${(mlValidationResult.goal_understanding.confidence || 0) * 100}%`}}
+                              ></div>
+                            </div>
+                            <span className="text-lg font-bold text-blue-800">
+                              {((mlValidationResult.goal_understanding.confidence || 0) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AI Agent Answer */}
+                  {mlValidationResult?.agent_answer && (
+                    <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl p-6 border border-cyan-200 shadow-lg">
+                      <h3 className="text-xl font-bold text-cyan-900 mb-4 flex items-center">
+                        <span className="mr-2">🤖</span>
+                        AI Validation Agent Report
+                      </h3>
+                      <div className="prose prose-sm max-w-none">
+                        <div className="whitespace-pre-wrap text-gray-800 leading-relaxed text-base">
+                          {mlValidationResult.agent_answer}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ML AI Insights */}
+                  {mlValidationResult?.aiInsights && (
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 shadow-lg">
+                      <h3 className="text-xl font-bold text-purple-900 mb-4 flex items-center">
+                        <span className="mr-2">🎯</span>
+                        ML Strategy & Recommendations
+                      </h3>
+                      <div className="prose prose-sm max-w-none">
+                        <div className="whitespace-pre-wrap text-gray-800 leading-relaxed text-base">
+                          {mlValidationResult.aiInsights}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Model Recommendations */}
+                  {mlValidationResult.modelRecommendations && mlValidationResult.modelRecommendations.length > 0 && (
+                    <div className="bg-white rounded-xl border shadow-sm p-6">
+                      <h3 className="text-xl font-bold text-green-900 mb-4 flex items-center">
+                        <span className="mr-2">🤖</span>
+                        Recommended ML Models
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {mlValidationResult.modelRecommendations.map((m: any, i: number) => (
+                          <div key={i} className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center gap-3 mb-3">
+                              <span className="text-2xl">🎯</span>
+                              <h4 className="font-bold text-green-800 text-lg">{m.algorithm || m.type || 'ML Model'}</h4>
+                            </div>
+                            <p className="text-gray-700">{m.use_case || m.description || 'Recommended for this dataset'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Performance Estimates */}
+                  {mlValidationResult.performanceEstimates && (
+                    <div className="bg-white rounded-xl border shadow-sm p-6">
+                      <h3 className="text-xl font-bold text-blue-900 mb-4 flex items-center">
+                        <span className="mr-2">📈</span>
+                        Performance Estimates
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 shadow-sm">
+                          <div className="text-3xl font-bold text-blue-600 mb-2">
+                            {mlValidationResult.performanceEstimates.confidence || 'N/A'}
+                          </div>
+                          <div className="text-sm text-gray-600 font-medium">Confidence Level</div>
+                        </div>
+                        <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200 shadow-sm">
+                          <div className="text-3xl font-bold text-green-600 mb-2">
+                            {mlValidationResult.performanceEstimates.expected_accuracy || 'N/A'}
+                          </div>
+                          <div className="text-sm text-gray-600 font-medium">Expected Accuracy</div>
+                        </div>
+                        <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200 shadow-sm">
+                          <div className="text-3xl font-bold text-purple-600 mb-2">
+                            {mlValidationResult.performanceEstimates.data_sufficiency || 'N/A'}
+                          </div>
+                          <div className="text-sm text-gray-600 font-medium">Data Sufficiency</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Risks and Warnings */}
+                  {mlValidationResult.risksAndWarnings && mlValidationResult.risksAndWarnings.length > 0 && (
+                    <div className="bg-yellow-50 rounded-xl border border-yellow-300 p-6 shadow-sm">
+                      <h3 className="text-xl font-bold text-yellow-900 mb-4 flex items-center">
+                        <span className="mr-2">⚠️</span>
+                        Important Warnings & Considerations
+                      </h3>
+                      <div className="space-y-3">
+                        {mlValidationResult.risksAndWarnings.map((risk: string, index: number) => (
+                          <div key={index} className="p-4 bg-white rounded-lg border-l-4 border-yellow-500 text-gray-800">
+                            {risk}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {/* Tabbed Interface */}
-          <div className="bg-white rounded-lg shadow-lg">
+          {/* Detailed Tabs for Additional Information */}
+          <div className="bg-white rounded-lg shadow-lg border">
+            <div className="border-b border-gray-200 px-6 py-4 bg-slate-50">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center">
+                <span className="mr-2">📚</span>
+                Additional Analysis & Tools
+              </h3>
+            </div>
             <div className="border-b border-gray-200">
               <nav className="flex space-x-8 px-6" aria-label="Tabs">
                 {[
-                  { id: 'overview', name: 'Overview', icon: '📊' },
-                  { id: 'eda', name: 'Detailed Analysis', icon: '📈' },
-                  { id: 'insights', name: 'Code & Insights', icon: '💡' },
+                  { id: 'overview', name: 'Statistics Overview', icon: '📊' },
+                  { id: 'eda', name: 'Detailed EDA', icon: '📈' },
+                  { id: 'insights', name: 'Python Code', icon: '💻' },
                   { id: 'qa', name: 'Ask Questions', icon: '💬' }
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === tab.id
                         ? 'border-blue-500 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'

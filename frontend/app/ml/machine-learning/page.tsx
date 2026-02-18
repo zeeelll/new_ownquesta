@@ -245,6 +245,67 @@ const MLStudioAdvanced: React.FC = () => {
     // Column analysis will be set only when actual file is validated
   }, [dataPreview, columnAnalysis]);
 
+  // Listen for validation results from ValidationAgentWidget
+  useEffect(() => {
+    const handleValidationComplete = (event: any) => {
+      try {
+        const result = event.detail;
+        console.log('🎯 Received validation result from widget:', result);
+        if (result) {
+          // Extract EDA and ML validation results
+          const eda = result.eda_result || result.result || result;
+          const ml = result.ml_result || result;
+          
+          if (eda) {
+            setEdaResults(eda);
+            console.log('✅ EDA results set from widget:', eda);
+          }
+          if (ml) {
+            setValidationResult(ml);
+            console.log('✅ Validation result set from widget:', ml);
+          }
+          
+          // Also analyze columns if we have dataPreview
+          if (!columnAnalysis && dataPreview) {
+            analyzeColumns().then(stats => {
+              setColumnAnalysis(stats);
+              console.log('✅ Column analysis completed:', stats);
+            });
+          }
+          
+          // Switch to insights tab to show results
+          setActiveTab('insights');
+          
+          // Make sure validation is not running
+          setIsValidating(false);
+        }
+      } catch (e) {
+        console.error('❌ Error handling validation result:', e);
+      }
+    };
+
+    const handleEdaMessages = (event: any) => {
+      try {
+        const messages = event.detail;
+        console.log('📨 Received EDA messages from widget:', messages);
+        // These messages are already being shown in the widget
+        // but we can use them to update the main page display
+      } catch (e) {
+        console.error('❌ Error handling EDA messages:', e);
+      }
+    };
+
+    console.log('👂 Setting up event listeners for validation results...');
+    window.addEventListener('ownquesta_validation_complete', handleValidationComplete);
+    window.addEventListener('ownquesta_eda_messages', handleEdaMessages);
+
+    return () => {
+      console.log('🧹 Cleaning up event listeners...');
+      window.removeEventListener('ownquesta_validation_complete', handleValidationComplete);
+      window.removeEventListener('ownquesta_eda_messages', handleEdaMessages);
+    };
+  }, [dataPreview, columnAnalysis]);
+
   // Auto-redirect to setup if on validate page without data
   useEffect(() => {
     if (currentStep === 'validate' && !dataPreview && !uploadedFile) {
@@ -372,6 +433,10 @@ const MLStudioAdvanced: React.FC = () => {
       setValidationResult(result);
       setEdaResults(result);
       setActiveTab('insights');
+      
+      console.log('Validation completed successfully!');
+      console.log('EDA Results:', result);
+      console.log('Validation Result:', result);
       
       // Add chat message
       setChatMessages(prev => [...prev, {
@@ -1381,30 +1446,662 @@ const MLStudioAdvanced: React.FC = () => {
               {/* ML Goal Display Section removed per request */}
             </div>
 
-            {/* Validation agent UI removed per request (no UI added). */}
+            {/* ========== EXPLORATORY DATA ANALYSIS ========== */}
+            {edaResults && !isValidating && (
+              <div className="space-y-8 mb-8">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center gap-3">
+                    📊 Exploratory Data Analysis
+                  </h2>
+                  <span className="px-4 py-2 bg-green-500/20 text-green-300 rounded-full text-sm font-semibold border border-green-400/40">
+                    Analysis Complete
+                  </span>
+                </div>
 
+                {/* 1. DATASET OVERVIEW */}
+                <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/40 rounded-2xl p-6 border-2 border-cyan-400/30">
+                  <h3 className="text-2xl font-bold text-cyan-300 mb-6 flex items-center gap-2">
+                    📁 Dataset Overview
+                  </h3>
+                  
+                  {/* Basic Stats Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-blue-500/10 border border-blue-400/30 rounded-xl p-4 text-center">
+                      <div className="text-3xl font-bold text-blue-300 mb-1">
+                        {edaResults.shape?.rows?.toLocaleString() || 'N/A'}
+                      </div>
+                      <div className="text-xs text-gray-400">Total Rows</div>
+                    </div>
+                    <div className="bg-green-500/10 border border-green-400/30 rounded-xl p-4 text-center">
+                      <div className="text-3xl font-bold text-green-300 mb-1">
+                        {edaResults.shape?.columns || 'N/A'}
+                      </div>
+                      <div className="text-xs text-gray-400">Total Columns</div>
+                    </div>
+                    <div className="bg-purple-500/10 border border-purple-400/30 rounded-xl p-4 text-center">
+                      <div className="text-3xl font-bold text-purple-300 mb-1">
+                        {edaResults.size?.toLocaleString() || (edaResults.shape?.rows * edaResults.shape?.columns)?.toLocaleString() || 'N/A'}
+                      </div>
+                      <div className="text-xs text-gray-400">Total Cells</div>
+                    </div>
+                    <div className="bg-orange-500/10 border border-orange-400/30 rounded-xl p-4 text-center">
+                      <div className="text-3xl font-bold text-orange-300 mb-1">
+                        {edaResults.validationChecks?.dataQuality || 'N/A'}
+                      </div>
+                      <div className="text-xs text-gray-400">Data Quality</div>
+                    </div>
+                  </div>
 
+                  {/* Column Types */}
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="bg-indigo-900/20 rounded-lg p-4 border border-indigo-500/30">
+                      <div className="text-lg font-bold text-indigo-300 mb-1">
+                        {edaResults.numericColumns?.length || 0}
+                      </div>
+                      <div className="text-sm text-gray-400">Numeric Features</div>
+                    </div>
+                    <div className="bg-emerald-900/20 rounded-lg p-4 border border-emerald-500/30">
+                      <div className="text-lg font-bold text-emerald-300 mb-1">
+                        {edaResults.objectColumns?.length || 0}
+                      </div>
+                      <div className="text-sm text-gray-400">Categorical Features</div>
+                    </div>
+                    <div className="bg-amber-900/20 rounded-lg p-4 border border-amber-500/30">
+                      <div className="text-lg font-bold text-amber-300 mb-1">
+                        {edaResults.datetimeColumns?.length || 0}
+                      </div>
+                      <div className="text-sm text-gray-400">DateTime Features</div>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Validation Progress - Hidden */}
-            {/* Validation CTA removed per request */}
+                {/* 2. STATISTICAL SUMMARY - NUMERICAL FEATURES */}
+                {edaResults.numericalSummary && Object.keys(edaResults.numericalSummary).length > 0 && (
+                  <div className="bg-gradient-to-br from-purple-900/30 to-indigo-900/20 rounded-2xl p-6 border-2 border-purple-400/30">
+                    <h3 className="text-2xl font-bold text-purple-300 mb-6 flex items-center gap-2">
+                      📈 Numerical Features Analysis
+                    </h3>
+                    
+                    <div className="space-y-6">
+                      {Object.entries(edaResults.numericalSummary).map(([colName, stats]: [string, any]) => (
+                        <div key={colName} className="bg-slate-800/50 rounded-xl p-5 border border-purple-500/20">
+                          {/* Column Header */}
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-xl font-bold text-white font-mono">{colName}</h4>
+                            <div className="flex gap-2">
+                              {stats.isNormal && (
+                                <span className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-xs font-semibold border border-green-400/40">
+                                  Normal Distribution
+                                </span>
+                              )}
+                              {stats.qualityScore && (
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                                  stats.qualityScore >= 80 ? 'bg-green-500/20 text-green-300 border-green-400/40' :
+                                  stats.qualityScore >= 60 ? 'bg-yellow-500/20 text-yellow-300 border-yellow-400/40' :
+                                  'bg-red-500/20 text-red-300 border-red-400/40'
+                                }`}>
+                                  Quality: {stats.qualityScore}%
+                                </span>
+                              )}
+                            </div>
+                          </div>
 
-            {/* EDA Processing & Results - Only show after button click */}
-            {edaResults && columnAnalysis && !isValidating && (
-              <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-bold text-white">Exploratory Data Analysis</h3>
-                  {edaResults && (
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/20 border border-green-500/30">
-                      <div className="w-2 h-2 rounded-full bg-green-400" />
-                      <span className="text-sm font-medium text-green-300">Analysis Complete</span>
+                          {/* Statistics Grid */}
+                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <div className="bg-blue-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Count</div>
+                              <div className="text-lg font-bold text-blue-300">{stats.count?.toLocaleString()}</div>
+                            </div>
+                            <div className="bg-green-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Unique</div>
+                              <div className="text-lg font-bold text-green-300">{stats.unique?.toLocaleString()}</div>
+                            </div>
+                            <div className="bg-purple-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Mean</div>
+                              <div className="text-lg font-bold text-purple-300">{stats.mean?.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-indigo-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Median</div>
+                              <div className="text-lg font-bold text-indigo-300">{stats.median?.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-pink-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Mode</div>
+                              <div className="text-lg font-bold text-pink-300">{stats.mode?.toFixed(2) || 'N/A'}</div>
+                            </div>
+                            <div className="bg-cyan-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Std Dev</div>
+                              <div className="text-lg font-bold text-cyan-300">{stats.std?.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-teal-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Variance</div>
+                              <div className="text-lg font-bold text-teal-300">{stats.variance?.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-orange-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Min</div>
+                              <div className="text-lg font-bold text-orange-300">{stats.min?.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-red-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Max</div>
+                              <div className="text-lg font-bold text-red-300">{stats.max?.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-yellow-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Range</div>
+                              <div className="text-lg font-bold text-yellow-300">{stats.range?.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-lime-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Q1 (25%)</div>
+                              <div className="text-lg font-bold text-lime-300">{stats.q1?.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-emerald-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Q3 (75%)</div>
+                              <div className="text-lg font-bold text-emerald-300">{stats.q3?.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-violet-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">IQR</div>
+                              <div className="text-lg font-bold text-violet-300">{stats.iqr?.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-fuchsia-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Skewness</div>
+                              <div className="text-lg font-bold text-fuchsia-300">{stats.skewness?.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-rose-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Kurtosis</div>
+                              <div className="text-lg font-bold text-rose-300">{stats.kurtosis?.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-amber-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Outliers</div>
+                              <div className="text-lg font-bold text-amber-300">{stats.outliers} ({stats.outliersPercentage?.toFixed(1)}%)</div>
+                            </div>
+                            {stats.zerosCount !== undefined && (
+                              <div className="bg-slate-900/40 rounded-lg p-3">
+                                <div className="text-xs text-gray-400 mb-1">Zeros</div>
+                                <div className="text-lg font-bold text-slate-300">{stats.zerosCount?.toLocaleString()}</div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Percentiles */}
+                          {stats.percentiles && (
+                            <div className="mt-4 bg-slate-900/40 rounded-lg p-4">
+                              <div className="text-sm font-semibold text-gray-300 mb-3">Percentiles</div>
+                              <div className="grid grid-cols-5 gap-3">
+                                <div className="text-center">
+                                  <div className="text-xs text-gray-400 mb-1">5%</div>
+                                  <div className="text-sm font-bold text-cyan-300">{stats.percentiles.p5?.toFixed(2)}</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-xs text-gray-400 mb-1">25%</div>
+                                  <div className="text-sm font-bold text-cyan-300">{stats.percentiles.p25?.toFixed(2)}</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-xs text-gray-400 mb-1">50%</div>
+                                  <div className="text-sm font-bold text-cyan-300">{stats.percentiles.p50?.toFixed(2)}</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-xs text-gray-400 mb-1">75%</div>
+                                  <div className="text-sm font-bold text-cyan-300">{stats.percentiles.p75?.toFixed(2)}</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-xs text-gray-400 mb-1">95%</div>
+                                  <div className="text-sm font-bold text-cyan-300">{stats.percentiles.p95?.toFixed(2)}</div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. CATEGORICAL FEATURES ANALYSIS */}
+                {edaResults.objectSummary && Object.keys(edaResults.objectSummary).length > 0 && (
+                  <div className="bg-gradient-to-br from-emerald-900/30 to-teal-900/20 rounded-2xl p-6 border-2 border-emerald-400/30">
+                    <h3 className="text-2xl font-bold text-emerald-300 mb-6 flex items-center gap-2">
+                      🏷️ Categorical Features Analysis
+                    </h3>
+                    
+                    <div className="space-y-6">
+                      {Object.entries(edaResults.objectSummary).map(([colName, stats]: [string, any]) => (
+                        <div key={colName} className="bg-slate-800/50 rounded-xl p-5 border border-emerald-500/20">
+                          {/* Column Header */}
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-xl font-bold text-white font-mono">{colName}</h4>
+                            <div className="flex gap-2">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                                stats.cardinality === 'Low' ? 'bg-green-500/20 text-green-300 border-green-400/40' :
+                                stats.cardinality === 'Medium' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-400/40' :
+                                'bg-red-500/20 text-red-300 border-red-400/40'
+                              }`}>
+                                {stats.cardinality} Cardinality
+                              </span>
+                              {stats.isBalanced && (
+                                <span className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs font-semibold border border-blue-400/40">
+                                  Balanced
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Basic Stats */}
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                            <div className="bg-emerald-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Count</div>
+                              <div className="text-lg font-bold text-emerald-300">{stats.count?.toLocaleString()}</div>
+                            </div>
+                            <div className="bg-teal-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Unique Values</div>
+                              <div className="text-lg font-bold text-teal-300">{stats.unique?.toLocaleString()}</div>
+                            </div>
+                            <div className="bg-cyan-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Unique %</div>
+                              <div className="text-lg font-bold text-cyan-300">{stats.uniquePercentage?.toFixed(1)}%</div>
+                            </div>
+                            <div className="bg-blue-900/20 rounded-lg p-3">
+                              <div className="text-xs text-gray-400 mb-1">Entropy</div>
+                              <div className="text-lg font-bold text-blue-300">{stats.entropy?.toFixed(2)}</div>
+                            </div>
+                          </div>
+
+                          {/* Top Values */}
+                          {stats.topValues && stats.topValues.length > 0 && (
+                            <div className="bg-slate-900/40 rounded-lg p-4">
+                              <div className="text-sm font-semibold text-gray-300 mb-3">Top Values</div>
+                              <div className="space-y-2">
+                                {stats.topValues.map((item: any, idx: number) => (
+                                  <div key={idx} className="flex items-center justify-between">
+                                    <span className="text-gray-200 font-mono text-sm">{item.value}</span>
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-32 bg-slate-700 rounded-full h-2">
+                                        <div 
+                                          className="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full"
+                                          style={{ width: `${item.percentage}%` }}
+                                        ></div>
+                                      </div>
+                                      <span className="text-emerald-300 font-bold text-sm min-w-[80px] text-right">
+                                        {item.count} ({item.percentage?.toFixed(1)}%)
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. MISSING VALUES & DATA QUALITY */}
+                <div className="bg-gradient-to-br from-yellow-900/30 to-amber-900/20 rounded-2xl p-6 border-2 border-yellow-400/30">
+                  <h3 className="text-2xl font-bold text-yellow-300 mb-6 flex items-center gap-2">
+                    ⚠️ Missing Values & Data Quality
+                  </h3>
+                  
+                  {/* Quality Metrics */}
+                  {edaResults.validationChecks && (
+                    <div className="grid md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-slate-800/50 rounded-lg p-4 border border-yellow-500/20">
+                        <div className="text-sm text-gray-400 mb-2">Missing Data Level</div>
+                        <div className={`text-2xl font-bold ${
+                          edaResults.validationChecks.missingDataLevel === 'Low' ? 'text-green-300' :
+                          edaResults.validationChecks.missingDataLevel === 'Medium' ? 'text-yellow-300' :
+                          'text-red-300'
+                        }`}>
+                          {edaResults.validationChecks.missingDataLevel}
+                        </div>
+                      </div>
+                      <div className="bg-slate-800/50 rounded-lg p-4 border border-yellow-500/20">
+                        <div className="text-sm text-gray-400 mb-2">Duplicate Rows</div>
+                        <div className="text-2xl font-bold text-amber-300">
+                          {edaResults.validationChecks.duplicateRows?.toLocaleString()} ({edaResults.validationChecks.duplicatePercentage?.toFixed(1)}%)
+                        </div>
+                      </div>
+                      <div className="bg-slate-800/50 rounded-lg p-4 border border-yellow-500/20">
+                        <div className="text-sm text-gray-400 mb-2">Readiness Score</div>
+                        <div className={`text-2xl font-bold ${
+                          edaResults.validationChecks.readinessScore >= 80 ? 'text-green-300' :
+                          edaResults.validationChecks.readinessScore >= 60 ? 'text-yellow-300' :
+                          'text-red-300'
+                        }`}>
+                          {edaResults.validationChecks.readinessScore?.toFixed(0)}%
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Missing Values Details */}
+                  {edaResults.missingValues && Object.keys(edaResults.missingValues).length > 0 && (
+                    <>
+                      <div className="text-lg font-semibold text-yellow-200 mb-4">Columns with Missing Values</div>
+                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(edaResults.missingValues).map(([col, info]: [string, any]) => (
+                          info.count > 0 && (
+                            <div key={col} className="bg-yellow-900/20 rounded-lg p-4 border border-yellow-600/30">
+                              <div className="font-mono text-white font-semibold mb-3">{col}</div>
+                              <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-400">Missing:</span>
+                                  <span className="text-yellow-300 font-bold">{info.count} ({info.percentage?.toFixed(1)}%)</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-400">Severity:</span>
+                                  <span className={`font-bold ${
+                                    info.severity === 'Low' ? 'text-green-300' :
+                                    info.severity === 'Medium' ? 'text-yellow-300' :
+                                    'text-red-300'
+                                  }`}>{info.severity}</span>
+                                </div>
+                                {info.pattern && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-400">Pattern:</span>
+                                    <span className="text-gray-300">{info.pattern}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Constant Columns */}
+                  {edaResults.validationChecks?.constantColumns && edaResults.validationChecks.constantColumns.length > 0 && (
+                    <div className="mt-6 bg-orange-900/20 rounded-lg p-4 border border-orange-500/30">
+                      <div className="text-sm font-semibold text-orange-300 mb-2">⚠️ Constant Columns (No Variance)</div>
+                      <div className="flex flex-wrap gap-2">
+                        {edaResults.validationChecks.constantColumns.map((col: string, idx: number) => (
+                          <span key={idx} className="px-3 py-1.5 bg-orange-900/30 border border-orange-500/40 rounded-lg text-sm text-orange-200 font-mono">
+                            {col}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
 
-                
+                {/* 5. CORRELATION MATRIX */}
+                {edaResults.correlation && Object.keys(edaResults.correlation).length > 1 && (
+                  <div className="bg-gradient-to-br from-pink-900/30 to-rose-900/20 rounded-2xl p-6 border-2 border-pink-400/30">
+                    <h3 className="text-2xl font-bold text-pink-300 mb-6 flex items-center gap-2">
+                      🔗 Correlation Matrix
+                    </h3>
+                    
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-pink-500/30">
+                            <th className="text-left p-3 text-pink-200 font-semibold">Feature</th>
+                            {Object.keys(edaResults.correlation).map((col: string) => (
+                              <th key={col} className="p-3 text-pink-200 font-mono text-xs">{col}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Object.entries(edaResults.correlation).map(([row, values]: [string, any]) => (
+                            <tr key={row} className="border-b border-slate-700/30">
+                              <td className="p-3 text-white font-mono font-semibold">{row}</td>
+                              {Object.values(values).map((val: any, idx: number) => {
+                                const corr = parseFloat(val);
+                                const absCorr = Math.abs(corr);
+                                return (
+                                  <td key={idx} className="p-3 text-center">
+                                    <span className={`px-2 py-1 rounded font-bold text-xs ${
+                                      absCorr > 0.8 ? 'bg-red-500/30 text-red-200' :
+                                      absCorr > 0.5 ? 'bg-orange-500/30 text-orange-200' :
+                                      absCorr > 0.3 ? 'bg-yellow-500/30 text-yellow-200' :
+                                      'bg-slate-700/30 text-gray-300'
+                                    }`}>
+                                      {corr.toFixed(2)}
+                                    </span>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* High Correlation Pairs */}
+                    <div className="mt-6 bg-slate-800/50 rounded-lg p-4">
+                      <div className="text-sm font-semibold text-pink-200 mb-3">Strong Correlations (|r| &gt; 0.5)</div>
+                      <div className="space-y-2">
+                        {Object.entries(edaResults.correlation).map(([col1, values]: [string, any]) => (
+                          Object.entries(values).map(([col2, val]: [string, any]) => {
+                            const corr = parseFloat(val);
+                            const absCorr = Math.abs(corr);
+                            if (absCorr > 0.5 && col1 < col2) {
+                              return (
+                                <div key={`${col1}-${col2}`} className="flex items-center justify-between bg-slate-900/50 rounded p-3">
+                                  <span className="text-gray-200 font-mono text-sm">{col1} ↔ {col2}</span>
+                                  <span className={`px-3 py-1 rounded-full font-bold text-sm ${
+                                    absCorr > 0.8 ? 'bg-red-500/30 text-red-200' :
+                                    'bg-orange-500/30 text-orange-200'
+                                  }`}>
+                                    r = {corr.toFixed(3)}
+                                  </span>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. AI INSIGHTS */}
+                {edaResults.aiInsights && (
+                  <div className="bg-gradient-to-r from-indigo-900/40 to-purple-900/30 rounded-2xl p-6 border-2 border-indigo-400/40">
+                    <h3 className="text-2xl font-bold text-indigo-300 mb-6 flex items-center gap-3">
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      AI-Powered Insights & Recommendations
+                    </h3>
+                    <div className="prose prose-invert prose-lg max-w-none">
+                      <div className="whitespace-pre-wrap text-gray-200 leading-relaxed bg-slate-900/40 rounded-lg p-6">
+                        {edaResults.aiInsights}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 7. RECOMMENDATIONS */}
+                {edaResults.recommendations && edaResults.recommendations.length > 0 && (
+                  <div className="bg-gradient-to-br from-cyan-900/30 to-blue-900/20 rounded-2xl p-6 border-2 border-cyan-400/30">
+                    <h3 className="text-2xl font-bold text-cyan-300 mb-6 flex items-center gap-2">
+                      💡 Data Processing Recommendations
+                    </h3>
+                    <div className="space-y-3">
+                      {edaResults.recommendations.map((rec: string, idx: number) => (
+                        <div key={idx} className="flex items-start gap-3 bg-slate-800/50 rounded-lg p-4 border border-cyan-500/20">
+                          <span className="text-cyan-400 text-xl">•</span>
+                          <span className="text-gray-200 leading-relaxed">{rec}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ========== SECTION 2: ML VALIDATION REPORT ========== */}
+            {validationResult && !isValidating && (
+              <div className="backdrop-blur-2xl bg-gradient-to-r from-indigo-900/60 to-purple-900/50 border-2 border-indigo-400/40 rounded-2xl p-8 shadow-2xl mb-8">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+                    🤖 ML Validation Report
+                  </h2>
+                  <div className="flex items-center gap-3">
+                    {validationResult.status && (
+                      <span className={`px-5 py-2 rounded-full text-sm font-bold ${
+                        validationResult.status === 'PROCEED' ? 'bg-green-500/30 text-green-200 border-2 border-green-400/50' :
+                        validationResult.status === 'PAUSE' ? 'bg-yellow-500/30 text-yellow-200 border-2 border-yellow-400/50' :
+                        'bg-blue-500/30 text-blue-200 border-2 border-blue-400/50'
+                      }`}>
+                        {validationResult.status}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quality Score */}
+                {validationResult.satisfaction_score !== undefined && (
+                  <div className="bg-gradient-to-r from-cyan-900/40 to-blue-900/30 rounded-xl p-6 mb-6 border border-cyan-400/30 text-center">
+                    <div className="text-sm text-gray-300 mb-2">Overall Quality Score</div>
+                    <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400 mb-3">
+                      {validationResult.satisfaction_score}/100
+                    </div>
+                    <div className="w-full bg-slate-700/50 rounded-full h-4 overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-cyan-500 to-blue-500 h-4 transition-all duration-1000 rounded-full"
+                        style={{width: `${validationResult.satisfaction_score}%`}}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Agent Answer */}
+                {validationResult.agent_answer && (
+                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 mb-6 border border-purple-400/30">
+                    <h3 className="text-2xl font-bold text-purple-300 mb-4 flex items-center gap-2">
+                      <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Validation Analysis
+                    </h3>
+                    <div className="prose prose-invert prose-lg max-w-none">
+                      <div className="whitespace-pre-wrap text-gray-200 leading-relaxed">
+                        {validationResult.agent_answer}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ML AI Insights */}
+                {validationResult.aiInsights && (
+                  <div className="bg-gradient-to-r from-pink-900/30 to-purple-900/30 rounded-xl p-6 mb-6 border-2 border-pink-400/30">
+                    <h3 className="text-2xl font-bold text-pink-300 mb-4 flex items-center gap-2">
+                      <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Strategic ML Recommendations
+                    </h3>
+                    <div className="prose prose-invert prose-lg max-w-none">
+                      <div className="whitespace-pre-wrap text-gray-200 leading-relaxed">
+                        {validationResult.aiInsights}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Goal Understanding */}
+                {validationResult.goal_understanding && (
+                  <div className="grid md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-indigo-900/30 rounded-xl p-5 border border-indigo-500/40">
+                      <div className="text-sm text-gray-400 mb-2">Task Type</div>
+                      <div className="text-xl font-bold text-indigo-300 capitalize">
+                        {validationResult.goal_understanding.interpreted_task}
+                      </div>
+                    </div>
+                    {validationResult.goal_understanding.target_column_guess && (
+                      <div className="bg-purple-900/30 rounded-xl p-5 border border-purple-500/40">
+                        <div className="text-sm text-gray-400 mb-2">Target Variable</div>
+                        <div className="text-xl font-bold text-purple-300">
+                          {validationResult.goal_understanding.target_column_guess}
+                        </div>
+                      </div>
+                    )}
+                    {validationResult.goal_understanding.confidence !== undefined && (
+                      <div className="bg-cyan-900/30 rounded-xl p-5 border border-cyan-500/40">
+                        <div className="text-sm text-gray-400 mb-2">Confidence</div>
+                        <div className="text-xl font-bold text-cyan-300">
+                          {(validationResult.goal_understanding.confidence * 100).toFixed(1)}%
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Model Recommendations */}
+                {validationResult.modelRecommendations && validationResult.modelRecommendations.length > 0 && (
+                  <div className="bg-slate-800/40 rounded-xl p-6 mb-6 border border-green-500/30">
+                    <h3 className="text-xl font-bold text-green-300 mb-4 flex items-center gap-2">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                      </svg>
+                      Recommended ML Models
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {validationResult.modelRecommendations.slice(0, 6).map((model: any, idx: number) => (
+                        <div key={idx} className="bg-green-900/20 rounded-lg p-5 border border-green-500/40 hover:bg-green-900/30 transition-colors">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-2xl">🎯</span>
+                            <h4 className="font-bold text-green-200 text-lg">{model.algorithm || model.type || 'ML Model'}</h4>
+                          </div>
+                          <p className="text-gray-300 text-sm leading-relaxed">{model.use_case || model.description || 'Recommended for this dataset'}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Performance Estimates */}
+                {validationResult.performanceEstimates && (
+                  <div className="grid md:grid-cols-3 gap-4 mb-6">
+                    {validationResult.performanceEstimates.confidence && (
+                      <div className="bg-blue-900/30 rounded-xl p-5 border border-blue-500/40 text-center">
+                        <div className="text-sm text-gray-400 mb-2">Confidence</div>
+                        <div className="text-3xl font-bold text-blue-300">{validationResult.performanceEstimates.confidence}</div>
+                      </div>
+                    )}
+                    {validationResult.performanceEstimates.expected_accuracy && (
+                      <div className="bg-green-900/30 rounded-xl p-5 border border-green-500/40 text-center">
+                        <div className="text-sm text-gray-400 mb-2">Expected Accuracy</div>
+                        <div className="text-3xl font-bold text-green-300">{validationResult.performanceEstimates.expected_accuracy}</div>
+                      </div>
+                    )}
+                    {validationResult.performanceEstimates.data_sufficiency && (
+                      <div className="bg-purple-900/30 rounded-xl p-5 border border-purple-500/40 text-center">
+                        <div className="text-sm text-gray-400 mb-2">Data Sufficiency</div>
+                        <div className="text-3xl font-bold text-purple-300">{validationResult.performanceEstimates.data_sufficiency}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Risks and Warnings */}
+                {validationResult.risksAndWarnings && validationResult.risksAndWarnings.length > 0 && (
+                  <div className="bg-yellow-900/20 rounded-xl p-6 border-2 border-yellow-500/40">
+                    <h3 className="text-xl font-bold text-yellow-300 mb-4 flex items-center gap-2">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      Important Warnings
+                    </h3>
+                    <div className="space-y-3">
+                      {validationResult.risksAndWarnings.map((warning: string, idx: number) => (
+                        <div key={idx} className="bg-yellow-800/30 rounded-lg p-4 border-l-4 border-yellow-500 text-gray-200">
+                          {warning}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Detailed EDA Tables (Collapsed by Default) */}
+            {edaResults && !isValidating && edaResults.results && (
+              <>
                 {/* Step 2: Detailed Analysis Layout - Show After Agent Response */}
-                {edaResults && edaResults.results && (
-                  <div className="space-y-6 mb-8 animate-slide" style={{animationDelay: '0.3s'}}>
+                <div className="space-y-6 mb-8 animate-slide" style={{animationDelay: '0.3s'}}>
                     {/* Dataset Shape */}
                     {edaResults.results.dataset_shape && (
                       <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/30">
@@ -2002,10 +2699,9 @@ const MLStudioAdvanced: React.FC = () => {
                       </div>
                     )}
                   </div>
-                )}
                 
                 {/* Local Dataset Overview Dashboard - Hidden, only show agent results */}
-              </div>
+              </>
             )}
 
 
