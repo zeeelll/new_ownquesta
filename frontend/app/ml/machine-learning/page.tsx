@@ -3368,7 +3368,18 @@ print(f"""
 
             {/* Action Buttons */}
             <div className="max-w-2xl mx-auto space-y-6">
-              {/* Configure Model CTA removed per request */}
+              {/* Go to Config Page Button - Show after validation complete */}
+              {validationResult && !isValidating && (
+                <button 
+                  onClick={() => setCurrentStep('configure')}
+                  className="w-full py-5 px-8 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 border-2 border-indigo-400/50 font-bold text-white text-lg shadow-2xl hover:shadow-indigo-500/50 transition-all duration-300 flex items-center justify-center gap-3 group"
+                >
+                  <span>✅ Proceed to Model Configuration</span>
+                  <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </button>
+              )}
 
               {/* Validation in Progress */}
               {isValidating && (
@@ -3389,48 +3400,251 @@ print(f"""
 
         {currentStep === 'configure' && (
           <div className="animate-slide space-y-8">
-            <div className="text-center space-y-4">
-              <h2 className="text-4xl font-bold text-gradient">Model Configuration</h2>
-              <p className="text-gray-400">Your model is being configured based on the validation results</p>
+            {/* Header */}
+            <div className="text-center space-y-4 mb-8">
+              <h2 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-600">
+                ⚙️ Model Configuration
+              </h2>
+              <p className="text-xl text-gray-300">Dataset Cleaned & Ready for Model Training</p>
+              <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-500/20 border-2 border-green-400/40 rounded-full">
+                <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-green-300 font-semibold">Validation Complete</span>
+              </div>
             </div>
             
-            {validationResult && (
-              <div className="space-y-6">
-                {/* User View Report - Markdown Display */}
-                {validationResult.user_view_report && (
-                  <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8">
-                    <div className="prose prose-invert max-w-none">
-                      <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                        {validationResult.user_view_report.split('\n').map((line: string, i: number) => {
-                          if (line.startsWith('# ')) {
-                            return <h1 key={i} className="text-3xl font-bold text-gradient mb-4">{line.substring(2)}</h1>;
-                          } else if (line.startsWith('## ')) {
-                            return <h2 key={i} className="text-2xl font-bold text-indigo-300 mt-6 mb-3">{line.substring(3)}</h2>;
-                          } else if (line.startsWith('- ')) {
-                            return <li key={i} className="ml-4 text-gray-300">{line.substring(2)}</li>;
-                          } else if (line.match(/^\d+\./)) {
-                            return <li key={i} className="ml-4 text-gray-300">{line}</li>;
-                          } else if (line.includes('**') && line.includes('✅')) {
-                            const formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-green-400">$1</strong>');
-                            return <p key={i} className="text-gray-200 mb-2" dangerouslySetInnerHTML={{ __html: formatted }} />;
-                          } else if (line.includes('**')) {
-                            const formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>');
-                            return <p key={i} className="text-gray-300 mb-2" dangerouslySetInnerHTML={{ __html: formatted }} />;
-                          } else if (line.trim()) {
-                            return <p key={i} className="text-gray-400 mb-2">{line}</p>;
-                          } else {
-                            return <br key={i} />;
-                          }
-                        })}
+            {/* Dataset Summary Card */}
+            {edaResults && (
+              <div className="bg-gradient-to-br from-slate-900/90 to-slate-800/80 rounded-2xl p-8 border-2 border-cyan-400/30 shadow-2xl">
+                <h3 className="text-2xl font-bold text-cyan-300 mb-6 flex items-center gap-3">
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Clean Dataset Overview
+                </h3>
+                
+                <div className="grid md:grid-cols-4 gap-6 mb-6">
+                  <div className="bg-blue-900/30 rounded-xl p-5 border border-blue-500/30 text-center">
+                    <div className="text-3xl font-bold text-blue-300 mb-2">
+                      {edaResults.shape?.rows?.toLocaleString() || 'N/A'}
+                    </div>
+                    <div className="text-sm text-gray-400">Total Rows</div>
+                  </div>
+                  <div className="bg-green-900/30 rounded-xl p-5 border border-green-500/30 text-center">
+                    <div className="text-3xl font-bold text-green-300 mb-2">
+                      {edaResults.shape?.columns || 'N/A'}
+                    </div>
+                    <div className="text-sm text-gray-400">Features</div>
+                  </div>
+                  <div className="bg-purple-900/30 rounded-xl p-5 border border-purple-500/30 text-center">
+                    <div className="text-3xl font-bold text-purple-300 mb-2">
+                      {edaResults.validationChecks?.dataQuality || 'Good'}
+                    </div>
+                    <div className="text-sm text-gray-400">Data Quality</div>
+                  </div>
+                  <div className="bg-orange-900/30 rounded-xl p-5 border border-orange-500/30 text-center">
+                    <div className="text-3xl font-bold text-orange-300 mb-2">
+                      {edaResults.validationChecks?.readinessScore?.toFixed(0) || '85'}%
+                    </div>
+                    <div className="text-sm text-gray-400">ML Readiness</div>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Feature Types */}
+                  <div className="bg-slate-800/50 rounded-xl p-5">
+                    <h4 className="text-lg font-semibold text-indigo-300 mb-4">Feature Types</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Numeric Features:</span>
+                        <span className="text-white font-bold">{edaResults.numericColumns?.length || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Categorical Features:</span>
+                        <span className="text-white font-bold">{edaResults.objectColumns?.length || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">DateTime Features:</span>
+                        <span className="text-white font-bold">{edaResults.datetimeColumns?.length || 0}</span>
                       </div>
                     </div>
                   </div>
-                )}
 
-
-
+                  {/* Data Quality */}
+                  <div className="bg-slate-800/50 rounded-xl p-5">
+                    <h4 className="text-lg font-semibold text-green-300 mb-4">Data Quality Metrics</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Missing Values:</span>
+                        <span className={`font-bold ${Object.values(edaResults.missingValues || {}).filter((v: any) => v.count > 0).length === 0 ? 'text-green-400' : 'text-yellow-400'}`}>
+                          {Object.values(edaResults.missingValues || {}).filter((v: any) => v.count > 0).length} columns
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Duplicates:</span>
+                        <span className={`font-bold ${edaResults.validationChecks?.duplicateRows === 0 ? 'text-green-400' : 'text-yellow-400'}`}>
+                          {edaResults.validationChecks?.duplicateRows || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Constant Columns:</span>
+                        <span className={`font-bold ${edaResults.validationChecks?.constantColumns?.length === 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {edaResults.validationChecks?.constantColumns?.length || 0}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
+
+            {/* ML Validation Summary */}
+            {validationResult && (
+              <div className="bg-gradient-to-br from-indigo-900/40 to-purple-900/30 rounded-2xl p-8 border-2 border-indigo-400/40 shadow-2xl">
+                <h3 className="text-2xl font-bold text-indigo-300 mb-6 flex items-center gap-3">
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  ML Validation Summary
+                </h3>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Task Detection */}
+                  {validationResult.goal_understanding && (
+                    <div className="bg-slate-800/50 rounded-xl p-6">
+                      <h4 className="text-lg font-semibold text-purple-300 mb-4">🎯 Detected Task</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-sm text-gray-400 mb-1">Task Type:</div>
+                          <div className="text-white font-semibold text-lg">{validationResult.goal_understanding.interpreted_task || userQuery}</div>
+                        </div>
+                        {validationResult.goal_understanding.target_column_guess && (
+                          <div>
+                            <div className="text-sm text-gray-400 mb-1">Target Column:</div>
+                            <div className="text-cyan-300 font-mono">{validationResult.goal_understanding.target_column_guess}</div>
+                          </div>
+                        )}
+                        {validationResult.goal_understanding.confidence && (
+                          <div>
+                            <div className="text-sm text-gray-400 mb-1">Confidence:</div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 bg-slate-700 rounded-full h-2">
+                                <div 
+                                  className="bg-gradient-to-r from-green-500 to-emerald-400 h-2 rounded-full"
+                                  style={{ width: `${(validationResult.goal_understanding.confidence * 100)}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-green-400 font-bold">{(validationResult.goal_understanding.confidence * 100).toFixed(0)}%</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quality Score */}
+                  <div className="bg-slate-800/50 rounded-xl p-6">
+                    <h4 className="text-lg font-semibold text-green-300 mb-4">📊 Quality Score</h4>
+                    <div className="flex items-center justify-center">
+                      <div className="relative w-40 h-40">
+                        <svg className="w-full h-full transform -rotate-90">
+                          <circle cx="80" cy="80" r="70" stroke="#1e293b" strokeWidth="12" fill="none" />
+                          <circle 
+                            cx="80" 
+                            cy="80" 
+                            r="70" 
+                            stroke="url(#gradient)" 
+                            strokeWidth="12" 
+                            fill="none"
+                            strokeDasharray={`${(validationResult.satisfaction_score || 85) * 4.4} 440`}
+                            strokeLinecap="round"
+                          />
+                          <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" style={{stopColor: '#10b981', stopOpacity: 1}} />
+                              <stop offset="100%" style={{stopColor: '#34d399', stopOpacity: 1}} />
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="text-4xl font-bold text-green-400">{validationResult.satisfaction_score || 85}</div>
+                            <div className="text-xs text-gray-400">/ 100</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Top Model Recommendations */}
+                  {validationResult.modelRecommendations && validationResult.modelRecommendations.length > 0 && (
+                    <div className="bg-slate-800/50 rounded-xl p-6 md:col-span-2">
+                      <h4 className="text-lg font-semibold text-cyan-300 mb-4">🤖 Recommended Models</h4>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        {validationResult.modelRecommendations.slice(0, 3).map((model: any, idx: number) => (
+                          <div key={idx} className="bg-gradient-to-br from-blue-900/30 to-indigo-900/20 rounded-lg p-4 border border-blue-500/30">
+                            <div className="text-white font-bold mb-2">{idx + 1}. {model.algorithm || model.type || model.name}</div>
+                            <div className="text-sm text-gray-400 mb-2">{model.use_case || model.description}</div>
+                            {model.complexity && (
+                              <span className="inline-block px-2 py-1 bg-slate-700/50 rounded text-xs text-gray-300">
+                                {model.complexity}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Next Steps */}
+            <div className="bg-gradient-to-br from-slate-900/90 to-slate-800/80 rounded-2xl p-8 border-2 border-green-400/30 shadow-2xl">
+              <h3 className="text-2xl font-bold text-green-300 mb-6 flex items-center gap-3">
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Ready to Build Your Model
+              </h3>
+              <div className="prose prose-invert max-w-none">
+                <p className="text-gray-300 mb-4">
+                  Your dataset has been validated and cleaned. You can now:
+                </p>
+                <ul className="space-y-2 text-gray-400">
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span>Use the Python code from the validation page to start training</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span>Follow the recommended models based on your task type</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span>Address any data quality issues identified in the EDA</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span>Export the clean dataset for model training</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Back Button */}
+            <div className="text-center">
+              <button
+                onClick={() => setCurrentStep('validate')}
+                className="px-8 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-medium transition-colors flex items-center gap-2 mx-auto"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Validation Results
+              </button>
+            </div>
           </div>
         )}
 
