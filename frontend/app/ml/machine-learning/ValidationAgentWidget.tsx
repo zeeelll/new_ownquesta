@@ -180,14 +180,23 @@ export default function ValidationAgentWidget({
     return () => el.removeEventListener("scroll", handler);
   }, [messagesRef.current]);
 
-  // initial greeting
+  // initial greeting with enhanced intelligence
   useEffect(() => {
     if (!initialized.current) {
-      const filename = actualFile ? actualFile.name : "no file uploaded";
+      const filename = actualFile ? actualFile.name : "no dataset uploaded";
       const goalText = userQuery || "Auto-detect task";
+      
+      // Enhanced intelligent greeting
+      const greetingMessage = `Hello! I'm your Validation Agent 🤖
+
+📊 Dataset: ${filename}
+🎯 Goal: ${goalText}
+
+I can auto-detect your ML task type and guide you through validation. Reply 'yes' to start!`;
+      
       addChatMessage({
         type: "ai",
-        text: `Hello — I am your Validation Agent. I see your goal: "${goalText}" and dataset: "${filename}". Reply with 'yes' to start ML validation when you're ready.`,
+        text: greetingMessage,
         timestamp: new Date().toLocaleTimeString(),
       });
       initialized.current = true;
@@ -195,29 +204,40 @@ export default function ValidationAgentWidget({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // prompt once when dataset+goal present
+  // Enhanced prompt when dataset+goal present
   useEffect(() => {
     const key = `${actualFile?.name || "nofile"}::${userQuery || "nogoal"}`;
     if (!actualFile || !userQuery) return;
     if (promptedRef.current[key]) return;
     promptedRef.current[key] = true;
 
-    // Replace any previous chat with concise, important details only.
+    // Detect goal type for better messaging
+    const detectTaskType = (goal: string) => {
+      const lower = goal.toLowerCase();
+      if (lower.includes('classification') || lower.includes('classify')) return 'Classification';
+      if (lower.includes('regression') || lower.includes('predict') && (lower.includes('price') || lower.includes('sales'))) return 'Regression';
+      if (lower.includes('cluster') || lower.includes('segment')) return 'Clustering';
+      return 'Auto-detect';
+    };
+
+    const taskType = detectTaskType(userQuery);
+    
+    // Replace with enhanced concise messages
     try {
       const ts = new Date().toLocaleTimeString();
       const concise: ChatMessage[] = [
-        { type: "ai", text: `Dataset uploaded: ${actualFile.name}`, timestamp: ts },
-        { type: "ai", text: `Goal: ${userQuery}`, timestamp: ts },
-        { type: "ai", text: `I detected a dataset "${actualFile.name}" and goal: "${userQuery}". Would you like me to start the ML validation process now? Reply 'yes' to begin.`, timestamp: ts },
+        { type: "ai", text: `📊 Dataset: ${actualFile.name}`, timestamp: ts },
+        { type: "ai", text: `🎯 Goal: ${userQuery}`, timestamp: ts },
+        { type: "ai", text: `🔍 Task Type: ${taskType}`, timestamp: ts },
+        { type: "ai", text: `✅ Ready for ML validation! Reply 'yes' to begin comprehensive analysis.`, timestamp: ts },
       ];
 
       setChatMessages(concise);
-      // persist that we updated payload
       lastPayloadRef.current = { fileName: actualFile.name, goal: userQuery };
     } catch (e) {
       addChatMessage({
         type: "ai",
-        text: `I detected a dataset "${actualFile.name}" and goal: "${userQuery}". Would you like me to start the ML validation process now? Reply 'yes' to begin.`,
+        text: `✅ Dataset "${actualFile.name}" & goal ready. Type 'yes' to start ML validation!`,
         timestamp: new Date().toLocaleTimeString(),
       });
     }
@@ -244,12 +264,12 @@ export default function ValidationAgentWidget({
 
   const startFlow = async () => {
     if (!actualFile) {
-      addChatMessage({ type: "ai", text: "Please upload a dataset first to begin validation.", timestamp: new Date().toLocaleTimeString() });
+      addChatMessage({ type: "ai", text: "📊 Upload dataset first to begin.", timestamp: new Date().toLocaleTimeString() });
       return;
     }
     setIsBusy(true);
 
-    addChatMessage({ type: "ai", text: `Starting ML validation for "${userQuery || "Auto-detect"}"... Preparing the validate page and running EDA then ML validation.`, timestamp: new Date().toLocaleTimeString() });
+    addChatMessage({ type: "ai", text: `🚀 Starting ML validation... View detailed results on main page!`, timestamp: new Date().toLocaleTimeString() });
 
     try {
       // persist payload for validate page
@@ -264,18 +284,13 @@ export default function ValidationAgentWidget({
         try { window.dispatchEvent(new CustomEvent("ownquesta_start_validation", { detail: payload })); } catch (e) {}
       } catch (e) {}
 
-      // Do not force navigation — run in-place handlers so the chat widget
-      // can perform validation without changing the user's current view.
-      // Navigation was previously performed here but caused the main page
-      // to open unexpectedly when users replied 'yes'.
-
-      // also attempt in-place handlers
+      // Run analysis handlers
       await onStartEDA();
       await onStartValidation();
 
-      addChatMessage({ type: "ai", text: "✅ Validation finished — view results on the main page. Ask follow-up questions there.", timestamp: new Date().toLocaleTimeString() });
+      addChatMessage({ type: "ai", text: "✅ Analysis complete! Check main page for detailed EDA & validation results. Ask me specific questions!", timestamp: new Date().toLocaleTimeString() });
     } catch (e: any) {
-      addChatMessage({ type: "ai", text: `Validation error: ${e?.message || String(e)}`, timestamp: new Date().toLocaleTimeString() });
+      addChatMessage({ type: "ai", text: `⚠️ Error: ${e?.message || String(e)}`, timestamp: new Date().toLocaleTimeString() });
     } finally {
       setIsBusy(false);
     }
@@ -289,30 +304,42 @@ export default function ValidationAgentWidget({
 
     const normalized = q.toLowerCase().trim();
 
-    if (["show code", "show eda code", "show ml code", "show implementation", "show code please"].some((k) => normalized.includes(k))) {
+    // Enhanced intelligent responses for common questions
+    if (["show code", "show eda code", "show ml code", "show implementation", "show code please", "python code", "documentation"].some((k) => normalized.includes(k))) {
       try { localStorage.setItem("ownquesta_request_show", JSON.stringify({ what: "code", ts: Date.now() })); } catch (e) {}
       try { window.dispatchEvent(new CustomEvent("ownquesta_request_show", { detail: { what: "code" } })); } catch (e) {}
-      addChatMessage({ type: "ai", text: "OK — opening code panel on the main validation page. Navigate there to view.", timestamp: new Date().toLocaleTimeString() });
+      addChatMessage({ type: "ai", text: "💻 Opening Python code documentation on main page. Easy-to-understand implementation available!", timestamp: new Date().toLocaleTimeString() });
       return;
     }
 
-    if (["show insights", "show analysis", "insights"].some((k) => normalized.includes(k))) {
+    if (["show insights", "show analysis", "insights", "results", "findings"].some((k) => normalized.includes(k))) {
       try { localStorage.setItem("ownquesta_request_show", JSON.stringify({ what: "insights", ts: Date.now() })); } catch (e) {}
       try { window.dispatchEvent(new CustomEvent("ownquesta_request_show", { detail: { what: "insights" } })); } catch (e) {}
-      addChatMessage({ type: "ai", text: "OK — opening insights on the main validation page. Navigate there to view.", timestamp: new Date().toLocaleTimeString() });
+      addChatMessage({ type: "ai", text: "📊 Opening detailed insights & analysis on main page!", timestamp: new Date().toLocaleTimeString() });
       return;
     }
 
-    if (["yes", "y", "sure", "start", "run", "go"].includes(normalized)) {
+    if (["yes", "y", "sure", "start", "run", "go", "begin", "proceed"].includes(normalized)) {
       startFlow();
       return;
     }
 
-    if (!edaResults) {
-      addChatMessage({ type: "ai", text: 'Please run EDA first — reply "yes" to start the ML validation which includes EDA.', timestamp: new Date().toLocaleTimeString() });
+    // Help and guidance responses
+    if (["help", "what can you do", "commands", "guide"].some((k) => normalized.includes(k))) {
+      addChatMessage({ 
+        type: "ai", 
+        text: "🚀 I help with ML validation! Say 'yes' to start, 'show code' for Python, 'insights' for analysis. Ask about your data!", 
+        timestamp: new Date().toLocaleTimeString() 
+      });
       return;
     }
 
+    if (!edaResults) {
+      addChatMessage({ type: "ai", text: "📈 Run EDA first - reply 'yes' to start comprehensive ML validation!", timestamp: new Date().toLocaleTimeString() });
+      return;
+    }
+
+    // Intelligent dataset questions
     setIsBusy(true);
     try {
       const res = await fetch("/api/validation/question", {
@@ -322,9 +349,13 @@ export default function ValidationAgentWidget({
       });
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const j = await res.json();
-      addChatMessage({ type: "ai", text: j.answer || "No answer", timestamp: new Date().toLocaleTimeString() });
+      
+      // Concise intelligent response
+      const answer = j.answer || "I'll analyze that for you...";
+      const shortAnswer = answer.length > 150 ? answer.substring(0, 150) + "... (view full analysis on main page)" : answer;
+      addChatMessage({ type: "ai", text: shortAnswer, timestamp: new Date().toLocaleTimeString() });
     } catch (err: any) {
-      addChatMessage({ type: "ai", text: `Error: ${err?.message || String(err)}`, timestamp: new Date().toLocaleTimeString() });
+      addChatMessage({ type: "ai", text: `⚠️ ${err?.message || "Connection error"}`, timestamp: new Date().toLocaleTimeString() });
     } finally {
       setIsBusy(false);
     }
