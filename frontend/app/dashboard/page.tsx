@@ -357,10 +357,21 @@ export default function DashboardPage() {
           localStorage.setItem('userAvatar', data.user.avatar || '');
         }
         loadDashboardData();
-      } catch (error) {
-        console.error('Auth error:', error);
-        showNotification('Authentication failed. Redirecting to login...', 'error');
-        setTimeout(() => router.push("/login"), 1500);
+      } catch (error: any) {
+        // Silently redirect to login if unauthorized (expected when not logged in)
+        if (error?.message === 'Unauthorized' || error?.message?.includes('Unauthorized')) {
+          console.log('Session expired or not authenticated. Redirecting to login...');
+          if (typeof window !== 'undefined') {
+            // Clear any stale session data
+            localStorage.removeItem('userAvatar');
+          }
+          router.push("/login");
+        } else {
+          // For other errors, show notification
+          console.error('Auth error:', error);
+          showNotification('Authentication failed. Redirecting to login...', 'error');
+          setTimeout(() => router.push("/login"), 1500);
+        }
       } finally {
         setIsLoading(false);
       }

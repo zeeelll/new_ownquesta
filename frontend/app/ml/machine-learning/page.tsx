@@ -438,10 +438,10 @@ const MLStudioAdvanced: React.FC = () => {
       console.log('EDA Results:', result);
       console.log('Validation Result:', result);
       
-      // Add chat message
+      // Add simple completion message (detailed results shown on main page)
       setChatMessages(prev => [...prev, {
         type: 'ai',
-        text: result.agent_answer || 'Validation complete',
+        text: '✅ **ML Validation Complete!**\n\nYour dataset has been analyzed successfully. Check the main page above to see the complete Exploratory Data Analysis and ML Validation Report.',
         timestamp: new Date().toLocaleTimeString()
       }]);
 
