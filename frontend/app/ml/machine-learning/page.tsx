@@ -1197,7 +1197,7 @@ const MLStudioAdvanced: React.FC = () => {
             {uploadedFile && dataPreview && (
               <div className="backdrop-blur-2xl bg-slate-900/60 border border-indigo-500/20 rounded-2xl p-8">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-bold text-white">Dataset Preview</h3>
+                  <h3 className="text-2xl font-bold text-white">Uploaded Dataset </h3>
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
