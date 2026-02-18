@@ -192,17 +192,17 @@ export default function Home() {
 
       {/* Navigation Bar */}
       <nav 
-        className={`fixed top-0 left-0 right-0 px-10 py-4 flex justify-between items-center bg-transparent z-[100] transition-all duration-500 ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}
+        className={`fixed top-0 left-0 right-0 px-4 sm:px-6 md:px-10 py-3 md:py-4 flex justify-between items-center bg-transparent z-[100] transition-all duration-500 ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}
       >
         <Logo href="/" size="md" />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {!user?.authenticated ? (
             <>
-              <Link href="/login" className="px-6 py-2.5 bg-gradient-to-r from-[#667eea] via-[#764ba2] to-[#f093fb] border border-[rgba(246,147,251,0.6)] rounded-lg text-sm font-semibold transition-all hover:from-[#764ba2] hover:via-[#f093fb] hover:to-[#667eea] hover:border-[rgba(246,147,251,0.9)] hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(246,147,251,0.6)] hover:scale-105">
+              <Link href="/login" className="px-3 sm:px-4 md:px-6 py-2 md:py-2.5 bg-gradient-to-r from-[#667eea] via-[#764ba2] to-[#f093fb] border border-[rgba(246,147,251,0.6)] rounded-lg text-xs sm:text-sm font-semibold transition-all hover:from-[#764ba2] hover:via-[#f093fb] hover:to-[#667eea] hover:border-[rgba(246,147,251,0.9)] hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(246,147,251,0.6)] hover:scale-105">
                 Log In
               </Link>
-              <Link href="/about" className="px-6 py-2.5 bg-gradient-to-r from-[#667eea] via-[#764ba2] to-[#f093fb] border border-[rgba(246,147,251,0.6)] rounded-lg text-sm font-semibold transition-all hover:from-[#764ba2] hover:via-[#f093fb] hover:to-[#667eea] hover:border-[rgba(246,147,251,0.9)] hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(246,147,251,0.6)] hover:scale-105">
+              <Link href="/about" className="px-3 sm:px-4 md:px-6 py-2 md:py-2.5 bg-gradient-to-r from-[#667eea] via-[#764ba2] to-[#f093fb] border border-[rgba(246,147,251,0.6)] rounded-lg text-xs sm:text-sm font-semibold transition-all hover:from-[#764ba2] hover:via-[#f093fb] hover:to-[#667eea] hover:border-[rgba(246,147,251,0.9)] hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(246,147,251,0.6)] hover:scale-105">
                 About
               </Link>
             </>
@@ -244,16 +244,16 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="min-h-screen flex items-center justify-center px-5 pt-[180px] pb-[120px]">
+      <section className="min-h-screen flex items-center justify-center px-4 sm:px-5 md:px-8 pt-24 sm:pt-32 md:pt-[180px] pb-16 sm:pb-20 md:pb-[120px]">
         <div className="w-full max-w-[900px] text-center relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 gradient-text">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6 gradient-text">
             {user?.authenticated 
               ? `Welcome ${user.name?.split(' ')[0]}!`
               : 'From Raw Data to Intelligent Models—Instantly'
             }
           </h1>
           
-          <p className="text-lg text-[#9fb3d9] leading-relaxed max-w-[700px] mx-auto mb-20">
+          <p className="text-sm sm:text-base md:text-lg text-[#9fb3d9] leading-relaxed max-w-[700px] mx-auto mb-12 sm:mb-16 md:mb-20 px-4">
             {user?.authenticated
               ? 'Click on Go to Menu button to start your journey with Ownquesta'
               : 'A complete no-code AI platform to explore datasets, create features, and train production-ready ML and deep learning models with explainable intelligence.'
@@ -261,18 +261,18 @@ export default function Home() {
           </p>
 
           {!user?.authenticated && (
-            <div className="mb-[100px]">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-[60px]">
+            <div className="mb-12 sm:mb-16 md:mb-[100px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12 md:mb-[60px]">
                 {[
                   { num: '1', title: 'Upload Dataset' },
                   { num: '2', title: 'Understand Data' },
                   { num: '3', title: 'Build Model' }
                 ].map((step, i) => (
                   <div key={i} className="opacity-0 animate-[fadeIn_0.8s_ease_forwards]" style={{ animationDelay: `${i * 0.15}s` }}>
-                    <div className="inline-flex items-center justify-center w-[72px] h-[72px] bg-[rgba(110,84,200,0.2)] border-2 border-[rgba(110,84,200,0.4)] rounded-2xl text-3xl font-bold mb-5 transition-all duration-500 hover:-translate-y-2 hover:scale-105 hover:shadow-[0_12px_32px_rgba(110,84,200,0.3)]">
+                    <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 md:w-[72px] md:h-[72px] bg-[rgba(110,84,200,0.2)] border-2 border-[rgba(110,84,200,0.4)] rounded-2xl text-2xl sm:text-3xl font-bold mb-3 sm:mb-5 transition-all duration-500 hover:-translate-y-2 hover:scale-105 hover:shadow-[0_12px_32px_rgba(110,84,200,0.3)]">
                       {step.num}
                     </div>
-                    <div className="text-base font-semibold tracking-wide">{step.title}</div>
+                    <div className="text-sm sm:text-base font-semibold tracking-wide">{step.title}</div>
                   </div>
                 ))}
               </div>
@@ -282,7 +282,7 @@ export default function Home() {
           {user?.authenticated && (
             <Link 
               href="/dashboard"
-              className="inline-flex items-center justify-center gap-3 px-10 py-4 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] text-white rounded-xl text-[17px] font-semibold shadow-[0_8px_24px_rgba(110,84,200,0.3)] transition-all duration-400 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_16px_40px_rgba(110,84,200,0.5)]"
+              className="inline-flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-8 md:px-10 py-3 sm:py-4 bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] text-white rounded-xl text-sm sm:text-base md:text-[17px] font-semibold shadow-[0_8px_24px_rgba(110,84,200,0.3)] transition-all duration-400 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_16px_40px_rgba(110,84,200,0.5)]"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="7" height="7"/>
@@ -299,7 +299,7 @@ export default function Home() {
       {!user?.authenticated && (
         <>
           {/* Features Section */}
-          <section className="min-h-screen flex items-center justify-center px-5 py-[120px] bg-[rgba(15,23,42,0.3)] backdrop-blur-md border-y border-[rgba(255,255,255,0.05)]">
+          <section className="min-h-screen flex items-center justify-center px-4 sm:px-5 md:px-8 py-16 sm:py-20 md:py-[120px] bg-[rgba(15,23,42,0.3)] backdrop-blur-md border-y border-[rgba(255,255,255,0.05)]">
             <div className="w-full max-w-[900px]">
               {[
                 {
@@ -320,28 +320,28 @@ export default function Home() {
               ].map((feature, i) => (
                 <div 
                   key={i}
-                  className="bg-[rgba(110,84,200,0.08)] border border-[rgba(110,84,200,0.2)] rounded-[20px] p-12 mb-8 transition-all duration-600 hover:-translate-y-3 hover:scale-[1.02] hover:bg-[rgba(110,84,200,0.12)] hover:shadow-[0_20px_60px_rgba(110,84,200,0.3)] hover:border-[rgba(110,84,200,0.4)]"
+                  className="bg-[rgba(110,84,200,0.08)] border border-[rgba(110,84,200,0.2)] rounded-[20px] p-6 sm:p-8 md:p-12 mb-6 sm:mb-8 transition-all duration-600 hover:-translate-y-3 hover:scale-[1.02] hover:bg-[rgba(110,84,200,0.12)] hover:shadow-[0_20px_60px_rgba(110,84,200,0.3)] hover:border-[rgba(110,84,200,0.4)]"
                 >
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 min-w-[48px] bg-[rgba(110,84,200,0.2)] border-2 border-[rgba(110,84,200,0.3)] rounded-xl flex items-center justify-center">
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 min-w-[40px] sm:min-w-[48px] bg-[rgba(110,84,200,0.2)] border-2 border-[rgba(110,84,200,0.3)] rounded-xl flex items-center justify-center">
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         {feature.icon}
                       </svg>
                     </div>
-                    <h3 className="text-[28px] font-bold text-white">{feature.title}</h3>
+                    <h3 className="text-xl sm:text-2xl md:text-[28px] font-bold text-white">{feature.title}</h3>
                   </div>
-                  <p className="text-base text-[#9fb3d9] leading-relaxed">{feature.desc}</p>
+                  <p className="text-sm sm:text-base text-[#9fb3d9] leading-relaxed">{feature.desc}</p>
                 </div>
               ))}
             </div>
           </section>
 
           {/* Trust Section */}
-          <section className="min-h-screen flex items-center justify-center px-5 py-[120px]">
+          <section className="min-h-screen flex items-center justify-center px-4 sm:px-5 md:px-8 py-16 sm:py-20 md:py-[120px]">
             <div className="w-full max-w-[900px] text-center">
-              <h2 className="text-sm uppercase tracking-[3px] text-[#9fb3d9] mb-[60px] font-semibold">Why Ownquesta</h2>
+              <h2 className="text-xs sm:text-sm uppercase tracking-[2px] sm:tracking-[3px] text-[#9fb3d9] mb-8 sm:mb-12 md:mb-[60px] font-semibold">Why Ownquesta</h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
                 {[
                   {
                     icon: <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
@@ -358,14 +358,14 @@ export default function Home() {
                 ].map((item, i) => (
                   <div 
                     key={i}
-                    className="flex flex-col items-center gap-4 p-8 bg-[rgba(110,84,200,0.05)] border border-[rgba(110,84,200,0.2)] rounded-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] hover:bg-[rgba(110,84,200,0.1)] hover:shadow-[0_12px_32px_rgba(110,84,200,0.2)]"
+                    className="flex flex-col items-center gap-3 sm:gap-4 p-6 sm:p-8 bg-[rgba(110,84,200,0.05)] border border-[rgba(110,84,200,0.2)] rounded-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] hover:bg-[rgba(110,84,200,0.1)] hover:shadow-[0_12px_32px_rgba(110,84,200,0.2)]"
                   >
-                    <div className="w-16 h-16 bg-[rgba(110,84,200,0.2)] border-2 border-[rgba(110,84,200,0.3)] rounded-xl flex items-center justify-center transition-transform hover:scale-110 hover:rotate-[5deg]">
-                      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-[rgba(110,84,200,0.2)] border-2 border-[rgba(110,84,200,0.3)] rounded-xl flex items-center justify-center transition-transform hover:scale-110 hover:rotate-[5deg]">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         {item.icon}
                       </svg>
                     </div>
-                    <p className="text-[15px] text-[#c5d4ed] leading-relaxed font-medium">{item.text}</p>
+                    <p className="text-sm sm:text-[15px] text-[#c5d4ed] leading-relaxed font-medium">{item.text}</p>
                   </div>
                 ))}
               </div>

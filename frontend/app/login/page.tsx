@@ -353,7 +353,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-5 relative overflow-x-hidden bg-[radial-gradient(ellipse_at_top,#1e1b4b_0%,#0a0e1a_50%)]">
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-5 md:p-8 relative overflow-x-hidden bg-[radial-gradient(ellipse_at_top,#1e1b4b_0%,#0a0e1a_50%)]">
       <style jsx global>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
@@ -370,10 +370,10 @@ export default function LoginPage() {
         }
       `}</style>
 
-      <div className="w-full max-w-[1000px] bg-[rgba(15,23,42,0.7)] backdrop-blur-[20px] rounded-3xl border border-[rgba(255,255,255,0.1)] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] grid grid-cols-1 md:grid-cols-[45%_55%] relative z-10">
+      <div className="w-full max-w-[1000px] bg-[rgba(15,23,42,0.7)] backdrop-blur-[20px] rounded-2xl md:rounded-3xl border border-[rgba(255,255,255,0.1)] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] grid grid-cols-1 md:grid-cols-[45%_55%] relative z-10">
         
         {/* Left Panel */}
-        <div className="bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] p-12 md:p-[60px_50px] flex flex-col justify-between relative overflow-hidden">
+        <div className="bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] p-8 sm:p-10 md:p-[60px_50px] flex flex-col justify-between relative overflow-hidden">
           <div 
             className="absolute inset-0 opacity-50" 
             style={{
@@ -381,13 +381,13 @@ export default function LoginPage() {
             }}
           />
           
-          <div className="mb-[60px] relative z-10">
+          <div className="mb-8 md:mb-[60px] relative z-10">
             <Logo href="/" size="lg" showText={true} variant="light" />
           </div>
 
           <div className="relative z-10">
-            <h1 className="text-[38px] font-bold leading-tight mb-5 text-white">Capturing Moments, Creating Memories</h1>
-            <p className="text-base leading-relaxed text-[rgba(255,255,255,0.9)] mb-[30px]">
+            <h1 className="text-2xl sm:text-3xl md:text-[38px] font-bold leading-tight mb-3 sm:mb-4 md:mb-5 text-white">Capturing Moments, Creating Memories</h1>
+            <p className="text-sm sm:text-base leading-relaxed text-[rgba(255,255,255,0.9)] mb-6 md:mb-[30px]">
               Join thousands of users who trust Ownquesta for powerful AI-driven services and seamless experiences.
             </p>
             
@@ -411,7 +411,7 @@ export default function LoginPage() {
         </div>
 
         {/* Right Panel */}
-        <div className="p-12 md:p-[60px_50px] bg-[#0f1623]">
+        <div className="p-6 sm:p-8 md:p-[60px_50px] bg-[#0f1623]">
           
           {/* Sign In View */}
           {!isSignUp && (
@@ -490,26 +490,26 @@ export default function LoginPage() {
                 {/* Sign In Form */}
                 {!isForgotPassword && (
                   <>
-                    <div className="mb-5">
-                      <label className="block text-sm font-semibold text-[#f8fafc] mb-2">Email Address</label>
+                    <div className="mb-4 sm:mb-5">
+                      <label className="block text-xs sm:text-sm font-semibold text-[#f8fafc] mb-1.5 sm:mb-2">Email Address</label>
                       <input 
                         type="email"
                         placeholder="you@example.com"
                         value={signInEmail}
                         onChange={(e) => setSignInEmail(e.target.value)}
-                        className="w-full p-3.5 rounded-lg border border-[#1e293b] bg-[rgba(15,23,42,0.5)] text-[#f8fafc] text-[15px] transition-all focus:outline-none focus:border-[#8b5cf6] focus:bg-[rgba(15,23,42,0.8)] focus:shadow-[0_0_0_3px_rgba(139,92,246,0.1)] placeholder:text-[#94a3b8]"
+                        className="w-full p-3 sm:p-3.5 rounded-lg border border-[#1e293b] bg-[rgba(15,23,42,0.5)] text-[#f8fafc] text-sm sm:text-[15px] transition-all focus:outline-none focus:border-[#8b5cf6] focus:bg-[rgba(15,23,42,0.8)] focus:shadow-[0_0_0_3px_rgba(139,92,246,0.1)] placeholder:text-[#94a3b8]"
                       />
                     </div>
 
-                    <div className="mb-5">
-                      <label className="block text-sm font-semibold text-[#f8fafc] mb-2">Password</label>
+                    <div className="mb-4 sm:mb-5">
+                      <label className="block text-xs sm:text-sm font-semibold text-[#f8fafc] mb-1.5 sm:mb-2">Password</label>
                       <input 
                         type="password"
                         placeholder="Enter your password"
                         value={signInPassword}
                         onChange={(e) => setSignInPassword(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleSignIn()}
-                        className="w-full p-3.5 rounded-lg border border-[#1e293b] bg-[rgba(15,23,42,0.5)] text-[#f8fafc] text-[15px] transition-all focus:outline-none focus:border-[#8b5cf6] focus:bg-[rgba(15,23,42,0.8)] focus:shadow-[0_0_0_3px_rgba(139,92,246,0.1)] placeholder:text-[#94a3b8]"
+                        className="w-full p-3 sm:p-3.5 rounded-lg border border-[#1e293b] bg-[rgba(15,23,42,0.5)] text-[#f8fafc] text-sm sm:text-[15px] transition-all focus:outline-none focus:border-[#8b5cf6] focus:bg-[rgba(15,23,42,0.8)] focus:shadow-[0_0_0_3px_rgba(139,92,246,0.1)] placeholder:text-[#94a3b8]"
                       />
                       <div className="mt-2 text-right">
                         <button
@@ -525,7 +525,7 @@ export default function LoginPage() {
                     <button 
                       onClick={handleSignIn}
                       disabled={loading}
-                      className="w-full p-[15px] rounded-lg border-none text-base font-semibold cursor-pointer transition-all flex items-center justify-center gap-2 bg-gradient-to-br from-[#8b5cf6] to-[#7c3aed] text-white shadow-[0_4px_12px_rgba(139,92,246,0.3)] hover:translate-y-[-2px] hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                      className="w-full p-3 sm:p-[15px] rounded-lg border-none text-sm sm:text-base font-semibold cursor-pointer transition-all flex items-center justify-center gap-2 bg-gradient-to-br from-[#8b5cf6] to-[#7c3aed] text-white shadow-[0_4px_12px_rgba(139,92,246,0.3)] hover:translate-y-[-2px] hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                     >
                       {loading ? (
                         <>
@@ -535,7 +535,7 @@ export default function LoginPage() {
                       ) : 'Sign In'}
                     </button>
 
-                    <div className="flex items-center gap-4 my-6 text-[#94a3b8] text-sm">
+                    <div className="flex items-center gap-3 sm:gap-4 my-5 sm:my-6 text-[#94a3b8] text-xs sm:text-sm">
                       <div className="flex-1 h-px bg-[#1e293b]" />
                       or continue with
                       <div className="flex-1 h-px bg-[#1e293b]" />
@@ -543,7 +543,7 @@ export default function LoginPage() {
 
                     <button
                       onClick={handleGoogleAuth}
-                      className="w-full p-[15px] rounded-lg font-semibold cursor-pointer transition-all flex items-center justify-center gap-2 bg-[rgba(255,255,255,0.05)] border border-[#1e293b] text-[#f8fafc] hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.2)]"
+                      className="w-full p-3 sm:p-[15px] rounded-lg font-semibold cursor-pointer transition-all flex items-center justify-center gap-2 bg-[rgba(255,255,255,0.05)] border border-[#1e293b] text-[#f8fafc] text-sm sm:text-base hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.2)]"
                     >
                       <svg width="20" height="20" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

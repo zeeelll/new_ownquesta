@@ -610,7 +610,7 @@ export default function ValidatePage() {
               Feature Correlations
             </h3>
             <div className="mb-4">
-              <div className="text-sm text-gray-600 mb-4">Strong correlations (|r| > 0.7):</div>
+              <div className="text-sm text-gray-600 mb-4">Strong correlations (|r| {'>'}  0.7):</div>
               <div className="space-y-3">
                 {Object.entries(edaResults.correlation).flatMap(([col, correlations]: [string, any]) => 
                   Object.entries(correlations).filter(([_, corr]: [string, any]) => 
@@ -655,7 +655,7 @@ export default function ValidatePage() {
                 )
               ).length === 0 && (
                 <div className="text-center py-8 text-gray-500">
-                  <p>No strong correlations found (|r| > 0.7)</p>
+                  <p>No strong correlations found (|r| {'>'} 0.7)</p>
                   <p className="text-sm mt-1">Features appear relatively independent</p>
                 </div>
               )}

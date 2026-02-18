@@ -25,7 +25,7 @@ export default function Button({
   href,
   icon
 }: ButtonProps) {
-  const baseClasses = 'inline-flex items-center justify-center gap-3 font-semibold rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0';
+  const baseClasses = 'inline-flex items-center justify-center gap-2 sm:gap-3 font-semibold rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 whitespace-nowrap';
 
   const variantClasses = {
     primary: 'bg-gradient-to-br from-[#6e54c8] to-[#7c49a9] text-white shadow-[0_4px_12px_rgba(110,84,200,0.3)] hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(110,84,200,0.4)] focus:ring-[#6e54c8]',
@@ -35,9 +35,9 @@ export default function Button({
   };
 
   const sizeClasses = {
-    sm: 'px-4 py-2 text-sm',
-    md: 'px-6 py-3 text-base',
-    lg: 'px-8 py-4 text-lg'
+    sm: 'px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm',
+    md: 'px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base',
+    lg: 'px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg'
   };
 
   const buttonClasses = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;

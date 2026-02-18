@@ -11,21 +11,21 @@ interface LogoProps {
 
 export default function Logo({ href = '/', size = 'md', showText = true, variant = 'default' }: LogoProps) {
   const sizeClasses = {
-    sm: 'w-8 h-8',
-    md: 'w-10 h-10',
-    lg: 'w-12 h-12'
+    sm: 'w-7 h-7 sm:w-8 sm:h-8',
+    md: 'w-8 h-8 sm:w-10 sm:h-10',
+    lg: 'w-10 h-10 sm:w-12 sm:h-12'
   };
 
   const iconSizes = {
-    sm: { width: 16, height: 16 },
-    md: { width: 20, height: 20 },
-    lg: { width: 24, height: 24 }
+    sm: { width: 14, height: 14 },
+    md: { width: 18, height: 18 },
+    lg: { width: 22, height: 22 }
   };
 
   const textSizes = {
-    sm: 'text-lg',
-    md: 'text-xl',
-    lg: 'text-2xl'
+    sm: 'text-base sm:text-lg',
+    md: 'text-lg sm:text-xl',
+    lg: 'text-xl sm:text-2xl'
   };
 
   return (
