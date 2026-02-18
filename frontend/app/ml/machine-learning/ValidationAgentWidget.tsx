@@ -188,24 +188,31 @@ export default function ValidationAgentWidget({
   // Initial greeting with enhanced intelligence and personality
   useEffect(() => {
     if (!initialized.current) {
-      const filename = actualFile ? actualFile.name : "no dataset uploaded yet";
-      const goalText = userQuery || "Auto-detect task type";
+      const filename = actualFile ? actualFile.name : "waiting for your dataset";
+      const goalText = userQuery || "I'll help you detect the best approach";
       
       // Enhanced intelligent greeting with personality
-      const greetingMessage = `👋 Hello! I'm your ML Validation Agent
+      const greetingMessage = `👋 **Hello! I'm your Validation Agent!**
 
-I specialize in analyzing datasets, detecting optimal ML approaches, and guiding you through the validation process.
+I'm here to be your personal ML data scientist. Think of me as your friendly AI assistant who loves analyzing data and helping you build amazing machine learning models! 🎉
 
 📊 **Current Dataset:** ${filename}
 🎯 **Your Goal:** ${goalText}
 
-**What I can do:**
-• Auto-detect ML task types (Classification, Regression, Clustering)
-• Perform comprehensive EDA & data validation
-• Generate Python code for your ML pipeline
-• Answer questions about your data
+✨ **What makes me special?**
+• I support **CSV and Excel files** (no size limits!)
+• I can automatically detect the best ML approach for your data
+• I perform comprehensive Exploratory Data Analysis (EDA)
+• I validate your dataset and catch potential issues
+• I generate ready-to-use Python code for you
+• I answer any questions about your data
 
-**Ready to begin?** Type 'yes' to start comprehensive validation, or ask me anything about your dataset!`;
+📁 **Supported Formats:**
+• CSV files (.csv) - any size
+• Excel files (.xlsx, .xls) - any size
+
+🚀 **Ready to get started?**
+Just say **'yes'** or **'start'** and I'll begin analyzing your dataset. Or feel free to ask me anything! I'm here to help make ML easy and fun for you! 😊`;
       
       addChatMessage({
         type: "ai",
@@ -231,29 +238,29 @@ I specialize in analyzing datasets, detecting optimal ML approaches, and guiding
       // Classification detection
       if (lower.includes('classif') || lower.includes('categor') || 
           lower.includes('detect') || lower.includes('identify')) {
-        return { type: 'Classification', icon: '🎯', confidence: 'High' };
+        return { type: 'Classification', icon: '🎯', confidence: 'High', emoji: '🎯' };
       }
       
       // Regression detection
       if ((lower.includes('predict') || lower.includes('forecast') || lower.includes('estimate')) && 
           (lower.includes('price') || lower.includes('sales') || lower.includes('value') || 
            lower.includes('score') || lower.includes('amount') || lower.includes('number'))) {
-        return { type: 'Regression', icon: '📈', confidence: 'High' };
+        return { type: 'Regression', icon: '📈', confidence: 'High', emoji: '📊' };
       }
       
       // Clustering detection
       if (lower.includes('cluster') || lower.includes('segment') || 
           lower.includes('group') || lower.includes('similar')) {
-        return { type: 'Clustering', icon: '🔍', confidence: 'High' };
+        return { type: 'Clustering', icon: '🔍', confidence: 'High', emoji: '🎨' };
       }
       
       // Time series detection
       if (lower.includes('time series') || lower.includes('forecast') || 
           lower.includes('trend') || lower.includes('temporal')) {
-        return { type: 'Time Series Analysis', icon: '⏱️', confidence: 'Medium' };
+        return { type: 'Time Series Analysis', icon: '⏱️', confidence: 'Medium', emoji: '📉' };
       }
       
-      return { type: 'Auto-detect', icon: '🤖', confidence: 'Will analyze' };
+      return { type: 'Auto-detect', icon: '🤖', confidence: 'Will analyze', emoji: '🔬' };
     };
 
     const taskInfo = detectTaskType(userQuery);
@@ -264,12 +271,17 @@ I specialize in analyzing datasets, detecting optimal ML approaches, and guiding
       const concise: ChatMessage[] = [
         { 
           type: "ai", 
-          text: `✅ **Analysis Ready!**\n\n📊 **Dataset:** ${actualFile.name}\n📝 **Size:** ${(actualFile.size / 1024).toFixed(2)} KB\n🎯 **Your Goal:** ${userQuery}\n\n${taskInfo.icon} **Detected Task:** ${taskInfo.type}\n🎓 **Confidence:** ${taskInfo.confidence}`, 
+          text: `🎉 **Excellent! Everything is ready!**\n\nI can see you've uploaded your dataset and set your goal. This is going to be exciting! Let me give you a quick overview...`, 
           timestamp: ts 
         },
         { 
           type: "ai", 
-          text: `🚀 **Next Steps:**\n\n1️⃣ I'll perform comprehensive EDA\n2️⃣ Validate dataset compatibility\n3️⃣ Generate Python ML code\n4️⃣ Provide optimization suggestions\n\n💡 **Say 'yes' to begin the magic!**`, 
+          text: `📊 **Your Dataset:** ${actualFile.name}\n📦 **Size:** ${(actualFile.size / 1024).toFixed(2)} KB\n\n🎯 **Your Goal:** "${userQuery}"\n\n${taskInfo.emoji} **Detected Task Type:** ${taskInfo.type}\n💪 **My Confidence:** ${taskInfo.confidence}\n\nThis looks like a ${taskInfo.type.toLowerCase()} problem - perfect! I have lots of experience with these! 😊`, 
+          timestamp: ts 
+        },
+        { 
+          type: "ai", 
+          text: `✨ **Here's what I'll do for you:**\n\n1️⃣ **Deep Dive EDA** - I'll analyze every aspect of your data\n2️⃣ **Quality Check** - I'll validate everything is ML-ready\n3️⃣ **Smart Recommendations** - I'll suggest the best models\n4️⃣ **Code Generation** - I'll create Python code you can use\n5️⃣ **Insights & Tips** - I'll share optimization ideas\n\n🚀 **Excited? Me too!** Just say **'yes'** or **'start'** and let's begin this ML journey together! 🎊`, 
           timestamp: ts 
         },
       ];
@@ -279,7 +291,7 @@ I specialize in analyzing datasets, detecting optimal ML approaches, and guiding
     } catch (e) {
       addChatMessage({
         type: "ai",
-        text: `✅ **Ready!** Dataset "${actualFile.name}" loaded. Goal set. Type 'yes' to start ML validation journey!`,
+        text: `✅ **Perfect!** Your dataset "${actualFile.name}" and goal are set. I'm ready to start the ML validation magic! 🪄\n\nType **'yes'** to begin!`,
         timestamp: new Date().toLocaleTimeString(),
       });
     }
@@ -308,7 +320,7 @@ I specialize in analyzing datasets, detecting optimal ML approaches, and guiding
     if (!actualFile) {
       addChatMessage({ 
         type: "ai", 
-        text: "⚠️ **No Dataset Found**\n\nPlease upload a dataset file (CSV format) to begin the validation process.", 
+        text: "⚠️ **No Dataset Found**\n\nPlease upload a dataset file (CSV or Excel format) to begin the validation process.", 
         timestamp: new Date().toLocaleTimeString() 
       });
       return;
@@ -317,36 +329,245 @@ I specialize in analyzing datasets, detecting optimal ML approaches, and guiding
 
     addChatMessage({ 
       type: "ai", 
-      text: `🚀 **Starting ML Validation Pipeline...**\n\n⏳ Analyzing dataset structure\n⏳ Performing EDA\n⏳ Validating compatibility\n\n📊 Results will appear on the main page!`, 
+      text: `🚀 **Starting ML Validation...**\n\nConnecting to Validation Agent and analyzing your dataset...\n\n📁 **File:** ${actualFile.name}\n📊 **Size:** ${(actualFile.size / 1024 / 1024).toFixed(2)} MB`, 
       timestamp: new Date().toLocaleTimeString() 
     });
 
     try {
+      // Read dataset content - support both CSV and Excel
+      let dataPayload: string | ArrayBuffer;
+      let isExcel = false;
+      
+      const fileExtension = actualFile.name.toLowerCase();
+      if (fileExtension.endsWith('.xlsx') || fileExtension.endsWith('.xls')) {
+        // For Excel files, read as binary and convert to base64
+        isExcel = true;
+        const arrayBuffer = await actualFile.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        bytes.forEach((byte) => binary += String.fromCharCode(byte));
+        dataPayload = btoa(binary);
+      } else {
+        // For CSV files, read as text
+        dataPayload = await actualFile.text();
+      }
+      
       // Persist payload for validate page
       try {
-        const payload: any = { ts: Date.now(), mlGoal: userQuery || "" };
-        try {
-          const text = await actualFile.text();
-          payload.csv_text = text;
-          payload.filename = actualFile.name;
-        } catch (e) {}
+        const payload: any = { 
+          ts: Date.now(), 
+          mlGoal: userQuery || "", 
+          csv_text: typeof dataPayload === 'string' ? dataPayload : '', 
+          filename: actualFile.name,
+          isExcel: isExcel
+        };
         try { localStorage.setItem("ownquesta_start_payload", JSON.stringify(payload)); } catch (e) {}
         try { window.dispatchEvent(new CustomEvent("ownquesta_start_validation", { detail: payload })); } catch (e) {}
       } catch (e) {}
 
-      // Run analysis handlers with progress updates
+      // Call validation agent from ownquesta_agents
+      const requestBody: any = {
+        goal: { text: userQuery || "auto-detect", type: "ml_validation" }
+      };
+
+      if (isExcel) {
+        // For Excel, send binary data as base64
+        requestBody.file_data = dataPayload;
+        requestBody.file_type = 'excel';
+        requestBody.filename = actualFile.name;
+      } else {
+        // For CSV, send as text
+        requestBody.csv_text = dataPayload;
+      }
+
+      const response = await fetch("http://localhost:8000/validation/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Validation service returned status ${response.status}. Make sure the agent is running on port 8000.`);
+      }
+
+      const result = await response.json();
+      
+      // Display real detailed EDA results
+      if (result.eda_result || result.result) {
+        const eda = result.eda_result || result.result;
+        
+        // 1. Dataset Structure & Overview
+        const shape = eda.shape || {};
+        const info = eda.info || {};
+        let structureMsg = `📊 **Dataset Structure**\n\n`;
+        structureMsg += `• **Filename:** ${actualFile.name}\n`;
+        structureMsg += `• **File Type:** ${isExcel ? 'Excel (.xlsx/.xls)' : 'CSV'}\n`;
+        structureMsg += `• **Dimensions:** ${shape.rows || 'N/A'} rows × ${shape.columns || 'N/A'} columns\n`;
+        if (shape.memory_usage) {
+          structureMsg += `• **Memory Usage:** ${shape.memory_usage}\n`;
+        }
+        addChatMessage({ type: "ai", text: structureMsg, timestamp: new Date().toLocaleTimeString() });
+
+        // 2. Column Types & Features
+        if (info.column_types || info.numerical_cols || info.categorical_cols) {
+          let featuresMsg = `🔍 **Feature Analysis**\n\n`;
+          
+          if (info.numerical_cols && info.numerical_cols.length > 0) {
+            featuresMsg += `📈 **Numerical Features (${info.numerical_cols.length}):**\n`;
+            featuresMsg += info.numerical_cols.slice(0, 10).join(', ');
+            if (info.numerical_cols.length > 10) featuresMsg += `, ... (${info.numerical_cols.length - 10} more)`;
+            featuresMsg += '\n\n';
+          }
+          
+          if (info.categorical_cols && info.categorical_cols.length > 0) {
+            featuresMsg += `🏷️ **Categorical Features (${info.categorical_cols.length}):**\n`;
+            featuresMsg += info.categorical_cols.slice(0, 10).join(', ');
+            if (info.categorical_cols.length > 10) featuresMsg += `, ... (${info.categorical_cols.length - 10} more)`;
+            featuresMsg += '\n';
+          }
+          
+          addChatMessage({ type: "ai", text: featuresMsg, timestamp: new Date().toLocaleTimeString() });
+        }
+
+        // 3. Data Quality Metrics
+        if (eda.summary || info.missing_values || info.duplicates !== undefined) {
+          let qualityMsg = `✅ **Data Quality Assessment**\n\n`;
+          
+          if (info.missing_values !== undefined) {
+            const totalMissing = typeof info.missing_values === 'number' ? info.missing_values : 
+                               (typeof info.missing_values === 'object' ? Object.values(info.missing_values).reduce((a: any, b: any) => a + b, 0) : 0);
+            qualityMsg += `• **Missing Values:** ${totalMissing}\n`;
+          }
+          
+          if (info.duplicates !== undefined) {
+            qualityMsg += `• **Duplicate Rows:** ${info.duplicates}\n`;
+          }
+          
+          if (eda.summary) {
+            qualityMsg += `• **Data Completeness:** ${eda.summary.completeness || 'Good'}\n`;
+          }
+          
+          addChatMessage({ type: "ai", text: qualityMsg, timestamp: new Date().toLocaleTimeString() });
+        }
+
+        // 4. Statistical Summary
+        if (eda.numericalSummary && Object.keys(eda.numericalSummary).length > 0) {
+          const keys = Object.keys(eda.numericalSummary).slice(0, 3);
+          let statsMsg = `📊 **Statistical Summary (Sample)**\n\n`;
+          
+          keys.forEach(col => {
+            const stats = eda.numericalSummary[col];
+            statsMsg += `**${col}:**\n`;
+            statsMsg += `  Mean: ${stats.mean?.toFixed(2) || 'N/A'}, `;
+            statsMsg += `Std: ${stats.std?.toFixed(2) || 'N/A'}\n`;
+            statsMsg += `  Range: [${stats.min?.toFixed(2) || 'N/A'}, ${stats.max?.toFixed(2) || 'N/A'}]\n\n`;
+          });
+          
+          if (Object.keys(eda.numericalSummary).length > 3) {
+            statsMsg += `... and ${Object.keys(eda.numericalSummary).length - 3} more features\n`;
+          }
+          
+          addChatMessage({ type: "ai", text: statsMsg, timestamp: new Date().toLocaleTimeString() });
+        }
+
+        // 5. Correlations
+        if (eda.correlationPairs && eda.correlationPairs.length > 0) {
+          let corrMsg = `🔗 **Top Correlations**\n\n`;
+          
+          eda.correlationPairs.slice(0, 5).forEach((pair: any, idx: number) => {
+            corrMsg += `${idx + 1}. **${pair.feature1}** ↔ **${pair.feature2}**: ${pair.correlation?.toFixed(3)}\n`;
+          });
+          
+          if (eda.correlationPairs.length > 5) {
+            corrMsg += `\n... and ${eda.correlationPairs.length - 5} more correlations`;
+          }
+          
+          addChatMessage({ type: "ai", text: corrMsg, timestamp: new Date().toLocaleTimeString() });
+        }
+
+        // 6. ML Validation Results
+        if (result.ml_result) {
+          const ml = result.ml_result;
+          
+          // Problem Type Detection
+          if (ml.problemType || ml.task_type) {
+            let mlTypeMsg = `🎯 **ML Task Detection**\n\n`;
+            mlTypeMsg += `• **Detected Type:** ${ml.problemType || ml.task_type}\n`;
+            if (ml.confidence) {
+              mlTypeMsg += `• **Confidence:** ${ml.confidence}\n`;
+            }
+            if (ml.reasoning) {
+              mlTypeMsg += `\n${ml.reasoning}\n`;
+            }
+            addChatMessage({ type: "ai", text: mlTypeMsg, timestamp: new Date().toLocaleTimeString() });
+          }
+
+          // Model Recommendations
+          if (ml.modelRecommendations && ml.modelRecommendations.length > 0) {
+            let modelsMsg = `🤖 **Model Recommendations**\n\n`;
+            
+            ml.modelRecommendations.slice(0, 5).forEach((m: any, idx: number) => {
+              modelsMsg += `**${idx + 1}. ${m.algorithm || m.type || m.name}**\n`;
+              if (m.use_case || m.description) {
+                modelsMsg += `   ${m.use_case || m.description}\n`;
+              }
+              if (m.complexity) {
+                modelsMsg += `   Complexity: ${m.complexity}\n`;
+              }
+              modelsMsg += '\n';
+            });
+            
+            addChatMessage({ type: "ai", text: modelsMsg, timestamp: new Date().toLocaleTimeString() });
+          }
+
+          // Performance Estimates
+          if (ml.performanceEstimates) {
+            let perfMsg = `📈 **Expected Performance**\n\n`;
+            const pe = ml.performanceEstimates;
+            
+            if (pe.expected_accuracy) perfMsg += `• **Accuracy:** ${pe.expected_accuracy}\n`;
+            if (pe.confidence) perfMsg += `• **Confidence:** ${pe.confidence}\n`;
+            if (pe.training_time) perfMsg += `• **Est. Training Time:** ${pe.training_time}\n`;
+            if (pe.notes) perfMsg += `\n${pe.notes}\n`;
+            
+            addChatMessage({ type: "ai", text: perfMsg, timestamp: new Date().toLocaleTimeString() });
+          }
+
+          // Recommendations & Next Steps
+          if (ml.recommendations && ml.recommendations.length > 0) {
+            let recsMsg = `💡 **Recommendations**\n\n`;
+            
+            ml.recommendations.slice(0, 5).forEach((rec: string, idx: number) => {
+              recsMsg += `${idx + 1}. ${rec}\n`;
+            });
+            
+            addChatMessage({ type: "ai", text: recsMsg, timestamp: new Date().toLocaleTimeString() });
+          }
+        }
+
+        // 7. AI-Generated Insights
+        if (result.agent_answer && result.agent_answer !== result.aiInsights) {
+          addChatMessage({ 
+            type: "ai", 
+            text: `🧠 **AI Insights**\n\n${result.agent_answer}`, 
+            timestamp: new Date().toLocaleTimeString() 
+          });
+        }
+      }
+
+      // Run original handlers for UI compatibility
       await onStartEDA();
       await onStartValidation();
 
       addChatMessage({ 
         type: "ai", 
-        text: `✅ **Analysis Complete!**\n\n📊 Comprehensive EDA finished\n🔍 Validation results ready\n💻 Python code generated\n\n**What's next?**\n• View detailed results on main page\n• Ask me specific questions about your data\n• Request code modifications\n• Get optimization suggestions`, 
+        text: `✅ **Analysis Complete!**\n\n🎉 All EDA and ML validation results are displayed above. Your dataset is ready for machine learning!\n\n**What's next?**\n• Ask me specific questions about your data\n• Type "show code" for Python implementation\n• Type "insights" for more detailed analysis`, 
         timestamp: new Date().toLocaleTimeString() 
       });
     } catch (e: any) {
       addChatMessage({ 
         type: "ai", 
-        text: `❌ **Error Encountered**\n\n${e?.message || String(e)}\n\nPlease check your dataset format and try again, or ask me for help!`, 
+        text: `❌ **Connection Issue**\n\n${e?.message || String(e)}\n\n💡 **Tip:** Make sure the validation agent is running:\n\`\`\`\ncd ownquesta_agents\nuv run uvicorn main:app --reload\n\`\`\``, 
         timestamp: new Date().toLocaleTimeString() 
       });
     } finally {
@@ -398,7 +619,7 @@ I specialize in analyzing datasets, detecting optimal ML approaches, and guiding
     if (["help", "what can you do", "commands", "guide", "capabilities", "features", "?", "how"].some((k) => normalized.includes(k))) {
       addChatMessage({ 
         type: "ai", 
-        text: "🤖 **I'm Your ML Validation Assistant!**\n\n**I can help you with:**\n\n🎯 **Validation**: Say 'yes' to start comprehensive ML validation\n\n💻 **Code**: Ask 'show code' for Python implementation\n\n📊 **Analysis**: Request 'insights' for detailed EDA results\n\n❓ **Questions**: Ask about your data, features, or ML approach\n\n📈 **Guidance**: Get recommendations for model selection and optimization\n\n**Try asking:**\n• \"What features are most important?\"\n• \"Are there missing values?\"\n• \"What model should I use?\"\n• \"Show me the correlations\"", 
+        text: "🤖 **Hey! I'm Your Friendly ML Assistant!**\n\nI'm here to make machine learning easy and fun for you! Here's what I can help with:\n\n🎯 **Start Validation** → Just say 'yes' or 'start'\nI'll analyze your dataset with comprehensive EDA and ML validation!\n\n💻 **View Code** → Ask 'show code' or 'python code'\nI'll show you clean, ready-to-use Python implementation!\n\n📊 **See Insights** → Say 'insights' or 'show analysis'\nGet detailed EDA results and recommendations!\n\n❓ **Ask Questions** → Just ask naturally!\n• \"What features are most important?\"\n• \"Are there any missing values?\"\n• \"What model should I use?\"\n• \"How's my data quality?\"\n\n📈 **Get Guidance** → I'll recommend:\n• Best ML models for your goal\n• Feature engineering tips\n• Data preprocessing steps\n• Model optimization strategies\n\n💡 **Tip:** I'm conversational! Just talk to me like a friend. I'm here to help! 😊", 
         timestamp: new Date().toLocaleTimeString() 
       });
       return;
@@ -409,7 +630,7 @@ I specialize in analyzing datasets, detecting optimal ML approaches, and guiding
       if (!edaResults) {
         addChatMessage({ 
           type: "ai", 
-          text: "📊 **Run EDA First**\n\nI need to analyze your dataset before I can answer quality questions. Say 'yes' to start!", 
+          text: "📊 **Great Question!**\n\nI'd love to tell you about data quality, but first I need to analyze your dataset! 🔍\n\nJust say **'yes'** and I'll perform a comprehensive analysis including:\n• Missing value detection\n• Data type validation\n• Quality metrics\n• Preprocessing recommendations\n\nLet's do this together! 🚀", 
           timestamp: new Date().toLocaleTimeString() 
         });
         return;
@@ -422,7 +643,7 @@ I specialize in analyzing datasets, detecting optimal ML approaches, and guiding
       if (!edaResults) {
         addChatMessage({ 
           type: "ai", 
-          text: "🔍 **Analysis Required**\n\nI need to perform EDA to analyze features. Reply 'yes' to begin!", 
+          text: "🔍 **I'm Ready to Analyze!**\n\nTo answer your question about features, I need to first explore your dataset in detail.\n\nSay **'yes'** or **'start'** and I'll analyze:\n• Feature types and distributions\n• Correlations and relationships\n• Feature importance\n• Engineering opportunities\n\nReady when you are! 😊", 
           timestamp: new Date().toLocaleTimeString() 
         });
         return;
@@ -435,7 +656,7 @@ I specialize in analyzing datasets, detecting optimal ML approaches, and guiding
       if (!edaResults) {
         addChatMessage({ 
           type: "ai", 
-          text: "🎯 **Let Me Analyze First**\n\nI need to understand your data before recommending models. Say 'yes' to start validation!", 
+          text: "🎯 **Perfect Question!**\n\nI'd love to recommend the best models for you! But first, let me understand your data better.\n\nJust say **'yes'** and I'll:\n• Analyze your dataset characteristics\n• Identify the problem type\n• Recommend optimal ML models\n• Explain why they're the best fit\n\nLet me help you make the best choice! 💪", 
           timestamp: new Date().toLocaleTimeString() 
         });
         return;
@@ -447,7 +668,7 @@ I specialize in analyzing datasets, detecting optimal ML approaches, and guiding
     if (!edaResults) {
       addChatMessage({ 
         type: "ai", 
-        text: "📈 **Ready to Analyze!**\n\nI'm ready to perform comprehensive ML validation on your dataset. This includes:\n\n• Exploratory Data Analysis (EDA)\n• Feature engineering insights\n• Model recommendations\n• Code generation\n\n**Reply 'yes' to begin!**", 
+        text: "📈 **I'm Excited to Help!**\n\nBefore I can answer that, I need to analyze your dataset first. Don't worry, it's super quick! ⚡\n\n**What I'll do:**\n• Comprehensive Exploratory Data Analysis\n• Feature analysis & insights\n• ML model recommendations\n• Generate Python code\n\n**Ready to start?** Just say **'yes'** and I'll begin! You can ask me any questions after the analysis is complete. 😊", 
         timestamp: new Date().toLocaleTimeString() 
       });
       return;
@@ -461,14 +682,22 @@ I specialize in analyzing datasets, detecting optimal ML approaches, and guiding
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q, eda_results: edaResults }),
       });
-      if (!res.ok) throw new Error(`Server responded with status ${res.status}`);
+      if (!res.ok) throw new Error(`I couldn't reach the analysis service (status ${res.status}). Let me try again...`);
       const j = await res.json();
       
-      // Format and display intelligent response
-      const answer = j.answer || "I'm analyzing that for you...";
-      const formattedAnswer = answer.length > 200 
-        ? `${answer.substring(0, 200)}...\n\n💡 *View complete analysis on the main page for full details*` 
-        : answer;
+      // Format and display intelligent response with friendly tone
+      const answer = j.answer || "I'm analyzing that for you... Give me just a moment! 🔍";
+      
+      // Add friendly wrapper to response
+      let formattedAnswer = answer;
+      if (answer.length > 200) {
+        formattedAnswer = `${answer.substring(0, 200)}...\n\n💡 **Want more details?** Check the main page for the complete analysis! I've put everything there for you.`;
+      }
+      
+      // Add encouraging closing
+      if (!formattedAnswer.includes('?') && !formattedAnswer.endsWith('!')) {
+        formattedAnswer += '\n\n💬 Have more questions? I\'m here to help!';
+      }
       
       addChatMessage({ 
         type: "ai", 
@@ -478,7 +707,7 @@ I specialize in analyzing datasets, detecting optimal ML approaches, and guiding
     } catch (err: any) {
       addChatMessage({ 
         type: "ai", 
-        text: `⚠️ **Connection Issue**\n\n${err?.message || "Unable to reach the validation service"}\n\nPlease check your connection and try again.`, 
+        text: `⚠️ **Oops! Connection Hiccup**\n\n${err?.message || "I couldn't reach the analysis service right now."}\n\n💡 **Don't worry!** This usually means:\n• The service might be starting up\n• Check your internet connection\n• The validation agent might need to be restarted\n\nTry asking again in a moment, or say **'help'** if you need assistance! 😊`, 
         timestamp: new Date().toLocaleTimeString() 
       });
     } finally {
