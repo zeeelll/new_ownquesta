@@ -452,7 +452,7 @@ Just say **'yes'** or **'start'** and I'll begin analyzing your dataset. Or feel
       try { window.dispatchEvent(new CustomEvent("ownquesta_request_show", { detail: { what: "code" } })); } catch (e) {}
       addChatMessage({ 
         type: "ai", 
-        text: "💻 **Opening Python Code View**\n\nI'm displaying the complete implementation on the main page. You'll find:\n• Data preprocessing code\n• Model training pipeline\n• Evaluation metrics\n• Easy-to-understand documentation", 
+        text: "💻 **Opening Python Code Documentation**\n\n📊 I'm displaying comprehensive Python code on the main page above!\n\n**What you'll find:**\n• Complete Exploratory Data Analysis code\n• Statistical analysis with visualizations\n• Data preprocessing pipeline\n• ML model training examples\n• Easy-to-understand learning comments\n• Production-ready code\n\n**Features:**\n✅ Copy to clipboard\n✅ Download as .py file\n✅ All steps explained with comments\n✅ Customizable for your needs\n\nScroll up to see the code! 🚀", 
         timestamp: new Date().toLocaleTimeString() 
       });
       return;
