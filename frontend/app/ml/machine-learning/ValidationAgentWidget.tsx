@@ -2,7 +2,12 @@
 
 import React, { useState, useEffect, useRef } from "react";
 
-type ChatMessage = { type: "user" | "ai"; text: string; timestamp: string };
+type ChatMessage = { 
+  type: "user" | "ai"; 
+  text: string; 
+  timestamp: string;
+  isTyping?: boolean;
+};
 
 interface Props {
   actualFile: File | null;
@@ -31,15 +36,25 @@ export default function ValidationAgentWidget({
   const [isBusy, setIsBusy] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [visible, setVisible] = useState(true);
+  const [edaPanelMessages, setEdaPanelMessages] = useState<string[]>([]);
   const initialized = useRef(false);
   const promptedRef = useRef<Record<string, boolean>>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const messagesRef = useRef<HTMLDivElement | null>(null);
+  const endRef = useRef<HTMLDivElement | null>(null);
+  const autoScrollEnabled = useRef(true);
   const lastPayloadRef = useRef<{ fileName?: string | null; goal?: string | null }>({});
 
   // Load persisted chat once
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+      // If user already uploaded a dataset and provided a goal, do not
+      // restore prior chat history — show only concise dataset/goal messages.
+      if (actualFile && userQuery) {
+        initialized.current = true;
+        return;
+      }
       if (raw && !initialized.current) {
         const parsed = JSON.parse(raw) as ChatMessage[];
         if (parsed && parsed.length > 0) {
@@ -97,14 +112,134 @@ export default function ValidationAgentWidget({
     return outReversed.reverse();
   };
 
-  // initial greeting
+  const isEdaMessage = (m: ChatMessage) => {
+    if (!m || !m.text) return false;
+    const txt = m.text;
+    const lower = txt.toLowerCase();
+    if (txt.includes('```')) return true;
+    if (txt.trim().startsWith('{') && txt.length > 120) return true;
+    if (txt.trim().startsWith('[') && txt.length > 120) return true;
+    if (lower.includes('columntypes') || lower.includes('datainfo') || lower.includes('memoryfootprint')) return true;
+    if (lower.includes('eda') && txt.length > 40) return true;
+    if (lower.includes('insight') && txt.length > 40) return true;
+    return false;
+  };
+
+  // Extract EDA / insights messages from chat and forward them to the main page
+  useEffect(() => {
+    try {
+      if (!chatMessages || chatMessages.length === 0) return;
+      const edaMsgs = chatMessages.filter(isEdaMessage);
+      if (edaMsgs.length === 0) return;
+      const edaTexts = edaMsgs.map((m) => m.text);
+      // keep local preview state
+      setEdaPanelMessages((prev) => {
+        const merged = [...prev, ...edaTexts];
+        // dedupe
+        return Array.from(new Set(merged));
+      });
+
+      // remove EDA messages from chat so they don't appear in the widget
+      const nonEda = chatMessages.filter((m) => !isEdaMessage(m));
+      // only update if different
+      if (nonEda.length !== chatMessages.length) {
+        setChatMessages(nonEda);
+      }
+
+      // dispatch to main page so it can render full EDA/insights panel there
+      try {
+        window.dispatchEvent(new CustomEvent("ownquesta_eda_messages", { detail: edaTexts }));
+      } catch (e) {}
+
+      // Also dispatch full EDA results if available
+      if (edaResults) {
+        try {
+          window.dispatchEvent(new CustomEvent("ownquesta_validation_complete", { 
+            detail: { eda_result: edaResults, ml_result: validationResult } 
+          }));
+        } catch (e) {}
+      }
+    } catch (e) {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatMessages]);
+
+  // Dispatch validation results to parent when they change
+  useEffect(() => {
+    if (edaResults || validationResult) {
+      try {
+        window.dispatchEvent(new CustomEvent("ownquesta_validation_complete", { 
+          detail: { eda_result: edaResults, ml_result: validationResult } 
+        }));
+        console.log('Dispatched validation results to main page:', { edaResults, validationResult });
+      } catch (e) {
+        console.error('Failed to dispatch validation results:', e);
+      }
+    }
+  }, [edaResults, validationResult]);
+
+  // Auto-scroll to bottom when messages change or agent finishes thinking
+  useEffect(() => {
+    try {
+      // only auto-scroll when user has not manually scrolled up
+      if (!autoScrollEnabled.current) return;
+      if (messagesRef.current) {
+        // instant scroll to bottom
+        messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+      } else if (endRef.current) {
+        endRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+      }
+    } catch (e) {}
+  }, [chatMessages, isBusy, visible, collapsed]);
+
+  // attach onScroll handler to detect manual user scrolling (stay up)
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (!el) return;
+    const threshold = 80; // px from bottom considered "at bottom"
+    const handler = () => {
+      try {
+        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - threshold;
+        autoScrollEnabled.current = atBottom;
+      } catch (e) {}
+    };
+    el.addEventListener("scroll", handler, { passive: true });
+    // initialize
+    handler();
+    return () => el.removeEventListener("scroll", handler);
+  }, [messagesRef.current]);
+
+  // Initial greeting with enhanced intelligence and personality
   useEffect(() => {
     if (!initialized.current) {
-      const filename = actualFile ? actualFile.name : "no file uploaded";
-      const goalText = userQuery || "Auto-detect task";
+      const filename = actualFile ? actualFile.name : "waiting for your dataset";
+      const goalText = userQuery || "I'll help you detect the best approach";
+      
+      // Enhanced intelligent greeting with personality
+      const greetingMessage = `👋 **Hello! I'm your Validation Agent!**
+
+I'm here to be your personal ML data scientist. Think of me as your friendly AI assistant who loves analyzing data and helping you build amazing machine learning models! 🎉
+
+📊 **Current Dataset:** ${filename}
+🎯 **Your Goal:** ${goalText}
+
+✨ **What makes me special?**
+• I support **CSV and Excel files** (no size limits!)
+• I can automatically detect the best ML approach for your data
+• I perform comprehensive Exploratory Data Analysis (EDA)
+• I validate your dataset and catch potential issues
+• I generate ready-to-use Python code for you
+• I answer any questions about your data
+
+📁 **Supported Formats:**
+• CSV files (.csv) - any size
+• Excel files (.xlsx, .xls) - any size
+
+🚀 **Ready to get started?**
+Just say **'yes'** or **'start'** and I'll begin analyzing your dataset. Or feel free to ask me anything! I'm here to help make ML easy and fun for you! 😊`;
+      
       addChatMessage({
         type: "ai",
-        text: `Hello — I am your Validation Agent. I see your goal: "${goalText}" and dataset: "${filename}". Reply with 'yes' to start ML validation when you're ready.`,
+        text: greetingMessage,
         timestamp: new Date().toLocaleTimeString(),
       });
       initialized.current = true;
@@ -112,70 +247,171 @@ export default function ValidationAgentWidget({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // prompt once when dataset+goal present
+  // Enhanced intelligent prompt when dataset + goal are present
   useEffect(() => {
     const key = `${actualFile?.name || "nofile"}::${userQuery || "nogoal"}`;
     if (!actualFile || !userQuery) return;
     if (promptedRef.current[key]) return;
     promptedRef.current[key] = true;
-    addChatMessage({
-      type: "ai",
-      text: `I detected a dataset "${actualFile.name}" and goal: "${userQuery}". Would you like me to start the ML validation process now? Reply 'yes' to begin.`,
-      timestamp: new Date().toLocaleTimeString(),
-    });
-  }, [actualFile, userQuery]);
 
-  // concise updates on dataset/goal changes
-  useEffect(() => {
+    // Advanced task type detection with confidence scoring
+    const detectTaskType = (goal: string) => {
+      const lower = goal.toLowerCase();
+      
+      // Classification detection
+      if (lower.includes('classif') || lower.includes('categor') || 
+          lower.includes('detect') || lower.includes('identify')) {
+        return { type: 'Classification', icon: '🎯', confidence: 'High', emoji: '🎯' };
+      }
+      
+      // Regression detection
+      if ((lower.includes('predict') || lower.includes('forecast') || lower.includes('estimate')) && 
+          (lower.includes('price') || lower.includes('sales') || lower.includes('value') || 
+           lower.includes('score') || lower.includes('amount') || lower.includes('number'))) {
+        return { type: 'Regression', icon: '📈', confidence: 'High', emoji: '📊' };
+      }
+      
+      // Clustering detection
+      if (lower.includes('cluster') || lower.includes('segment') || 
+          lower.includes('group') || lower.includes('similar')) {
+        return { type: 'Clustering', icon: '🔍', confidence: 'High', emoji: '🎨' };
+      }
+      
+      // Time series detection
+      if (lower.includes('time series') || lower.includes('forecast') || 
+          lower.includes('trend') || lower.includes('temporal')) {
+        return { type: 'Time Series Analysis', icon: '⏱️', confidence: 'Medium', emoji: '📉' };
+      }
+      
+      return { type: 'Auto-detect', icon: '🤖', confidence: 'Will analyze', emoji: '🔬' };
+    };
+
+    const taskInfo = detectTaskType(userQuery);
+    
+    // Create welcome messages matching the screenshot
     try {
-      const prev = lastPayloadRef.current;
-      const fname = actualFile?.name || null;
-      const goal = userQuery || null;
-      let pushed = false;
-      if (fname && prev.fileName !== fname) {
-        addChatMessage({ type: "ai", text: `Dataset updated: ${fname}`, timestamp: new Date().toLocaleTimeString() });
-        pushed = true;
-      }
-      if (goal && prev.goal !== goal) {
-        addChatMessage({ type: "ai", text: `Goal updated: ${goal}`, timestamp: new Date().toLocaleTimeString() });
-        pushed = true;
-      }
-      if (pushed) lastPayloadRef.current = { fileName: fname, goal };
-    } catch (e) {}
-  }, [actualFile?.name, userQuery]);
+      const ts = new Date().toLocaleTimeString();
+      const welcomeMessages: ChatMessage[] = [
+        { 
+          type: "ai", 
+          text: `**Excellent! Everything is ready!**\n\nI can see you've uploaded your dataset and set your goal. This is going to be exciting! Let me give you a quick overview...`, 
+          timestamp: ts 
+        },
+        { 
+          type: "ai", 
+          text: `📁 **Your Dataset:** ${actualFile.name}\n📦 **Size:** ${(actualFile.size / 1024).toFixed(2)} KB\n\n🎯 **Your Goal:** "${userQuery}"\n\n🔍 **Detected Task Type:** ${taskInfo.type}\n👍 **My Confidence:** ${taskInfo.confidence}\n\nThis looks like a ${taskInfo.type.toLowerCase()} problem - perfect! I have lots of experience with these! 😊`, 
+          timestamp: ts 
+        },
+        { 
+          type: "ai", 
+          text: `🚀 **Ready to begin?**\n\nAre you ready to start the ML validation process? Just type **'yes'** or **'start'** and I'll analyze your dataset in detail!`, 
+          timestamp: ts 
+        },
+      ];
+
+      setChatMessages(welcomeMessages);
+      lastPayloadRef.current = { fileName: actualFile.name, goal: userQuery };
+    } catch (e) {
+      addChatMessage({
+        type: "ai",
+        text: `✅ **Perfect!** Your dataset "${actualFile.name}" and goal are set. I'm ready to start the ML validation magic! 🪄\n\nType **'yes'** to begin!`,
+        timestamp: new Date().toLocaleTimeString(),
+      });
+    }
+  }, [actualFile, userQuery]);
 
   const startFlow = async () => {
     if (!actualFile) {
-      addChatMessage({ type: "ai", text: "Please upload a dataset first to begin validation.", timestamp: new Date().toLocaleTimeString() });
+      addChatMessage({ 
+        type: "ai", 
+        text: "⚠️ **No Dataset Found**\n\nPlease upload a dataset file (CSV or Excel format) to begin the validation process.", 
+        timestamp: new Date().toLocaleTimeString() 
+      });
       return;
     }
     setIsBusy(true);
 
-    addChatMessage({ type: "ai", text: `Starting ML validation for "${userQuery || "Auto-detect"}"... Preparing the validate page and running EDA then ML validation.`, timestamp: new Date().toLocaleTimeString() });
+    addChatMessage({ 
+      type: "ai", 
+      text: `🚀 **Starting ML Validation...**\n\nConnecting to Validation Agent and analyzing your dataset...\n\n📁 **File:** ${actualFile.name}\n📊 **Size:** ${(actualFile.size / 1024 / 1024).toFixed(2)} MB`, 
+      timestamp: new Date().toLocaleTimeString() 
+    });
 
     try {
-      // persist payload for validate page
+      // Read dataset content - support both CSV and Excel
+      let dataPayload: string | ArrayBuffer;
+      let isExcel = false;
+      
+      const fileExtension = actualFile.name.toLowerCase();
+      if (fileExtension.endsWith('.xlsx') || fileExtension.endsWith('.xls')) {
+        // For Excel files, read as binary and convert to base64
+        isExcel = true;
+        const arrayBuffer = await actualFile.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        bytes.forEach((byte) => binary += String.fromCharCode(byte));
+        dataPayload = btoa(binary);
+      } else {
+        // For CSV files, read as text
+        dataPayload = await actualFile.text();
+      }
+      
+      // Persist payload for validate page
       try {
-        const payload: any = { ts: Date.now(), mlGoal: userQuery || "" };
-        try {
-          const text = await actualFile.text();
-          payload.csv_text = text;
-          payload.filename = actualFile.name;
-        } catch (e) {}
+        const payload: any = { 
+          ts: Date.now(), 
+          mlGoal: userQuery || "", 
+          csv_text: typeof dataPayload === 'string' ? dataPayload : '', 
+          filename: actualFile.name,
+          isExcel: isExcel
+        };
         try { localStorage.setItem("ownquesta_start_payload", JSON.stringify(payload)); } catch (e) {}
         try { window.dispatchEvent(new CustomEvent("ownquesta_start_validation", { detail: payload })); } catch (e) {}
       } catch (e) {}
 
-      // navigate to validate page (same app)
-      try { window.location.href = "/ml/machine-learning/validate"; } catch (e) {}
+      // Call validation agent from ownquesta_agents
+      const requestBody: any = {
+        goal: { text: userQuery || "auto-detect", type: "ml_validation" }
+      };
 
-      // also attempt in-place handlers
+      if (isExcel) {
+        // For Excel, send binary data as base64
+        requestBody.file_data = dataPayload;
+        requestBody.file_type = 'excel';
+        requestBody.filename = actualFile.name;
+      } else {
+        // For CSV, send as text
+        requestBody.csv_text = dataPayload;
+      }
+
+      const response = await fetch("http://localhost:8000/validation/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Validation service returned status ${response.status}. Make sure the agent is running on port 8000.`);
+      }
+
+      const result = await response.json();
+      
+      // Run original handlers for UI compatibility
       await onStartEDA();
       await onStartValidation();
 
-      addChatMessage({ type: "ai", text: "✅ Validation finished — view results on the main page. Ask follow-up questions there.", timestamp: new Date().toLocaleTimeString() });
+      // Show simple completion message - detailed results displayed on main page
+      addChatMessage({ 
+        type: "ai", 
+        text: `✅ **ML Validation Complete!**\n\nYour dataset has been analyzed successfully. Check the main page now to see the complete Exploratory Data Analysis and ML Validation Report.`, 
+        timestamp: new Date().toLocaleTimeString() 
+      });
     } catch (e: any) {
-      addChatMessage({ type: "ai", text: `Validation error: ${e?.message || String(e)}`, timestamp: new Date().toLocaleTimeString() });
+      addChatMessage({ 
+        type: "ai", 
+        text: `❌ **Connection Issue**\n\n${e?.message || String(e)}\n\n💡 **Tip:** Make sure the validation agent is running:\n\`\`\`\ncd ownquesta_agents\nuv run uvicorn main:app --reload\n\`\`\``, 
+        timestamp: new Date().toLocaleTimeString() 
+      });
     } finally {
       setIsBusy(false);
     }
@@ -189,30 +425,177 @@ export default function ValidationAgentWidget({
 
     const normalized = q.toLowerCase().trim();
 
-    if (["show code", "show eda code", "show ml code", "show implementation", "show code please"].some((k) => normalized.includes(k))) {
-      try { localStorage.setItem("ownquesta_request_show", JSON.stringify({ what: "code", ts: Date.now() })); } catch (e) {}
-      try { window.dispatchEvent(new CustomEvent("ownquesta_request_show", { detail: { what: "code" } })); } catch (e) {}
-      addChatMessage({ type: "ai", text: "OK — opening code panel on the main validation page. Navigate there to view.", timestamp: new Date().toLocaleTimeString() });
+    // Enhanced intelligent routing for various user intents
+    
+    // Code-related queries with context awareness
+    if (["show code", "code", "show eda code", "show ml code", "implementation", "python code", "documentation", "generate code", "view code"].some((k) => normalized.includes(k))) {
+      
+      // Check if validation has been completed and code is available
+      if (!edaResults && !validationResult) {
+        addChatMessage({ 
+          type: "ai", 
+          text: "📝 **I'd love to show you the code!**\n\nBut first, I need to analyze your dataset. Once I complete the validation, I'll have comprehensive Python code ready for you!\n\nJust say **'yes'** or **'start'** to begin! 🚀", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+        return;
+      }
+      
+      // Request code from main page and detect specific section
+      let codeSection = "full";
+      
+      if (["missing", "null", "nan", "fillna", "handle missing", "impute"].some(k => normalized.includes(k))) {
+        codeSection = "missing_values";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Code: Handling Missing Values**\n\nI'm highlighting the missing values handling section on the main page above!\n\n**What you'll see:**\n• Missing value detection\n• Multiple imputation strategies\n• Forward/backward fill methods\n• Drop missing rows/columns logic\n\n**Scroll up to see the code!** Look for the '# Handle Missing Values' section. 📊", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      else if (["correlation", "corr", "heatmap", "relationship"].some(k => normalized.includes(k))) {
+        codeSection = "correlation";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Code: Correlation Analysis**\n\nI'm highlighting the correlation analysis section on the main page above!\n\n**What you'll see:**\n• Correlation matrix calculation\n• Heatmap visualization\n• Feature relationship analysis\n• High correlation detection\n\n**Scroll up to see the code!** Look for the '# Correlation Analysis' section. 📈", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      else if (["plot", "visualize", "graph", "chart", "histogram", "scatter", "distribution"].some(k => normalized.includes(k))) {
+        codeSection = "visualization";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Code: Data Visualization**\n\nI'm highlighting the visualization section on the main page above!\n\n**What you'll see:**\n• Distribution plots (histograms)\n• Box plots for outliers\n• Scatter plots\n• Pair plots\n• Customized visualizations\n\n**Scroll up to see the code!** Look for the '# Visualization' section. 📊", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      else if (["model", "train", "fit", "machine learning", "classifier", "regressor", "algorithm"].some(k => normalized.includes(k))) {
+        codeSection = "model_training";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Code: Model Training**\n\nI'm highlighting the ML model training section on the main page above!\n\n**What you'll see:**\n• Train-test split\n• Feature scaling\n• Model selection & training\n• Prediction & evaluation\n• Feature importance\n\n**Scroll up to see the code!** Look for the '# Model Training' section. 🤖", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      else if (["preprocessing", "clean", "prepare", "transform", "encode"].some(k => normalized.includes(k))) {
+        codeSection = "preprocessing";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Code: Data Preprocessing**\n\nI'm highlighting the preprocessing section on the main page above!\n\n**What you'll see:**\n• Data cleaning steps\n• Feature encoding\n• Scaling & normalization\n• Train-test split\n• Pipeline creation\n\n**Scroll up to see the code!** Look for the '# Data Preprocessing' section. 🔧", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      else if (["eda", "exploratory", "analysis", "statistics", "describe"].some(k => normalized.includes(k))) {
+        codeSection = "eda";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Code: Exploratory Data Analysis**\n\nI'm highlighting the EDA section on the main page above!\n\n**What you'll see:**\n• Dataset overview\n• Statistical summaries\n• Data type analysis\n• Distribution checks\n• Initial insights\n\n**Scroll up to see the code!** Look for the '# Exploratory Data Analysis' section. 🔍", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      else {
+        // Show full code on main page
+        codeSection = "full";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Complete Python Code**\n\n📊 I'm displaying the full Python implementation on the main page above!\n\n**What you'll find:**\n• Complete EDA code\n• Statistical analysis\n• Data preprocessing\n• ML model training\n• Visualizations\n• All steps with comments\n\n**Pro Tip:** Ask me for specific sections:\n• \"show code for missing values\"\n• \"show correlation code\"\n• \"show visualization code\"\n• \"show model training code\"\n• \"show preprocessing code\"\n\n**Scroll up to see the full code!** 🚀", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      
+      // Dispatch event to main page to show code and scroll to specific section
+      try { 
+        localStorage.setItem("ownquesta_request_show", JSON.stringify({ 
+          what: "code", 
+          section: codeSection,
+          ts: Date.now() 
+        })); 
+      } catch (e) {}
+      try { 
+        window.dispatchEvent(new CustomEvent("ownquesta_request_show", { 
+          detail: { what: "code", section: codeSection } 
+        })); 
+      } catch (e) {}
+      
       return;
     }
 
-    if (["show insights", "show analysis", "insights"].some((k) => normalized.includes(k))) {
+    // Insights and analysis queries
+    if (["show insights", "show analysis", "insights", "results", "findings", "show results", "analysis", "summary", "report"].some((k) => normalized.includes(k))) {
       try { localStorage.setItem("ownquesta_request_show", JSON.stringify({ what: "insights", ts: Date.now() })); } catch (e) {}
       try { window.dispatchEvent(new CustomEvent("ownquesta_request_show", { detail: { what: "insights" } })); } catch (e) {}
-      addChatMessage({ type: "ai", text: "OK — opening insights on the main validation page. Navigate there to view.", timestamp: new Date().toLocaleTimeString() });
+      addChatMessage({ 
+        type: "ai", 
+        text: "📊 **Opening Insights Panel**\n\nDisplaying comprehensive analysis including:\n• Data quality metrics\n• Feature correlations\n• Distribution analysis\n• Actionable recommendations", 
+        timestamp: new Date().toLocaleTimeString() 
+      });
       return;
     }
 
-    if (["yes", "y", "sure", "start", "run", "go"].includes(normalized)) {
+    // Start/confirmation queries
+    if (["yes", "y", "sure", "start", "run", "go", "begin", "proceed", "ok", "okay", "let's go", "do it"].includes(normalized)) {
       startFlow();
       return;
     }
 
-    if (!edaResults) {
-      addChatMessage({ type: "ai", text: 'Please run EDA first — reply "yes" to start the ML validation which includes EDA.', timestamp: new Date().toLocaleTimeString() });
+    // Help and guidance
+    if (["help", "what can you do", "commands", "guide", "capabilities", "features", "?", "how"].some((k) => normalized.includes(k))) {
+      addChatMessage({ 
+        type: "ai", 
+        text: "🤖 **Hey! I'm Your Friendly ML Assistant!**\n\nI'm here to make machine learning easy and fun for you! Here's what I can help with:\n\n🎯 **Start Validation** → Just say 'yes' or 'start'\nI'll analyze your dataset with comprehensive EDA and ML validation!\n\n💻 **View Code** → Ask 'show code' or 'python code'\nI'll show you clean, ready-to-use Python implementation!\n\n📊 **See Insights** → Say 'insights' or 'show analysis'\nGet detailed EDA results and recommendations!\n\n❓ **Ask Questions** → Just ask naturally!\n• \"What features are most important?\"\n• \"Are there any missing values?\"\n• \"What model should I use?\"\n• \"How's my data quality?\"\n\n📈 **Get Guidance** → I'll recommend:\n• Best ML models for your goal\n• Feature engineering tips\n• Data preprocessing steps\n• Model optimization strategies\n\n💡 **Tip:** I'm conversational! Just talk to me like a friend. I'm here to help! 😊", 
+        timestamp: new Date().toLocaleTimeString() 
+      });
       return;
     }
 
+    // Data quality queries
+    if (["missing", "null", "data quality", "clean", "preprocessing"].some((k) => normalized.includes(k))) {
+      if (!edaResults) {
+        addChatMessage({ 
+          type: "ai", 
+          text: "📊 **Great Question!**\n\nI'd love to tell you about data quality, but first I need to analyze your dataset! 🔍\n\nJust say **'yes'** and I'll perform a comprehensive analysis including:\n• Missing value detection\n• Data type validation\n• Quality metrics\n• Preprocessing recommendations\n\nLet's do this together! 🚀", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+        return;
+      }
+      // Will be handled by API below
+    }
+
+    // Feature-related queries
+    if (["feature", "column", "variable", "correlation", "importance"].some((k) => normalized.includes(k))) {
+      if (!edaResults) {
+        addChatMessage({ 
+          type: "ai", 
+          text: "🔍 **I'm Ready to Analyze!**\n\nTo answer your question about features, I need to first explore your dataset in detail.\n\nSay **'yes'** or **'start'** and I'll analyze:\n• Feature types and distributions\n• Correlations and relationships\n• Feature importance\n• Engineering opportunities\n\nReady when you are! 😊", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+        return;
+      }
+      // Will be handled by API below
+    }
+
+    // Model selection queries
+    if (["model", "algorithm", "which", "best", "recommend", "suggest"].some((k) => normalized.includes(k))) {
+      if (!edaResults) {
+        addChatMessage({ 
+          type: "ai", 
+          text: "🎯 **Perfect Question!**\n\nI'd love to recommend the best models for you! But first, let me understand your data better.\n\nJust say **'yes'** and I'll:\n• Analyze your dataset characteristics\n• Identify the problem type\n• Recommend optimal ML models\n• Explain why they're the best fit\n\nLet me help you make the best choice! 💪", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+        return;
+      }
+      // Will be handled by API below
+    }
+
+    // Generic EDA requirement check
+    if (!edaResults) {
+      addChatMessage({ 
+        type: "ai", 
+        text: "📈 **I'm Excited to Help!**\n\nBefore I can answer that, I need to analyze your dataset first. Don't worry, it's super quick! ⚡\n\n**What I'll do:**\n• Comprehensive Exploratory Data Analysis\n• Feature analysis & insights\n• ML model recommendations\n• Generate Python code\n\n**Ready to start?** Just say **'yes'** and I'll begin! You can ask me any questions after the analysis is complete. 😊", 
+        timestamp: new Date().toLocaleTimeString() 
+      });
+      return;
+    }
+
+    // Intelligent Q&A using API
     setIsBusy(true);
     try {
       const res = await fetch("/api/validation/question", {
@@ -220,11 +603,68 @@ export default function ValidationAgentWidget({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q, eda_results: edaResults }),
       });
-      if (!res.ok) throw new Error(`Status ${res.status}`);
+      if (!res.ok) throw new Error(`I couldn't reach the analysis service (status ${res.status}). Let me try again...`);
       const j = await res.json();
-      addChatMessage({ type: "ai", text: j.answer || "No answer", timestamp: new Date().toLocaleTimeString() });
+      
+      // Use concise answer for chatbot (2-line response)
+      const conciseAnswer = j.concise || j.answer || "I'm analyzing that for you... Give me just a moment! 🔍";
+      const detailedAnswer = j.detailed || j.answer || "";
+      const codeSection = j.code_section; // Check if backend wants to show code
+      
+      // Show concise answer in chatbot (keep it short)
+      addChatMessage({ 
+        type: "ai", 
+        text: conciseAnswer, 
+        timestamp: new Date().toLocaleTimeString() 
+      });
+      
+      // If backend indicates code should be shown, trigger code display
+      if (codeSection) {
+        console.log('🔍 Backend requested code display for section:', codeSection);
+        try {
+          localStorage.setItem("ownquesta_request_show", JSON.stringify({ 
+            what: "code", 
+            section: codeSection === 'full' ? 'full' : codeSection,
+            ts: Date.now() 
+          }));
+        } catch (e) {
+          console.error('Failed to store code request:', e);
+        }
+        
+        try {
+          window.dispatchEvent(new CustomEvent("ownquesta_request_show", { 
+            detail: { 
+              what: "code", 
+              section: codeSection === 'full' ? 'full' : codeSection
+            } 
+          }));
+          console.log('✅ Code display event dispatched for section:', codeSection);
+        } catch (e) {
+          console.error('Failed to dispatch code request:', e);
+        }
+      }
+      
+      // Dispatch detailed answer to main page for display
+      if (detailedAnswer && detailedAnswer !== conciseAnswer) {
+        try {
+          window.dispatchEvent(new CustomEvent("ownquesta_detailed_answer", { 
+            detail: { 
+              question: q,
+              concise: conciseAnswer,
+              detailed: detailedAnswer,
+              timestamp: new Date().toISOString()
+            } 
+          }));
+        } catch (e) {
+          console.error('Failed to dispatch detailed answer:', e);
+        }
+      }
     } catch (err: any) {
-      addChatMessage({ type: "ai", text: `Error: ${err?.message || String(err)}`, timestamp: new Date().toLocaleTimeString() });
+      addChatMessage({ 
+        type: "ai", 
+        text: `⚠️ Connection issue. ${err?.message || "Try again or check the validation agent status."}`, 
+        timestamp: new Date().toLocaleTimeString() 
+      });
     } finally {
       setIsBusy(false);
     }
@@ -233,114 +673,212 @@ export default function ValidationAgentWidget({
   return (
     <>
       {visible && (
-        <div ref={panelRef} className={`fixed right-6 bottom-8 z-[60] transition-transform ${collapsed ? "translate-x-64" : "translate-x-0"}`} style={{ width: 460 }}>
-          <div className="flex flex-col bg-[#0f1724] border border-slate-700/40 rounded-xl shadow-lg overflow-hidden" style={{ height: "85vh", minHeight: 560 }}>
-        <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-br from-[#071228] to-[#071029] border-b border-slate-700/30">
-          <div className="flex items-center gap-3">
-            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" className="w-9 h-9" aria-hidden>
-              <defs>
-                <linearGradient id="headerGradientBest" x1="0" x2="1">
-                  <stop offset="0" stopColor="#7c3aed" />
-                  <stop offset="1" stopColor="#06b6d4" />
-                </linearGradient>
-                <filter id="headerGlowBest" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="3" result="b" />
-                  <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-                </filter>
-              </defs>
-              <rect width="48" height="48" rx="10" fill="url(#headerGradientBest)" />
-              <g filter="url(#headerGlowBest)" opacity="0.95">
-                <path d="M16 22c0-5 4-8 8-8s8 3 8 8-4 8-8 8-8-3-8-8z" fill="rgba(255,255,255,0.06)" />
-              </g>
-              <path d="M20 20c1.2-2 3-3 4-3s2.8 1 4 3c0 0 .6 1.2.6 2.6 0 2-1.6 3.6-3.6 3.6H19c-1.8 0-3.6-1.6-3.6-3.6 0-1.2.5-2.2 1.2-2.6z" fill="#fff" opacity="0.06" />
-              <path d="M19 18c.8-1.4 2-2.2 3-2.2s2.2.8 3 2.2" stroke="#fff" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" opacity="0.98" />
-            </svg>
-            <div className="flex flex-col leading-tight">
-              <div className="text-sm font-semibold text-white">Validation Agent</div>
-              <div className="text-xs text-slate-400">AI Data Scientist</div>
+        <div 
+          ref={panelRef} 
+          className={`fixed right-6 bottom-8 z-[60] transition-all duration-500 ease-out ${collapsed ? "translate-x-64 opacity-0" : "translate-x-0 opacity-100"}`} 
+          style={{ width: 480 }}
+        >
+          <div 
+            className="flex flex-col bg-gradient-to-br from-[#0a1120] via-[#0f1724] to-[#0a1120] border border-slate-700/50 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl" 
+            style={{ height: "92vh", minHeight: 650, maxHeight: 850 }}
+          >
+            {/* Enhanced Header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-br from-indigo-600/20 via-purple-600/20 to-cyan-600/20 border-b border-slate-700/40 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                {/* Premium AI Avatar with Glow */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-xl blur-lg opacity-60 animate-pulse"></div>
+                  <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 relative z-10" aria-hidden>
+                    <defs>
+                      <linearGradient id="headerGradientPremium" x1="0" x2="1" y1="0" y2="1">
+                        <stop offset="0" stopColor="#8b5cf6" />
+                        <stop offset="0.5" stopColor="#7c3aed" />
+                        <stop offset="1" stopColor="#06b6d4" />
+                      </linearGradient>
+                      <filter id="headerGlowPremium" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="2.5" result="b" />
+                        <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                      </filter>
+                    </defs>
+                    <rect width="48" height="48" rx="12" fill="url(#headerGradientPremium)" />
+                    <g filter="url(#headerGlowPremium)" opacity="0.95">
+                      <circle cx="19" cy="20" r="2.5" fill="#fff" />
+                      <circle cx="29" cy="20" r="2.5" fill="#fff" />
+                      <path d="M18 26c1-1.5 3-2 6-2s5 .5 6 2" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none" />
+                    </g>
+                  </svg>
+                </div>
+                <div className="flex flex-col leading-tight">
+                  <div className="text-base font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-cyan-300 bg-clip-text text-transparent">
+                    Validation Agent
+                  </div>
+                  <div className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    AI Data Scientist
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setVisible(false)} 
+                  title="Minimize Validation Agent" 
+                  aria-label="Minimize Validation Agent" 
+                  className="p-2 rounded-lg text-slate-300 hover:bg-slate-800/60 hover:text-white transition-all duration-200 hover:scale-105"
+                > 
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setVisible(false)} title="Close Validation Agent" aria-label="Close Validation Agent" className="p-2 rounded text-slate-300 hover:bg-slate-800/40 transition-colors"> 
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
 
-        <div className="p-3 h-full overflow-hidden">
-          <div className="flex flex-col h-full">
-              <div className="flex-1 overflow-y-auto pr-2 space-y-3" style={{ maxHeight: "calc(85vh - 160px)" }}>
-              {uniqueMessagesForRender(chatMessages || []).slice(-60).map((m, i) => (
-                <div key={i} className={`flex items-end gap-3 ${m.type === "user" ? "justify-end" : "justify-start"}`}>
-                  {m.type === "ai" && (
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-700 to-slate-600 text-white flex items-center justify-center mr-2 flex-shrink-0 ring-1 ring-slate-800 overflow-hidden">
-                      <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" aria-hidden>
-                        <defs>
-                          <linearGradient id="avatarGradientBest" x1="0" x2="1">
-                            <stop offset="0" stopColor="#8b5cf6" />
-                            <stop offset="1" stopColor="#06b6d4" />
-                          </linearGradient>
-                          <filter id="avatarGlowBest" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                        </defs>
-                        <rect width="36" height="36" rx="18" fill="url(#avatarGradientBest)" />
-                        <g filter="url(#avatarGlowBest)">
-                          <path d="M12.5 15.5c0-3 2-4.8 4.5-4.8s4.5 1.8 4.5 4.8S19 20.3 16.5 20.3 12.5 18.5 12.5 15.5z" fill="rgba(255,255,255,0.06)" />
-                        </g>
-                        <circle cx="14.5" cy="15.5" r="0.9" fill="#fff" />
-                        <circle cx="20" cy="15.5" r="0.9" fill="#fff" />
-                      </svg>
+            {/* Chat Area */}
+            <div className="p-4 h-full overflow-hidden">
+              <div className="flex flex-col h-full">
+                {/* Messages Container with Enhanced Scrolling */}
+                <div 
+                  ref={messagesRef} 
+                  className="flex-1 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent" 
+                  style={{ maxHeight: "calc(92vh - 180px)" }}
+                >
+                  {uniqueMessagesForRender(chatMessages || []).slice(-60).map((m, i) => (
+                    <div 
+                      key={i} 
+                      className={`flex items-end gap-3 animate-fadeIn ${m.type === "user" ? "justify-end" : "justify-start"}`}
+                      style={{ animation: "fadeIn 0.3s ease-out" }}
+                    >
+                      {/* AI Avatar */}
+                      {m.type === "ai" && (
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-500 text-white flex items-center justify-center flex-shrink-0 ring-2 ring-indigo-500/30 shadow-lg overflow-hidden">
+                          <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" aria-hidden>
+                            <circle cx="14" cy="14" r="1.5" fill="#fff" />
+                            <circle cx="22" cy="14" r="1.5" fill="#fff" />
+                            <path d="M13 19c1-1 3-1.5 5-1.5s4 .5 5 1.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                          </svg>
+                        </div>
+                      )}
+                      
+                      {/* Message Bubble */}
+                      <div 
+                        className={`${
+                          m.type === "user" 
+                            ? "bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30" 
+                            : "bg-gradient-to-br from-slate-800/90 via-slate-700/90 to-slate-800/90 text-slate-100 backdrop-blur-sm border border-slate-600/30"
+                        } max-w-[84%] rounded-2xl p-3.5 text-sm leading-relaxed relative transition-all duration-200 hover:shadow-xl`}
+                      > 
+                        <div className="text-[10px] text-slate-400 mb-1.5 font-medium">{m.timestamp}</div>
+                        <div className="whitespace-pre-wrap break-words">{m.text}</div>
+                      </div>
+                      
+                      {/* User Avatar */}
+                      {m.type === "user" && (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ring-2 ring-indigo-500/30 shadow-lg">
+                          You
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  <div ref={endRef} />
+
+                  {/* Enhanced Thinking Indicator */}
+                  {isBusy && (
+                    <div className="flex items-center gap-3 text-sm text-slate-300 bg-slate-800/40 rounded-xl p-3 backdrop-blur-sm animate-fadeIn">
+                      <div className="flex gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
+                      <span className="font-medium">Agent is thinking...</span>
                     </div>
                   )}
-                  <div className={`${m.type === "user" ? "bg-gradient-to-br from-indigo-600 to-indigo-500 text-white shadow-lg" : "bg-gradient-to-br from-slate-800 to-slate-700 text-slate-100"} max-w-[82%] rounded-2xl p-3 text-sm leading-relaxed relative`}> 
-                    <div className="text-[10px] text-slate-400 mb-1">{m.timestamp}</div>
-                    <div className="whitespace-pre-wrap">{m.text}</div>
-                  </div>
-                  {m.type === "user" && (
-                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">You</div>
-                  )}
                 </div>
-              ))}
 
-              {isBusy && <div className="flex items-center gap-2 text-sm text-slate-400"> <div className="w-2 h-2 rounded-full bg-slate-400 animate-pulse" /> Agent is thinking...</div>}
-            </div>
-
-            <div className="mt-auto space-y-0">
-              <div className="flex gap-3 items-center">
-                <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendQuestion()} placeholder={"Ask a question..."} className="flex-1 px-4 py-3 rounded-xl bg-[#061122] text-white text-sm outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 transition-shadow" />
-                <button onClick={sendQuestion} disabled={!input.trim() || isBusy} className="ml-2 w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-xl flex items-center justify-center shadow-lg transform hover:-translate-y-0.5 transition-all" title="Send">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M22 2L11 13" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>
-                </button>
+                {/* Enhanced Input Area */}
+                <div className="mt-auto pt-3 space-y-0">
+                  <div className="flex gap-2 items-center">
+                    <input 
+                      value={input} 
+                      onChange={(e) => setInput(e.target.value)} 
+                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendQuestion()} 
+                      placeholder="Ask me anything about your data..." 
+                      className="flex-1 px-4 py-3.5 rounded-xl bg-slate-900/60 border border-slate-700/50 text-white text-sm outline-none placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-200 backdrop-blur-sm" 
+                      disabled={isBusy}
+                    />
+                    <button 
+                      onClick={sendQuestion} 
+                      disabled={!input.trim() || isBusy} 
+                      className="w-12 h-12 bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-purple-500 disabled:from-slate-700 disabled:to-slate-600 disabled:cursor-not-allowed text-white rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30 transform hover:scale-105 active:scale-95 transition-all duration-200" 
+                      title="Send Message"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Enhanced Floating Button When Collapsed */}
+      {!visible && (
+        <div className="fixed right-6 bottom-8 z-[70]">
+          <div className="relative">
+            {/* Pulsing Glow Effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl blur-xl opacity-50 animate-pulse"></div>
+            
+            <button 
+              onClick={() => setVisible(true)} 
+              title="Open Validation Agent" 
+              aria-label="Open Validation Agent" 
+              className="relative w-14 h-14 bg-gradient-to-br from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:via-purple-500 hover:to-cyan-500 text-white rounded-xl flex items-center justify-center shadow-2xl ring-2 ring-indigo-500/30 transform hover:scale-110 active:scale-95 transition-all duration-200"
+            >
+              <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" aria-hidden>
+                <circle cx="14" cy="14" r="1.8" fill="#fff" />
+                <circle cx="22" cy="14" r="1.8" fill="#fff" />
+                <path d="M13 20c1-1.2 3-1.8 5-1.8s4 .6 5 1.8" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none" />
+              </svg>
+              
+              {/* Notification Dot */}
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-full border-2 border-slate-900 animate-pulse"></span>
+            </button>
+          </div>
         </div>
       )}
 
-      {!visible && (
-        <div className="fixed right-2 bottom-20 z-[70]">
-            <button onClick={() => setVisible(true)} title="Open Validation Agent" aria-label="Open Validation Agent" className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg flex items-center justify-center shadow-lg ring-1 ring-slate-800/60">
-              <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" aria-hidden>
-                <defs>
-                  <linearGradient id="openGradientBest" x1="0" x2="1">
-                    <stop offset="0" stopColor="#7c3aed" />
-                    <stop offset="1" stopColor="#06b6d4" />
-                  </linearGradient>
-                  <filter id="openGlowBest" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                </defs>
-                <rect width="36" height="36" rx="9" fill="url(#openGradientBest)" />
-                <g filter="url(#openGlowBest)">
-                  <path d="M13 15c0-3.2 2.3-5.2 5-5.2s5 2 5 5.2-2.3 5.2-5 5.2-5-2-5-5.2z" fill="rgba(255,255,255,0.06)" />
-                </g>
-                <circle cx="15.5" cy="15" r="1.2" fill="#fff" />
-                <circle cx="20" cy="15" r="1.2" fill="#fff" />
-              </svg>
-            </button>
-        </div>
-      )}
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background: rgba(71, 85, 105, 0.5);
+          border-radius: 3px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background: rgba(71, 85, 105, 0.7);
+        }
+      `}</style>
     </>
   );
 }

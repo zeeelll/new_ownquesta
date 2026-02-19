@@ -357,10 +357,21 @@ export default function DashboardPage() {
           localStorage.setItem('userAvatar', data.user.avatar || '');
         }
         loadDashboardData();
-      } catch (error) {
-        console.error('Auth error:', error);
-        showNotification('Authentication failed. Redirecting to login...', 'error');
-        setTimeout(() => router.push("/login"), 1500);
+      } catch (error: any) {
+        // Silently redirect to login if unauthorized (expected when not logged in)
+        if (error?.message === 'Unauthorized' || error?.message?.includes('Unauthorized')) {
+          console.log('Session expired or not authenticated. Redirecting to login...');
+          if (typeof window !== 'undefined') {
+            // Clear any stale session data
+            localStorage.removeItem('userAvatar');
+          }
+          router.push("/login");
+        } else {
+          // For other errors, show notification
+          console.error('Auth error:', error);
+          showNotification('Authentication failed. Redirecting to login...', 'error');
+          setTimeout(() => router.push("/login"), 1500);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -1025,14 +1036,14 @@ export default function DashboardPage() {
       )}
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-8 bg-transparent">
-        <div className="flex items-center gap-3">
+      <nav className="fixed top-0 left-0 right-0 h-14 sm:h-16 z-50 flex items-center justify-between px-4 sm:px-6 md:px-8 bg-transparent">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Logo href="/home" size="md" />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => router.push('/home')}
-            className="px-4 py-2 rounded-lg text-white font-medium text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all"
+            className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-white font-medium text-xs sm:text-sm bg-slate-700/50 border border-slate-600/20 backdrop-blur-md hover:bg-slate-700/80 transition-all"
           >
             Back
           </button>
@@ -1046,7 +1057,7 @@ export default function DashboardPage() {
               <img 
                 src={user?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.name || 'User')} 
                 alt="User" 
-                className="w-10 h-10 rounded-full border-2 border-indigo-500/60 hover:border-indigo-500" 
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-indigo-500/60 hover:border-indigo-500" 
               />
             </div>
             
@@ -1100,7 +1111,7 @@ export default function DashboardPage() {
 
       {/* Sidebar Menu */}
       <aside
-        className={`fixed top-16 left-0 w-80 h-[calc(100vh-4rem)] bg-gradient-to-b from-slate-800/95 to-slate-900/95 backdrop-blur-xl border-r border-indigo-500/20 z-[1000] transition-transform duration-400 ${
+        className={`fixed top-14 sm:top-16 left-0 w-full sm:w-80 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] bg-gradient-to-b from-slate-800/95 to-slate-900/95 backdrop-blur-xl border-r border-indigo-500/20 z-[1000] transition-transform duration-400 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } overflow-y-auto`}
       >
@@ -1113,29 +1124,29 @@ export default function DashboardPage() {
           ✕
         </Button>
 
-        <div className="p-6 border-b border-slate-700/50">
-          <h2 className="text-white text-xl font-bold mb-2">Select Platform</h2>
+        <div className="p-4 sm:p-6 border-b border-slate-700/50">
+          <h2 className="text-white text-lg sm:text-xl font-bold mb-1 sm:mb-2">Select Platform</h2>
           <p className="text-slate-400 text-xs">
             Choose your validation environment
           </p>
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
           <div
             onClick={() => selectModelType("machine-learning")}
-            className="flex items-center gap-4 p-5 rounded-xl bg-slate-800/80 border border-slate-600/50 hover:border-indigo-400 hover:bg-slate-700/60 cursor-pointer transition-all shadow-lg backdrop-blur-sm"
+            className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl bg-slate-800/80 border border-slate-600/50 hover:border-indigo-400 hover:bg-slate-700/60 cursor-pointer transition-all shadow-lg backdrop-blur-sm"
           >
-            <div className="w-12 h-12 flex items-center justify-center bg-indigo-500/20 rounded-lg text-2xl border border-indigo-500/30">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-indigo-500/20 rounded-lg text-xl sm:text-2xl border border-indigo-500/30">
               <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
             <div>
-              <h3 className="text-white text-base font-semibold">
+              <h3 className="text-white text-sm sm:text-base font-semibold">
                 Machine Learning
               </h3>
-              <p className="text-slate-400 text-xs">
+              <p className="text-slate-400 text-xs hidden sm:block">
                 Traditional ML models & algorithms
               </p>
             </div>
@@ -1143,18 +1154,18 @@ export default function DashboardPage() {
 
           <div
             onClick={() => selectModelType("deep-learning")}
-            className="flex items-center gap-4 p-5 rounded-xl bg-slate-800/30 border border-slate-700/30 hover:border-indigo-500/50 hover:bg-indigo-500/5 cursor-pointer transition-all"
+            className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl bg-slate-800/30 border border-slate-700/30 hover:border-indigo-500/50 hover:bg-indigo-500/5 cursor-pointer transition-all"
           >
-            <div className="w-12 h-12 flex items-center justify-center bg-indigo-500/15 rounded-lg text-2xl">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-indigo-500/15 rounded-lg text-xl sm:text-2xl">
               <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
             </div>
             <div>
-              <h3 className="text-white text-base font-semibold">
+              <h3 className="text-white text-sm sm:text-base font-semibold">
                 Deep Learning
               </h3>
-              <p className="text-slate-400 text-xs">
+              <p className="text-slate-400 text-xs hidden sm:block">
                 Neural networks & advanced AI
               </p>
             </div>
@@ -1163,31 +1174,31 @@ export default function DashboardPage() {
       </aside>
 
       {/* Main Content */}
-      <main className="pt-24 pb-12 px-6">
+      <main className="pt-16 sm:pt-20 md:pt-24 pb-8 sm:pb-12 px-3 sm:px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
           {/* Welcome Dashboard Section - Enhanced Visibility */}
-          <div className="mb-12 text-center relative overflow-hidden">
+          <div className="mb-8 sm:mb-12 text-center relative overflow-hidden">
             {/* Enhanced background with subtle animations */}
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-800/50 via-slate-800/40 to-slate-900/60 backdrop-blur-xl border border-slate-600/40 rounded-3xl shadow-2xl" />
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-indigo-500/15 to-purple-500/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-blue-500/10 to-cyan-500/15 rounded-full blur-3xl" />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 via-transparent to-slate-800/10 rounded-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-800/50 via-slate-800/40 to-slate-900/60 backdrop-blur-xl border border-slate-600/40 rounded-2xl sm:rounded-3xl shadow-2xl" />
+            <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-gradient-to-bl from-indigo-500/15 to-purple-500/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-36 sm:h-36 md:w-48 md:h-48 bg-gradient-to-tr from-blue-500/10 to-cyan-500/15 rounded-full blur-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 via-transparent to-slate-800/10 rounded-2xl sm:rounded-3xl" />
             
-            <div className="relative z-10 p-10">
-              <h1 className="text-6xl font-bold text-white mb-8 bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent drop-shadow-2xl tracking-tight">
+            <div className="relative z-10 p-4 sm:p-6 md:p-10">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 md:mb-8 bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent drop-shadow-2xl tracking-tight">
                 Welcome to Your AI Dashboard
               </h1>
-              <div className="max-w-3xl mx-auto mb-12">
-                <h2 className="text-2xl font-semibold text-slate-200 mb-5 tracking-wide">
+              <div className="max-w-3xl mx-auto mb-6 sm:mb-8 md:mb-12">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-slate-200 mb-3 sm:mb-4 md:mb-5 tracking-wide">
                   Dashboard Overview
                 </h2>
-                <p className="text-slate-300 text-lg leading-relaxed font-medium">
+                <p className="text-slate-300 text-sm sm:text-base md:text-lg leading-relaxed font-medium px-2">
                   Manage your AI validation projects with advanced analytics and insights. 
                   Get started by uploading a dataset, validating your data, or continue working on existing projects.
                 </p>
               </div>
 
-              <div className="flex flex-wrap justify-center gap-6 mb-8">
+              <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
                 <Button
                   onClick={() => {
                     setSidebarOpen(true);
@@ -1248,8 +1259,8 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Action Bar */}
-          <div className="mb-10">
-            <div className="flex flex-wrap gap-3">
+          <div className="mb-6 sm:mb-8 md:mb-10">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
               <Button 
                 variant="outline" 
                 size="sm"
@@ -1293,21 +1304,21 @@ export default function DashboardPage() {
           </div>
 
           {/* KPI Cards - Enhanced */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10 md:mb-12">
             {/* ML Verify Dataset */}
-            <div className="group relative rounded-2xl p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-green-400/50 hover:shadow-2xl hover:shadow-green-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+            <div className="group relative rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-green-400/50 hover:shadow-2xl hover:shadow-green-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
               {/* Background glow effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
               
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/30 group-hover:shadow-green-500/50 transition-all duration-300 group-hover:scale-110">
-                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/30 group-hover:shadow-green-500/50 transition-all duration-300 group-hover:scale-110">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-white mb-1 group-hover:text-green-300 transition-colors">
+                    <div className="text-2xl sm:text-3xl font-bold text-white mb-1 group-hover:text-green-300 transition-colors">
                       {stats.validations}
                     </div>
                   </div>
@@ -1319,19 +1330,19 @@ export default function DashboardPage() {
             </div>
 
             {/* Datasets Uploaded */}
-            <div className="group relative rounded-2xl p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+            <div className="group relative rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
               {/* Background glow effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
               
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-all duration-300 group-hover:scale-110">
-                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-all duration-300 group-hover:scale-110">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">
+                    <div className="text-2xl sm:text-3xl font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">
                       {stats.datasets}
                     </div>
                   </div>
@@ -1343,19 +1354,19 @@ export default function DashboardPage() {
             </div>
 
             {/* Avg Confidence */}
-            <div className="group relative rounded-2xl p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-purple-400/50 hover:shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+            <div className="group relative rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-purple-400/50 hover:shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
               {/* Background glow effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
               
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:shadow-purple-500/50 transition-all duration-300 group-hover:scale-110">
-                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:shadow-purple-500/50 transition-all duration-300 group-hover:scale-110">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-white mb-1 group-hover:text-purple-300 transition-colors">
+                    <div className="text-2xl sm:text-3xl font-bold text-white mb-1 group-hover:text-purple-300 transition-colors">
                       {stats.avgConfidence}%
                     </div>
                   </div>
@@ -1367,24 +1378,24 @@ export default function DashboardPage() {
             </div>
 
             {/* Total Rows Analyzed */}
-            <div className="group relative rounded-2xl p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-orange-400/50 hover:shadow-2xl hover:shadow-orange-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+            <div className="group relative rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-gradient-to-br from-slate-800/60 to-slate-900/40 backdrop-blur-xl border border-slate-700/30 hover:border-orange-400/50 hover:shadow-2xl hover:shadow-orange-500/25 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
               {/* Background glow effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
               
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:shadow-orange-500/50 transition-all duration-300 group-hover:scale-110">
-                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:shadow-orange-500/50 transition-all duration-300 group-hover:scale-110">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-white mb-1 group-hover:text-orange-300 transition-colors">
+                    <div className="text-2xl sm:text-3xl font-bold text-white mb-1 group-hover:text-orange-300 transition-colors">
                       {stats.totalRows.toLocaleString()}
                     </div>
                   </div>
                 </div>
-                <div className="text-slate-400 font-semibold text-sm tracking-wide group-hover:text-slate-300 transition-colors">
+                <div className="text-slate-400 font-semibold text-xs sm:text-sm tracking-wide group-hover:text-slate-300 transition-colors">
                   Total Rows Analyzed
                 </div>
               </div>

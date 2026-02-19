@@ -154,17 +154,17 @@ export default function HomePage() {
 
       {/* Navigation Bar */}
       <nav 
-        className={`fixed top-0 left-0 right-0 px-10 py-4 flex justify-between items-center bg-transparent z-[100] transition-all duration-500 ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}
+        className={`fixed top-0 left-0 right-0 px-4 sm:px-6 md:px-10 py-3 md:py-4 flex justify-between items-center bg-transparent z-[100] transition-all duration-500 ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}
       >
         <Logo href="/home" size="md" />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div id="user-dropdown" className="relative">
             <div 
               className="cursor-pointer transition-all hover:opacity-80"
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
             >
-              <img src={user.avatar || 'https://via.placeholder.com/36'} alt="User" className="w-10 h-10 rounded-full border-2 border-[rgba(110,84,200,0.6)] hover:border-[rgba(110,84,200,0.9)]" />
+              <img src={user.avatar || 'https://via.placeholder.com/36'} alt="User" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-[rgba(110,84,200,0.6)] hover:border-[rgba(110,84,200,0.9)]" />
             </div>
             
             {userDropdownOpen && (
@@ -191,13 +191,13 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section - Authenticated User Home */}
-      <section className="min-h-screen flex items-center justify-center px-5 pt-[180px] pb-[120px]">
+      <section className="min-h-screen flex items-center justify-center px-4 sm:px-5 md:px-8 pt-24 sm:pt-32 md:pt-[180px] pb-16 sm:pb-20 md:pb-[120px]">
         <div className="w-full max-w-[900px] text-center relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 gradient-text">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6 gradient-text">
             Hey {user.name?.split(' ')[0]}, Welcome to Ownquesta!
           </h1>
           
-          <p className="text-lg text-white leading-relaxed max-w-[700px] mx-auto mb-20">
+          <p className="text-sm sm:text-base md:text-lg text-white leading-relaxed max-w-[700px] mx-auto mb-12 sm:mb-16 md:mb-20 px-4">
             Start your journey with Ownquesta and transform data into powerful AI models—no coding required. Your next breakthrough is just one click away.
           </p>
 

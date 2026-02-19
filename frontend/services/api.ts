@@ -5,22 +5,51 @@ const BASE =
   "http://localhost:5000";
 
 export async function api(path: string, options: RequestInit = {}) {
-  const res = await fetch(`${BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    },
-    credentials: "include" // ✅ important for cookies/session
-  });
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      },
+      credentials: "include" // ✅ important for cookies/session
+    });
 
-  const data = await res.json().catch(() => ({}));
+    // Handle different response types
+    let data;
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      data = await res.json();
+    } else {
+      // For non-JSON responses (like 401, 403, etc.)
+      const text = await res.text();
+      data = text ? { message: text } : {};
+    }
 
-  if (!res.ok) {
-    throw new Error(data.message || "API Error");
+    if (!res.ok) {
+      // Provide clear error message based on status code
+      if (res.status === 401) {
+        throw new Error("Unauthorized");
+      } else if (res.status === 403) {
+        throw new Error("Forbidden");
+      } else if (res.status === 404) {
+        throw new Error("Not Found");
+      } else {
+        throw new Error(data.message || `API Error: ${res.status}`);
+      }
+    }
+
+    return data;
+  } catch (error: any) {
+    // Network errors or fetch failures
+    if (error.message === "Unauthorized" || error.message === "Forbidden") {
+      throw error; // Re-throw auth errors as-is
+    }
+    if (error.name === "TypeError" && error.message.includes("fetch")) {
+      throw new Error("Backend server is not responding. Make sure it's running on " + BASE);
+    }
+    throw error;
   }
-
-  return data;
 }
 
 // Test endpoint

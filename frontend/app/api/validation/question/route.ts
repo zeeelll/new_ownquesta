@@ -1,35 +1,38 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-// Proxy route for validation Q&A functionality
-const DEFAULT_TARGET = 'https://ownquestaagents-production.up.railway.app/validation/question';
+const VALIDATION_AGENT_URL = process.env.VALIDATION_AGENT_URL || 'http://localhost:8000';
 
-export async function POST(req: Request) {
-  const target = process.env.NEXT_PUBLIC_ML_VALIDATION_URL?.replace('/ml-validation/validate', '/validation/question') || DEFAULT_TARGET;
-
+export async function POST(request: NextRequest) {
   try {
-    const body = await req.json();
-
-    const res = await fetch(target, {
+    const body = await request.json();
+    
+    console.log('🔍 Proxying question to validation agent:', body.question);
+    
+    const response = await fetch(`${VALIDATION_AGENT_URL}/validation/question`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'accept': 'application/json',
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
     });
 
-    if (!res.ok) {
-      throw new Error(`API request failed: ${res.status}`);
+    if (!response.ok) {
+      console.error('❌ Validation agent error:', response.status, response.statusText);
+      return NextResponse.json(
+        { error: `Validation agent returned ${response.status}` },
+        { status: response.status }
+      );
     }
 
-    const result = await res.json();
-    return NextResponse.json(result);
-  } catch (err: any) {
-    console.error('Proxy to validation Q&A service failed:', err);
-    return NextResponse.json({ 
-      answer: 'Sorry, I couldn\'t process your question at the moment. Please try again later.',
-      error: 'Proxy error', 
-      message: String(err?.message || err) 
-    }, { status: 200 }); // Return 200 to avoid showing errors to user
+    const data = await response.json();
+    console.log('✅ Validation agent response received');
+    
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error('❌ Error calling validation agent:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to reach validation agent' },
+      { status: 500 }
+    );
   }
 }

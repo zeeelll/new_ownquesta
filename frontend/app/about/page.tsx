@@ -71,28 +71,28 @@ export default function AboutPage() {
       />
 
       {/* Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 px-10 py-5 flex justify-between items-center bg-transparent z-[100]">
+      <nav className="fixed top-0 left-0 right-0 px-4 sm:px-6 md:px-10 py-3 sm:py-4 md:py-5 flex justify-between items-center bg-transparent z-[100]">
         <Logo href="/home" size="md" />
         
         <Link 
           href="/"
-          className="px-6 py-2.5 bg-[rgba(110,84,200,0.15)] border border-[rgba(110,84,200,0.4)] rounded-lg text-sm font-semibold transition-all hover:bg-[rgba(110,84,200,0.3)] hover:border-[rgba(110,84,200,0.6)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(110,84,200,0.3)]"
+          className="px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-2.5 bg-[rgba(110,84,200,0.15)] border border-[rgba(110,84,200,0.4)] rounded-lg text-xs sm:text-sm font-semibold transition-all hover:bg-[rgba(110,84,200,0.3)] hover:border-[rgba(110,84,200,0.6)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(110,84,200,0.3)]"
         >
           Home
         </Link>
       </nav>
 
       {/* Main Container */}
-      <div className="max-w-[1100px] mx-auto mt-[100px] mb-[60px] px-6 py-10">
+      <div className="max-w-[1100px] mx-auto mt-16 sm:mt-20 md:mt-[100px] mb-10 sm:mb-12 md:mb-[60px] px-4 sm:px-5 md:px-6 py-6 sm:py-8 md:py-10">
         {/* Hero Section */}
-        <div className="text-center mb-20 py-[60px]">
-          <h1 className="text-4xl md:text-5xl font-bold mb-5 gradient-text">
+        <div className="text-center mb-12 sm:mb-16 md:mb-20 py-8 sm:py-10 md:py-[60px]">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 md:mb-5 gradient-text px-2">
             Making AI Easy for Everyone
           </h1>
-          <p className="text-xl text-[#9fb3d9] max-w-[700px] mx-auto mb-8 leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-[#9fb3d9] max-w-[700px] mx-auto mb-6 sm:mb-8 leading-relaxed px-2">
             Giving Smart Tools to All Creators
           </p>
-          <p className="text-base text-[#c5d4ed] max-w-[800px] mx-auto leading-loose">
+          <p className="text-sm sm:text-base text-[#c5d4ed] max-w-[800px] mx-auto leading-loose px-4">
             Ownquesta is a simple tool for machine learning. It helps people use AI without needing to be experts. Our app lets anyone, from beginners to business owners, make smart predictions from their data easily.
           </p>
         </div>
