@@ -288,28 +288,28 @@ Just say **'yes'** or **'start'** and I'll begin analyzing your dataset. Or feel
 
     const taskInfo = detectTaskType(userQuery);
     
-    // Create enhanced detailed messages
+    // Create welcome messages matching the screenshot
     try {
       const ts = new Date().toLocaleTimeString();
-      const concise: ChatMessage[] = [
+      const welcomeMessages: ChatMessage[] = [
         { 
           type: "ai", 
-          text: `🎉 **Excellent! Everything is ready!**\n\nI can see you've uploaded your dataset and set your goal. This is going to be exciting! Let me give you a quick overview...`, 
+          text: `**Excellent! Everything is ready!**\n\nI can see you've uploaded your dataset and set your goal. This is going to be exciting! Let me give you a quick overview...`, 
           timestamp: ts 
         },
         { 
           type: "ai", 
-          text: `📊 **Your Dataset:** ${actualFile.name}\n📦 **Size:** ${(actualFile.size / 1024).toFixed(2)} KB\n\n🎯 **Your Goal:** "${userQuery}"\n\n${taskInfo.emoji} **Detected Task Type:** ${taskInfo.type}\n💪 **My Confidence:** ${taskInfo.confidence}\n\nThis looks like a ${taskInfo.type.toLowerCase()} problem - perfect! I have lots of experience with these! 😊`, 
+          text: `📁 **Your Dataset:** ${actualFile.name}\n📦 **Size:** ${(actualFile.size / 1024).toFixed(2)} KB\n\n🎯 **Your Goal:** "${userQuery}"\n\n🔍 **Detected Task Type:** ${taskInfo.type}\n👍 **My Confidence:** ${taskInfo.confidence}\n\nThis looks like a ${taskInfo.type.toLowerCase()} problem - perfect! I have lots of experience with these! 😊`, 
           timestamp: ts 
         },
         { 
           type: "ai", 
-          text: `✨ **Here's what I'll do for you:**\n\n1️⃣ **Deep Dive EDA** - I'll analyze every aspect of your data\n2️⃣ **Quality Check** - I'll validate everything is ML-ready\n3️⃣ **Smart Recommendations** - I'll suggest the best models\n4️⃣ **Code Generation** - I'll create Python code you can use\n5️⃣ **Insights & Tips** - I'll share optimization ideas\n\n🚀 **Excited? Me too!** Just say **'yes'** or **'start'** and let's begin this ML journey together! 🎊`, 
+          text: `🚀 **Ready to begin?**\n\nAre you ready to start the ML validation process? Just type **'yes'** or **'start'** and I'll analyze your dataset in detail!`, 
           timestamp: ts 
         },
       ];
 
-      setChatMessages(concise);
+      setChatMessages(welcomeMessages);
       lastPayloadRef.current = { fileName: actualFile.name, goal: userQuery };
     } catch (e) {
       addChatMessage({
@@ -319,25 +319,6 @@ Just say **'yes'** or **'start'** and I'll begin analyzing your dataset. Or feel
       });
     }
   }, [actualFile, userQuery]);
-
-  // concise updates on dataset/goal changes
-  useEffect(() => {
-    try {
-      const prev = lastPayloadRef.current;
-      const fname = actualFile?.name || null;
-      const goal = userQuery || null;
-      let pushed = false;
-      if (fname && prev.fileName !== fname) {
-        addChatMessage({ type: "ai", text: `Dataset updated: ${fname}`, timestamp: new Date().toLocaleTimeString() });
-        pushed = true;
-      }
-      if (goal && prev.goal !== goal) {
-        addChatMessage({ type: "ai", text: `Goal updated: ${goal}`, timestamp: new Date().toLocaleTimeString() });
-        pushed = true;
-      }
-      if (pushed) lastPayloadRef.current = { fileName: fname, goal };
-    } catch (e) {}
-  }, [actualFile?.name, userQuery]);
 
   const startFlow = async () => {
     if (!actualFile) {
@@ -422,7 +403,7 @@ Just say **'yes'** or **'start'** and I'll begin analyzing your dataset. Or feel
       // Show simple completion message - detailed results displayed on main page
       addChatMessage({ 
         type: "ai", 
-        text: `✅ **ML Validation Complete!**\n\n🎉 Your dataset has been analyzed successfully!\n\n📊 **Check the main page above** to see:\n• Complete Exploratory Data Analysis\n• Detailed statistical summaries\n• ML Validation Report\n• Model recommendations\n• Data quality insights\n\n💬 **What's next?**\n• Ask me specific questions about your data\n• Type "show code" for Python implementation\n• Type "insights" to jump to the analysis section`, 
+        text: `✅ **ML Validation Complete!**\n\nYour dataset has been analyzed successfully. Check the main page now to see the complete Exploratory Data Analysis and ML Validation Report.`, 
         timestamp: new Date().toLocaleTimeString() 
       });
     } catch (e: any) {
@@ -446,15 +427,94 @@ Just say **'yes'** or **'start'** and I'll begin analyzing your dataset. Or feel
 
     // Enhanced intelligent routing for various user intents
     
-    // Code-related queries
+    // Code-related queries with context awareness
     if (["show code", "code", "show eda code", "show ml code", "implementation", "python code", "documentation", "generate code", "view code"].some((k) => normalized.includes(k))) {
-      try { localStorage.setItem("ownquesta_request_show", JSON.stringify({ what: "code", ts: Date.now() })); } catch (e) {}
-      try { window.dispatchEvent(new CustomEvent("ownquesta_request_show", { detail: { what: "code" } })); } catch (e) {}
-      addChatMessage({ 
-        type: "ai", 
-        text: "💻 **Opening Python Code Documentation**\n\n📊 I'm displaying comprehensive Python code on the main page above!\n\n**What you'll find:**\n• Complete Exploratory Data Analysis code\n• Statistical analysis with visualizations\n• Data preprocessing pipeline\n• ML model training examples\n• Easy-to-understand learning comments\n• Production-ready code\n\n**Features:**\n✅ Copy to clipboard\n✅ Download as .py file\n✅ All steps explained with comments\n✅ Customizable for your needs\n\nScroll up to see the code! 🚀", 
-        timestamp: new Date().toLocaleTimeString() 
-      });
+      
+      // Check if validation has been completed and code is available
+      if (!edaResults && !validationResult) {
+        addChatMessage({ 
+          type: "ai", 
+          text: "📝 **I'd love to show you the code!**\n\nBut first, I need to analyze your dataset. Once I complete the validation, I'll have comprehensive Python code ready for you!\n\nJust say **'yes'** or **'start'** to begin! 🚀", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+        return;
+      }
+      
+      // Request code from main page and detect specific section
+      let codeSection = "full";
+      
+      if (["missing", "null", "nan", "fillna", "handle missing", "impute"].some(k => normalized.includes(k))) {
+        codeSection = "missing_values";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Code: Handling Missing Values**\n\nI'm highlighting the missing values handling section on the main page above!\n\n**What you'll see:**\n• Missing value detection\n• Multiple imputation strategies\n• Forward/backward fill methods\n• Drop missing rows/columns logic\n\n**Scroll up to see the code!** Look for the '# Handle Missing Values' section. 📊", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      else if (["correlation", "corr", "heatmap", "relationship"].some(k => normalized.includes(k))) {
+        codeSection = "correlation";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Code: Correlation Analysis**\n\nI'm highlighting the correlation analysis section on the main page above!\n\n**What you'll see:**\n• Correlation matrix calculation\n• Heatmap visualization\n• Feature relationship analysis\n• High correlation detection\n\n**Scroll up to see the code!** Look for the '# Correlation Analysis' section. 📈", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      else if (["plot", "visualize", "graph", "chart", "histogram", "scatter", "distribution"].some(k => normalized.includes(k))) {
+        codeSection = "visualization";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Code: Data Visualization**\n\nI'm highlighting the visualization section on the main page above!\n\n**What you'll see:**\n• Distribution plots (histograms)\n• Box plots for outliers\n• Scatter plots\n• Pair plots\n• Customized visualizations\n\n**Scroll up to see the code!** Look for the '# Visualization' section. 📊", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      else if (["model", "train", "fit", "machine learning", "classifier", "regressor", "algorithm"].some(k => normalized.includes(k))) {
+        codeSection = "model_training";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Code: Model Training**\n\nI'm highlighting the ML model training section on the main page above!\n\n**What you'll see:**\n• Train-test split\n• Feature scaling\n• Model selection & training\n• Prediction & evaluation\n• Feature importance\n\n**Scroll up to see the code!** Look for the '# Model Training' section. 🤖", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      else if (["preprocessing", "clean", "prepare", "transform", "encode"].some(k => normalized.includes(k))) {
+        codeSection = "preprocessing";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Code: Data Preprocessing**\n\nI'm highlighting the preprocessing section on the main page above!\n\n**What you'll see:**\n• Data cleaning steps\n• Feature encoding\n• Scaling & normalization\n• Train-test split\n• Pipeline creation\n\n**Scroll up to see the code!** Look for the '# Data Preprocessing' section. 🔧", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      else if (["eda", "exploratory", "analysis", "statistics", "describe"].some(k => normalized.includes(k))) {
+        codeSection = "eda";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Code: Exploratory Data Analysis**\n\nI'm highlighting the EDA section on the main page above!\n\n**What you'll see:**\n• Dataset overview\n• Statistical summaries\n• Data type analysis\n• Distribution checks\n• Initial insights\n\n**Scroll up to see the code!** Look for the '# Exploratory Data Analysis' section. 🔍", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      else {
+        // Show full code on main page
+        codeSection = "full";
+        addChatMessage({ 
+          type: "ai", 
+          text: "💻 **Showing Complete Python Code**\n\n📊 I'm displaying the full Python implementation on the main page above!\n\n**What you'll find:**\n• Complete EDA code\n• Statistical analysis\n• Data preprocessing\n• ML model training\n• Visualizations\n• All steps with comments\n\n**Pro Tip:** Ask me for specific sections:\n• \"show code for missing values\"\n• \"show correlation code\"\n• \"show visualization code\"\n• \"show model training code\"\n• \"show preprocessing code\"\n\n**Scroll up to see the full code!** 🚀", 
+          timestamp: new Date().toLocaleTimeString() 
+        });
+      }
+      
+      // Dispatch event to main page to show code and scroll to specific section
+      try { 
+        localStorage.setItem("ownquesta_request_show", JSON.stringify({ 
+          what: "code", 
+          section: codeSection,
+          ts: Date.now() 
+        })); 
+      } catch (e) {}
+      try { 
+        window.dispatchEvent(new CustomEvent("ownquesta_request_show", { 
+          detail: { what: "code", section: codeSection } 
+        })); 
+      } catch (e) {}
+      
       return;
     }
 
@@ -546,29 +606,63 @@ Just say **'yes'** or **'start'** and I'll begin analyzing your dataset. Or feel
       if (!res.ok) throw new Error(`I couldn't reach the analysis service (status ${res.status}). Let me try again...`);
       const j = await res.json();
       
-      // Format and display intelligent response with friendly tone
-      const answer = j.answer || "I'm analyzing that for you... Give me just a moment! 🔍";
+      // Use concise answer for chatbot (2-line response)
+      const conciseAnswer = j.concise || j.answer || "I'm analyzing that for you... Give me just a moment! 🔍";
+      const detailedAnswer = j.detailed || j.answer || "";
+      const codeSection = j.code_section; // Check if backend wants to show code
       
-      // Add friendly wrapper to response
-      let formattedAnswer = answer;
-      if (answer.length > 200) {
-        formattedAnswer = `${answer.substring(0, 200)}...\n\n💡 **Want more details?** Check the main page for the complete analysis! I've put everything there for you.`;
-      }
-      
-      // Add encouraging closing
-      if (!formattedAnswer.includes('?') && !formattedAnswer.endsWith('!')) {
-        formattedAnswer += '\n\n💬 Have more questions? I\'m here to help!';
-      }
-      
+      // Show concise answer in chatbot (keep it short)
       addChatMessage({ 
         type: "ai", 
-        text: formattedAnswer, 
+        text: conciseAnswer, 
         timestamp: new Date().toLocaleTimeString() 
       });
+      
+      // If backend indicates code should be shown, trigger code display
+      if (codeSection) {
+        console.log('🔍 Backend requested code display for section:', codeSection);
+        try {
+          localStorage.setItem("ownquesta_request_show", JSON.stringify({ 
+            what: "code", 
+            section: codeSection === 'full' ? 'full' : codeSection,
+            ts: Date.now() 
+          }));
+        } catch (e) {
+          console.error('Failed to store code request:', e);
+        }
+        
+        try {
+          window.dispatchEvent(new CustomEvent("ownquesta_request_show", { 
+            detail: { 
+              what: "code", 
+              section: codeSection === 'full' ? 'full' : codeSection
+            } 
+          }));
+          console.log('✅ Code display event dispatched for section:', codeSection);
+        } catch (e) {
+          console.error('Failed to dispatch code request:', e);
+        }
+      }
+      
+      // Dispatch detailed answer to main page for display
+      if (detailedAnswer && detailedAnswer !== conciseAnswer) {
+        try {
+          window.dispatchEvent(new CustomEvent("ownquesta_detailed_answer", { 
+            detail: { 
+              question: q,
+              concise: conciseAnswer,
+              detailed: detailedAnswer,
+              timestamp: new Date().toISOString()
+            } 
+          }));
+        } catch (e) {
+          console.error('Failed to dispatch detailed answer:', e);
+        }
+      }
     } catch (err: any) {
       addChatMessage({ 
         type: "ai", 
-        text: `⚠️ **Oops! Connection Hiccup**\n\n${err?.message || "I couldn't reach the analysis service right now."}\n\n💡 **Don't worry!** This usually means:\n• The service might be starting up\n• Check your internet connection\n• The validation agent might need to be restarted\n\nTry asking again in a moment, or say **'help'** if you need assistance! 😊`, 
+        text: `⚠️ Connection issue. ${err?.message || "Try again or check the validation agent status."}`, 
         timestamp: new Date().toLocaleTimeString() 
       });
     } finally {

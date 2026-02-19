@@ -53,6 +53,8 @@ const MLStudioAdvanced: React.FC = () => {
   const [edaResults, setEdaResults] = useState<any>(null);
   const [showPythonCode, setShowPythonCode] = useState<boolean>(false);
   const [pythonCode, setPythonCode] = useState<string>('');
+  const [agentDetailedAnswer, setAgentDetailedAnswer] = useState<string>('');
+  const [showAgentAnswer, setShowAgentAnswer] = useState<boolean>(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasGoal = userQuery.trim().length > 0;
@@ -596,22 +598,97 @@ print(f"""
 `;
   };
 
+  // Extract specific section from generated Python code
+  const extractCodeSection = (fullCode: string, section: string): string => {
+    const sectionMap: Record<string, string[]> = {
+      'missing_values': ['STEP 4: Data Quality Assessment', 'STEP 5:'],
+      'correlation': ['STEP 7: Correlation Analysis', 'STEP 8:'],
+      'visualization': ['STEP 8: Data Visualization', 'STEP 9:'],
+      'model_training': ['STEP 11: Machine Learning Pipeline', 'SUMMARY'],
+      'preprocessing': ['STEP 9: Data Preprocessing', 'STEP 10:'],
+      'eda': ['STEP 3: Initial Data Exploration', 'STEP 4:']
+    };
+
+    const keywords = sectionMap[section];
+    if (!keywords || keywords.length === 0) {
+      return fullCode; // Return full code if section not found
+    }
+
+    // Find the section using the STEP markers
+    const lines = fullCode.split('\n');
+    let startIndex = -1;
+    let endIndex = -1;
+
+    // Find start of section
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes(keywords[0])) {
+        startIndex = i;
+        break;
+      }
+    }
+
+    // Find end of section (next STEP marker)
+    if (startIndex !== -1 && keywords.length > 1) {
+      for (let i = startIndex + 1; i < lines.length; i++) {
+        if (lines[i].includes(keywords[1])) {
+          endIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (endIndex === -1) {
+      endIndex = lines.length;
+    }
+
+    if (startIndex !== -1) {
+      const extractedLines = lines.slice(startIndex, endIndex);
+      return extractedLines.join('\n');
+    }
+
+    return fullCode; // Return full code if extraction failed
+  };
+
   // Listen for code display requests
   useEffect(() => {
     const handleShowCodeRequest = (event: any) => {
       try {
         const detail = event.detail;
         if (detail?.what === 'code') {
-          console.log('📝 Code display requested from validation agent');
+          console.log('📝 Code display requested from validation agent', detail.section || 'full');
           if (edaResults || validationResult) {
-            const code = generatePythonCode();
-            setPythonCode(code);
+            const fullCode = generatePythonCode();
+            
+            // Extract specific section if requested, otherwise show full code
+            let codeToShow = fullCode;
+            if (detail.section && detail.section !== 'full') {
+              console.log(`🎯 Extracting section: ${detail.section}`);
+              codeToShow = extractCodeSection(fullCode, detail.section);
+              
+              // Add section header if extraction was successful
+              if (codeToShow !== fullCode) {
+                const sectionTitle = detail.section.replace('_', ' ').toUpperCase();
+                codeToShow = `# ========================================\n# ${sectionTitle} SECTION\n# ========================================\n\n${codeToShow}`;
+              }
+            }
+            
+            setPythonCode(codeToShow);
             setShowPythonCode(true);
+            
             // Scroll to code section
             setTimeout(() => {
               const codeSection = document.getElementById('python-code-section');
               if (codeSection) {
                 codeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // Show notification if specific section was requested
+                if (detail.section && detail.section !== 'full') {
+                  const notification = document.createElement('div');
+                  notification.className = 'fixed top-24 right-8 bg-cyan-500/90 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
+                  notification.innerHTML = `📍 Showing: ${detail.section.replace('_', ' ').toUpperCase()} section`;
+                  document.body.appendChild(notification);
+                  setTimeout(() => notification.remove(), 3000);
+                }
               }
             }, 100);
           } else {
@@ -639,6 +716,37 @@ print(f"""
       window.removeEventListener('ownquesta_request_show', handleShowCodeRequest);
     };
   }, [edaResults, validationResult, actualFile, userQuery]);
+
+  // Listen for detailed answers from validation agent
+  useEffect(() => {
+    const handleDetailedAnswer = (event: any) => {
+      try {
+        const detail = event.detail;
+        if (detail?.detailed) {
+          console.log('📝 Received detailed answer from validation agent');
+          setAgentDetailedAnswer(detail.detailed);
+          setShowAgentAnswer(true);
+          
+          // Auto-scroll to answer section
+          setTimeout(() => {
+            const answerSection = document.getElementById('agent-answer-section');
+            if (answerSection) {
+              answerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 100);
+        }
+      } catch (e) {
+        console.error('❌ Error handling detailed answer:', e);
+      }
+    };
+
+    console.log('👂 Setting up event listener for detailed answers...');
+    window.addEventListener('ownquesta_detailed_answer', handleDetailedAnswer);
+
+    return () => {
+      window.removeEventListener('ownquesta_detailed_answer', handleDetailedAnswer);
+    };
+  }, []);
 
   // Basic column analysis (fallback)
   const analyzeColumns = async () => {
@@ -1165,14 +1273,11 @@ print(f"""
       if (existingIndex !== -1) {
         // Update existing project
         list[existingIndex] = project;
-        setChatMessages(prev => [...prev, { type: 'ai', text: `💾 Project "${project.name}" updated.`, timestamp: new Date().toLocaleTimeString() }]);
       } else {
         // Create new project - check for duplicates by name + dataset
         if (!list.some(p => p.name === project.name && p.dataset === project.dataset)) {
           list.unshift(project);
-          setChatMessages(prev => [...prev, { type: 'ai', text: `✅ Project "${project.name}" saved to dashboard.`, timestamp: new Date().toLocaleTimeString() }]);
         } else {
-          setChatMessages(prev => [...prev, { type: 'ai', text: `ℹ️ Project "${project.name}" already exists in dashboard.`, timestamp: new Date().toLocaleTimeString() }]);
           return; // Don't update stats or storage if duplicate
         }
       }
@@ -2006,6 +2111,34 @@ print(f"""
 
               {/* ML Goal Display Section removed per request */}
             </div>
+
+            {/* ========== AGENT DETAILED ANSWER ========== */}
+            {showAgentAnswer && agentDetailedAnswer && (
+              <div id="agent-answer-section" className="bg-gradient-to-br from-cyan-900/40 to-blue-900/30 rounded-2xl p-6 border-2 border-cyan-400/50 shadow-xl animate-fade-in mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-2xl font-bold text-cyan-300 flex items-center gap-2">
+                    🤖 Agent Response
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowAgentAnswer(false);
+                      setAgentDetailedAnswer('');
+                    }}
+                    className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg border border-red-400/40 transition-all duration-200 flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Close
+                  </button>
+                </div>
+                <div className="prose prose-invert max-w-none">
+                  <div className="whitespace-pre-wrap text-gray-200 leading-relaxed">
+                    {agentDetailedAnswer}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* ========== EXPLORATORY DATA ANALYSIS ========== */}
             {edaResults && !isValidating && (
