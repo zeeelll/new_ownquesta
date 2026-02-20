@@ -92,6 +92,68 @@ const MLStudioAdvanced: React.FC = () => {
     }
   };
 
+  // Format train/test split into friendly string
+  const formatSplit = (cfg: any): string => {
+    if (!cfg) return 'auto';
+    const splitRaw = cfg.split || cfg.train_test_split || cfg.test_size || cfg.test || cfg.train_size || cfg.split_ratio;
+    if (!splitRaw && typeof cfg === 'string') return cfg;
+    const s = splitRaw;
+    if (typeof s === 'string') {
+      if (s.includes('-')) {
+        const parts = s.split('-').map((p: string) => p.trim());
+        if (parts.length === 2) return `${parts[0]}% / ${parts[1]}%`;
+      }
+      return s;
+    }
+    if (typeof s === 'number') {
+      // assume fraction if <=1, otherwise percent
+      if (s > 0 && s <= 1) {
+        const testPct = Math.round(s * 100);
+        return `${100 - testPct}% / ${testPct}%`;
+      }
+      if (s >= 1 && s <= 100) {
+        const train = Math.round(s);
+        return `${train}% / ${100 - train}%`;
+      }
+      return String(s);
+    }
+    return String(s);
+  };
+
+  const formatCV = (cfg: any): string => {
+    if (!cfg) return 'auto';
+    const cv = cfg.cv || cfg.n_splits || cfg.folds || cfg.cv_folds;
+    if (!cv) return 'auto';
+    return `${cv} fold${cv === 1 ? '' : 's'}`;
+  };
+
+  // Suggest likely models client-side based on task/EDA when agent hasn't returned choices yet
+  const suggestModelsFromContext = (): string[] => {
+    try {
+      const taskRaw = validationResult?.goal_understanding?.interpreted_task || preprocessingConfig?.task || userQuery || '';
+      const task = (taskRaw || '').toString().toLowerCase();
+      const numericCount = (preprocessingConfig?.feature_summary?.numeric || []).length || 0;
+      const categoricalCount = (preprocessingConfig?.feature_summary?.categorical || []).length || 0;
+
+      if (task.includes('regress') || task.includes('regression') || task.includes('predict numeric')) {
+        return ['Linear Regression', 'Random Forest Regressor', 'XGBoost Regressor'];
+      }
+
+      if (task.includes('class') || task.includes('classification') || task.includes('predict')) {
+        // Prefer tree-based and linear models for classification
+        const list = ['Random Forest', 'Gradient Boosting', 'Logistic Regression', 'SVM'];
+        if (numericCount > 20 && categoricalCount < 5) list.push('KNN');
+        return list.slice(0, 5);
+      }
+
+      // Unknown task: pick a balanced shortlist
+      const mixed = ['Random Forest', 'Gradient Boosting', 'Logistic Regression'];
+      return mixed;
+    } catch {
+      return ['Random Forest', 'Gradient Boosting', 'Logistic Regression'];
+    }
+  };
+
   // Generate comprehensive Python code for EDA and ML
   const generatePythonCode = (): string => {
     const fileName = actualFile?.name || 'dataset.csv';
@@ -3785,45 +3847,64 @@ print(f"""
                     </h4>
                     
                     <div className="grid md:grid-cols-2 gap-6">
-                      {/* Feature Selection */}
+                      {/* Feature Selection (agent-driven, read-only) */}
                       <div className="bg-slate-800/50 rounded-lg p-5">
                         <h5 className="text-lg font-semibold text-cyan-200 mb-3">Feature Selection</h5>
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-gray-300">Remove Low Variance</span>
-                            <input type="checkbox" className="rounded" defaultChecked />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-gray-300">Correlation Filter</span>
-                            <input type="checkbox" className="rounded" defaultChecked />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-gray-300">Recursive Feature Elimination</span>
-                            <input type="checkbox" className="rounded" />
-                          </div>
+                          {preprocessingConfig && preprocessingConfig.feature_summary ? (
+                            <div>
+                              <div className="text-sm text-gray-300 mb-2">Agent-selected features ({(preprocessingConfig.feature_summary.selected_features || []).length}):</div>
+                              <div className="flex flex-wrap gap-2">
+                                {(preprocessingConfig.feature_summary.selected_features || []).map((f: string) => (
+                                  <span key={f} className="px-2 py-1 bg-indigo-700/40 text-indigo-100 rounded text-xs">{f}</span>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-400">No agent preprocessing yet. Click "Run Preprocessing" to let the agent decide.</div>
+                          )}
                         </div>
                       </div>
 
-                      {/* Scaling & Encoding */}
+                      {/* Scaling & Encoding (show agent choices) */}
                       <div className="bg-slate-800/50 rounded-lg p-5">
                         <h5 className="text-lg font-semibold text-cyan-200 mb-3">Scaling & Encoding</h5>
                         <div className="space-y-3">
-                          <div>
-                            <label className="block text-gray-300 mb-1">Numeric Scaling:</label>
-                            <select className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white">
-                              <option value="standard">Standard Scaler</option>
-                              <option value="minmax">Min-Max Scaler</option>
-                              <option value="robust">Robust Scaler</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-gray-300 mb-1">Categorical Encoding:</label>
-                            <select className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white">
-                              <option value="onehot">One-Hot Encoding</option>
-                              <option value="label">Label Encoding</option>
-                              <option value="target">Target Encoding</option>
-                            </select>
-                          </div>
+                          {preprocessingConfig && preprocessingConfig.suggested_transforms ? (
+                            (() => {
+                              const sug = preprocessingConfig.suggested_transforms || {};
+                              const scalingMap = sug.scaling || {};
+                              const encodingMap = sug.encoding || {};
+
+                              const getMostCommon = (m: any) => {
+                                const counts: Record<string, number> = {};
+                                Object.values(m || {}).forEach((v: any) => {
+                                  const key = (v || '').toString();
+                                  counts[key] = (counts[key] || 0) + 1;
+                                });
+                                const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+                                return entries.length ? entries[0][0] : 'N/A';
+                              };
+
+                              const numericChoice = getMostCommon(scalingMap);
+                              const categoricalChoice = getMostCommon(encodingMap);
+
+                              return (
+                                <>
+                                  <div>
+                                    <label className="block text-gray-300 mb-1">Numeric Scaling:</label>
+                                    <div className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white">{numericChoice}</div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-gray-300 mb-1">Categorical Encoding:</label>
+                                    <div className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white">{categoricalChoice}</div>
+                                  </div>
+                                </>
+                              );
+                            })()
+                          ) : (
+                            <div className="text-sm text-gray-400">No suggested transforms yet.</div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -3935,48 +4016,69 @@ print(f"""
                     </h4>
                     
                     <div className="grid lg:grid-cols-3 gap-6">
-                      {/* Model Selection */}
+                      {/* Model Selection (agent-driven, read-only) */}
                       <div className="bg-slate-800/50 rounded-lg p-5">
                         <h5 className="text-lg font-semibold text-purple-200 mb-3">Model Selection</h5>
                         <div className="space-y-3">
-                          {['Random Forest', 'Gradient Boosting', 'Logistic Regression', 'SVM', 'Neural Network'].map((model) => (
-                            <div key={model} className="flex items-center gap-2">
-                              <input type="checkbox" className="rounded" defaultChecked={model === 'Random Forest'} />
-                              <span className="text-gray-300">{model}</span>
+                          {modelTrainingConfig && modelTrainingConfig.trained_models ? (
+                            <div>
+                              <div className="text-sm text-gray-300 mb-2">Models the agent will train ({(modelTrainingConfig.trained_models || []).length}):</div>
+                              <div className="flex flex-wrap gap-2">
+                                {(modelTrainingConfig.trained_models || []).map((m: any, idx: number) => (
+                                  <span key={idx} className="px-2 py-1 bg-purple-700/40 text-purple-100 rounded text-xs">{m.name || m}</span>
+                                ))}
+                              </div>
                             </div>
-                          ))}
+                          ) : (
+                            <div>
+                              <div className="text-sm text-gray-400 mb-2">Agent will select models automatically. Likely candidates:</div>
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {suggestModelsFromContext().map((m) => (
+                                  <span key={m} className="px-2 py-1 bg-purple-700/20 text-purple-100 rounded text-xs">{m}</span>
+                                ))}
+                              </div>
+                              <div className="text-xs text-gray-400">Click "Train Selected Models (Model Agent)" to run and see final selection.</div>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {/* Training Config */}
+                      {/* Training Config (show agent choices) */}
                       <div className="bg-slate-800/50 rounded-lg p-5">
                         <h5 className="text-lg font-semibold text-purple-200 mb-3">Training Configuration</h5>
                         <div className="space-y-3">
-                          <div>
-                            <label className="block text-gray-300 mb-1">Train/Test Split:</label>
-                            <select className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white">
-                              <option value="80-20">80% / 20%</option>
-                              <option value="70-30">70% / 30%</option>
-                              <option value="75-25">75% / 25%</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-gray-300 mb-1">Cross Validation:</label>
-                            <input type="number" className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white" defaultValue={5} min={3} max={10} />
-                          </div>
+                          {modelTrainingConfig ? (
+                            <div>
+                              <div className="text-sm text-gray-300 mb-2">Train/Test Split</div>
+                              <div className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white">{formatSplit(modelTrainingConfig.train_config || modelTrainingConfig.config || modelTrainingConfig)}</div>
+                              <div className="text-sm text-gray-300 mt-3 mb-1">Cross Validation</div>
+                              <div className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white">{formatCV(modelTrainingConfig.train_config || modelTrainingConfig.config || modelTrainingConfig)}</div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-400">No training configuration yet — agent will decide split and CV settings.</div>
+                          )}
                         </div>
                       </div>
 
-                      {/* Evaluation Metrics */}
+                      {/* Evaluation Metrics (show agent-chosen metrics) */}
                       <div className="bg-slate-800/50 rounded-lg p-5">
                         <h5 className="text-lg font-semibold text-purple-200 mb-3">Evaluation Metrics</h5>
                         <div className="space-y-2">
-                          {['Accuracy', 'Precision', 'Recall', 'F1-Score', 'ROC-AUC'].map((metric) => (
-                            <div key={metric} className="flex items-center justify-between">
-                              <span className="text-gray-300">{metric}</span>
-                              <input type="checkbox" className="rounded" defaultChecked />
-                            </div>
-                          ))}
+                          {modelTrainingConfig && (modelTrainingConfig.evaluation_metrics || modelTrainingConfig.metrics) ? (
+                            (modelTrainingConfig.evaluation_metrics || modelTrainingConfig.metrics).map((metric: any, i: number) => (
+                              <div key={i} className="flex items-center justify-between">
+                                <span className="text-gray-300">{metric}</span>
+                                <span className="text-xs text-green-300">agent</span>
+                              </div>
+                            ))
+                          ) : (
+                            ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'ROC-AUC'].map((metric) => (
+                              <div key={metric} className="flex items-center justify-between">
+                                <span className="text-gray-300">{metric}</span>
+                                <span className="text-xs text-gray-400">default</span>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
