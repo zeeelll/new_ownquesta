@@ -3813,6 +3813,28 @@ print(f"""
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 Model Configuration Pipeline
+                <button
+                  title="Show Python code"
+                  onClick={() => {
+                    try {
+                      const code = generatePythonCode();
+                      setPythonCode(code);
+                      setShowPythonCode(true);
+                      setTimeout(() => {
+                        const el = document.getElementById('python-code-section');
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 80);
+                    } catch (e) {
+                      console.error('Failed to generate python code', e);
+                    }
+                  }}
+                  className="ml-4 inline-flex items-center justify-center p-2 rounded-md hover:bg-slate-700/40 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16l-4-4m0 0l4-4m-4 4h12" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8l4 4m0 0l-4 4m4-4H8" />
+                  </svg>
+                </button>
               </h3>
               
               {/* Configuration Step Navigation */}
@@ -4024,10 +4046,53 @@ print(f"""
                             <div>
                               <div className="text-sm text-gray-300 mb-2">Models the agent will train ({(modelTrainingConfig.trained_models || []).length}):</div>
                               <div className="flex flex-wrap gap-2">
-                                {(modelTrainingConfig.trained_models || []).map((m: any, idx: number) => (
-                                  <span key={idx} className="px-2 py-1 bg-purple-700/40 text-purple-100 rounded text-xs">{m.name || m}</span>
-                                ))}
+                                {(() => {
+                                  const trained = modelTrainingConfig.trained_models || [];
+                                  const bestName = modelTrainingConfig?.best_model?.name;
+                                  return trained.map((m: any, idx: number) => {
+                                    const name = m?.name || m;
+                                    const isBest = name && bestName && name === bestName;
+                                    return (
+                                      <span
+                                        key={idx}
+                                        className={`px-2 py-1 rounded text-xs ${isBest ? 'bg-green-600 text-white ring-2 ring-green-400' : 'bg-purple-700/40 text-purple-100'}`}
+                                        title={isBest ? 'Best model selected by agent' : name}
+                                      >
+                                        {name}
+                                      </span>
+                                    );
+                                  });
+                                })()}
                               </div>
+
+                              {/* Per-model results (small summary) */}
+                              {modelTrainingConfig.results && Array.isArray(modelTrainingConfig.results) && (
+                                <div className="mt-3 space-y-2 text-sm">
+                                  {modelTrainingConfig.results.map((r: any, i: number) => {
+                                    const name = r.name || r.model || `model_${i}`;
+                                    const bestName = modelTrainingConfig?.best_model?.name;
+                                    const isBest = name && bestName && name === bestName;
+                                    let metricText = '';
+                                    if (r.accuracy !== undefined) metricText = `Accuracy: ${Number(r.accuracy).toFixed(3)}`;
+                                    else if (r.f1 !== undefined) metricText = `F1: ${r.f1 !== null ? Number(r.f1).toFixed(3) : 'n/a'}`;
+                                    else if (r.rmse !== undefined) metricText = `RMSE: ${Number(r.rmse).toFixed(3)}`;
+                                    else if (r.r2 !== undefined) metricText = `R2: ${Number(r.r2).toFixed(3)}`;
+                                    else if (r.silhouette !== undefined) metricText = `Silhouette: ${r.silhouette !== null ? Number(r.silhouette).toFixed(3) : 'n/a'}`;
+                                    else if (r.note) metricText = r.note;
+                                    else if (r.error) metricText = `Error: ${r.error}`;
+
+                                    return (
+                                      <div key={i} className={`flex items-center justify-between p-2 rounded-md ${isBest ? 'bg-green-900/20 border border-green-700/30' : 'bg-slate-800/30 border border-slate-700/30'}`}>
+                                        <div className="font-medium text-sm text-white">{name}</div>
+                                        <div className="flex items-center gap-2">
+                                          <div className="text-xs text-gray-300">{metricText}</div>
+                                          {isBest && <div className="text-xs bg-green-500 text-white px-2 py-0.5 rounded">Best</div>}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div>
@@ -4091,21 +4156,37 @@ print(f"""
                             const base = (VALIDATION_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
                             const payload: any = { eda_result: edaResults || preprocessingConfig || null, goal: { text: userQuery || '' } };
 
-                            // If preprocessing produced a processed_sample or features, include them
+                            // If preprocessing produced a processed_sample, include it so model_agent can build a DataFrame
                             if (preprocessingConfig && preprocessingConfig.processed_sample) {
-                              payload.features = preprocessingConfig.processed_sample;
+                              payload.processed_sample = preprocessingConfig.processed_sample;
                             }
 
-                            const res = await fetch(`${base}/model/create_and_train`, {
+                            // Try canonical prefix first, then fallback to folder-based prefix
+                            let res = await fetch(`${base}/model/create_and_train`, {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify(payload),
                             });
 
+                            if (res.status === 404) {
+                              // try alternate prefix used by main.py when registering routers
+                              res = await fetch(`${base}/model_agent/create_and_train`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload),
+                              });
+                            }
+
                             if (!res.ok) throw new Error(`Model agent returned ${res.status}`);
                             const json = await res.json();
                             setModelTrainingConfig(json);
-                            setModelConfigStep('comparison');
+                            // Only move to comparison if training succeeded
+                            if (json && (json.status === 'success' || json.status === 'ok')) {
+                              setModelConfigStep('comparison');
+                            } else {
+                              // keep user on modeling tab and surface message
+                              console.warn('Model agent did not return success:', json);
+                            }
                           } catch (err: any) {
                             console.error('Model agent error:', err);
                             setModelTrainingConfig({ error: String(err?.message || err) });
@@ -4137,131 +4218,133 @@ print(f"""
                       📈 Model Comparison & Analysis
                     </h4>
                     
-                    {/* Model Performance Comparison Table */}
+                    {/* Model Performance Comparison: call Moco Agent and display only comparison + best model */}
                     <div className="bg-slate-800/50 rounded-lg p-5 mb-6">
                       <h5 className="text-lg font-semibold text-green-200 mb-3">Performance Comparison</h5>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b border-slate-600">
-                              <th className="text-left p-3 text-gray-300">Model</th>
-                              <th className="text-left p-3 text-gray-300">Accuracy</th>
-                              <th className="text-left p-3 text-gray-300">Precision</th>
-                              <th className="text-left p-3 text-gray-300">Recall</th>
-                              <th className="text-left p-3 text-gray-300">F1-Score</th>
-                              <th className="text-left p-3 text-gray-300">Training Time</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {[
-                              { name: 'Random Forest', accuracy: 94.2, precision: 93.8, recall: 94.5, f1: 94.1, time: '2.3s' },
-                              { name: 'Gradient Boosting', accuracy: 92.7, precision: 92.1, recall: 93.2, f1: 92.6, time: '5.7s' },
-                              { name: 'Logistic Regression', accuracy: 89.4, precision: 88.9, recall: 90.1, f1: 89.5, time: '0.8s' }
-                            ].map((model, idx) => (
-                              <tr key={model.name} className={`border-b border-slate-700/50 ${idx === 0 ? 'bg-green-900/20' : ''}`}>
-                                <td className={`p-3 font-medium ${idx === 0 ? 'text-green-300' : 'text-white'}`}>
-                                  {model.name} {idx === 0 && '👑'}
-                                </td>
-                                <td className="p-3 text-white">{model.accuracy}%</td>
-                                <td className="p-3 text-white">{model.precision}%</td>
-                                <td className="p-3 text-white">{model.recall}%</td>
-                                <td className="p-3 text-white">{model.f1}%</td>
-                                <td className="p-3 text-gray-300">{model.time}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                      <div className="mb-4">
+                        <button
+                          onClick={async () => {
+                            try {
+                              const base = (VALIDATION_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+                              // Use modelTrainingConfig.results (which should include paths) or trained_models
+                              const summaries = modelTrainingConfig?.results || modelTrainingConfig?.trained_models || [];
+                              const payload = { model_summaries: summaries, processed_sample: preprocessingConfig?.processed_sample || edaResults?.sample || null, eda_result: edaResults || validationResult || null, goal: { text: userQuery || '' } };
 
-                    <div className="mt-4 text-center">
-                      <button
-                        onClick={async () => {
-                          try {
-                            const base = (VALIDATION_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
-                              const summaries = modelTrainingConfig?.summary || [];
-                              const payload = { model_summaries: summaries, eda_result: edaResults || validationResult || null, goal: { text: userQuery || '' } };
-
-                              if ((!payload.model_summaries || payload.model_summaries.length === 0) && !(preprocessingConfig?.processed_sample || edaResults?.sample || null)) {
-                                // Nothing to compare — report back to UI instead of calling the agent
+                              if ((!payload.model_summaries || payload.model_summaries.length === 0) && !payload.processed_sample) {
                                 setModelComparisonResults({ error: 'No model summaries or processed sample available for comparison' });
                                 return;
                               }
 
-                              const res = await fetch(`${base}/moco/compare`, {
+                              // Try canonical prefix first, then fallback to folder-based prefix
+                              let res = await fetch(`${base}/moco/compare`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(payload),
                               });
 
+                              if (res.status === 404) {
+                                res = await fetch(`${base}/moco_agent/compare`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify(payload),
+                                });
+                              }
+
                               if (!res.ok) {
                                 let errBody = '';
                                 try { errBody = await res.text(); } catch (e) { errBody = String(e); }
-                                console.warn('Moco compare returned non-ok status', res.status, errBody);
                                 setModelComparisonResults({ error: `Moco agent returned ${res.status}: ${errBody}` });
-                              } else {
-                                const json = await res.json();
-                                setModelComparisonResults(json);
+                                return;
                               }
-                          } catch (err) {
-                            console.error('Moco agent error:', err);
-                            setModelComparisonResults({ error: String(err) });
-                          }
-                        }}
-                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium"
-                      >
-                        Run Comparison (Moco Agent)
-                      </button>
-                    </div>
 
-                    {/* Gen explanations removed per user request */}
-
-                    {/* Best Model Insights */}
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="bg-slate-800/50 rounded-lg p-5">
-                        <h5 className="text-lg font-semibold text-green-200 mb-3">🏆 Best Model: Random Forest</h5>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-300">Overall Score:</span>
-                            <span className="text-green-300 font-bold">94.2%</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-300">Cross-Val Score:</span>
-                            <span className="text-white">93.8% ± 1.2%</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-300">Overfitting Risk:</span>
-                            <span className="text-yellow-300">Low</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-300">Interpretability:</span>
-                            <span className="text-blue-300">High</span>
-                          </div>
-                        </div>
+                              const json = await res.json();
+                              // Normalize response: keep evaluations/results, best model and any message/status returned
+                              const evaluations = json.evaluations || json.results || json.models || [];
+                              const best = json.best_model || json.best || json.bestModel || json.best_model_summary || null;
+                              const message = json.message || json.msg || (json.status === 'no_models' ? 'No model artifacts found by the Moco agent.' : null);
+                              const status = json.status || null;
+                              setModelComparisonResults({ evaluations, best_model: best, message, status, raw: json });
+                            } catch (err) {
+                              console.error('Moco agent error:', err);
+                              setModelComparisonResults({ error: String(err) });
+                            }
+                          }}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium"
+                        >
+                          Run Comparison (Moco Agent)
+                        </button>
                       </div>
 
-                      <div className="bg-slate-800/50 rounded-lg p-5">
-                        <h5 className="text-lg font-semibold text-green-200 mb-3">📊 Feature Importance</h5>
-                        <div className="space-y-2">
-                          {[
-                            { feature: 'spending_score', importance: 0.35 },
-                            { feature: 'annual_income', importance: 0.28 },
-                            { feature: 'age', importance: 0.22 },
-                            { feature: 'gender', importance: 0.15 }
-                          ].map((item) => (
-                            <div key={item.feature} className="flex items-center gap-2">
-                              <div className="text-xs text-gray-400 w-20 truncate">{item.feature}</div>
-                              <div className="flex-1 bg-slate-700 rounded h-2">
-                                <div 
-                                  className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded" 
-                                  style={{ width: `${item.importance * 100}%` }}
-                                />
-                              </div>
-                              <div className="text-xs text-white w-8">{(item.importance * 100).toFixed(0)}%</div>
-                            </div>
-                          ))}
+                      {/* Display comparisons returned by moco */}
+                      {modelComparisonResults?.error && (
+                        <div className="text-sm text-yellow-300">{modelComparisonResults.error}</div>
+                      )}
+                      {modelComparisonResults?.message && (
+                        <div className="text-sm text-gray-200">{modelComparisonResults.message}</div>
+                      )}
+
+                      {modelComparisonResults?.evaluations && Array.isArray(modelComparisonResults.evaluations) && (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-slate-600">
+                                <th className="text-left p-3 text-gray-300">Model</th>
+                                <th className="text-left p-3 text-gray-300">Primary Metric</th>
+                                <th className="text-left p-3 text-gray-300">Secondary</th>
+                                <th className="text-left p-3 text-gray-300">Extra</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {modelComparisonResults.evaluations.map((m: any, idx: number) => {
+                                const name = m.name || m.model || (m.path ? (m.path.split('/').pop()) : `model_${idx}`);
+                                let primary = '';
+                                if (m.accuracy !== undefined) primary = `Accuracy: ${Number(m.accuracy).toFixed(3)}`;
+                                else if (m.r2 !== undefined) primary = `R2: ${Number(m.r2).toFixed(3)}`;
+                                else if (m.rmse !== undefined) primary = `RMSE: ${Number(m.rmse).toFixed(3)}`;
+                                else if (m.silhouette !== undefined) primary = `Silhouette: ${m.silhouette !== null ? Number(m.silhouette).toFixed(3) : 'n/a'}`;
+                                else if (m.score !== undefined) primary = `Score: ${Number(m.score).toFixed(3)}`;
+                                const secondary = m.f1 !== undefined ? `F1: ${Number(m.f1).toFixed(3)}` : (m.auc !== undefined ? `AUC: ${Number(m.auc).toFixed(3)}` : '');
+                                const extra = m.path ? `path: ${m.path}` : (m.note || m.error || '');
+                                // Support best_model as string or object
+                                let bestName: string | null = null;
+                                if (modelComparisonResults.best_model) {
+                                  const bm = modelComparisonResults.best_model;
+                                  bestName = typeof bm === 'string' ? bm : (bm.name || bm.model || (bm.path ? bm.path.split('/').pop() : null));
+                                }
+                                const isBest = bestName && bestName === name;
+                                return (
+                                  <tr key={name} className={`border-b border-slate-700/50 ${isBest ? 'bg-green-900/20' : ''}`}>
+                                    <td className={`p-3 font-medium ${isBest ? 'text-green-300' : 'text-white'}`}>{name} {isBest && '👑'}</td>
+                                    <td className="p-3 text-white">{primary}</td>
+                                    <td className="p-3 text-white">{secondary}</td>
+                                    <td className="p-3 text-gray-300 truncate max-w-md">{extra}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
                         </div>
-                      </div>
+                      )}
+
+                      {/* Best model card */}
+                      {modelComparisonResults?.best_model && (
+                        <div className="mt-6 bg-slate-800/40 rounded-lg p-4 border border-green-700/30">
+                          {(() => {
+                            const bm = modelComparisonResults.best_model;
+                            const displayName = typeof bm === 'string' ? bm : (bm?.name || bm?.model || (bm?.path ? bm.path.split('/').pop() : null) || 'Best Model');
+                            const artifactPath = typeof bm === 'string' ? null : (bm?.path || bm?.artifact || null);
+                            return (
+                              <>
+                                <div className="text-lg font-semibold text-green-300">🏆 Best Model: {displayName}</div>
+                                <div className="text-sm text-gray-300 mt-2">Selected by the Moco Agent based on re-evaluation of provided models.</div>
+                                {artifactPath && (
+                                  <div className="text-xs text-gray-400 mt-2">Artifact: {artifactPath}</div>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
