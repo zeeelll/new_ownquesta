@@ -118,3 +118,11 @@ export async function getAllActivities(limit?: number, skip?: number) {
   if (skip) params.append('skip', skip.toString());
   return api(`/api/admin/activities?${params.toString()}`);
 }
+
+// Gen agent (explain) — proxies to backend /api/gen/explain
+export async function explainModelViaGen(best_model: any, eda_result?: any, goal?: any, processed_sample?: any, model_summaries?: any) {
+  return api('/api/gen/explain', {
+    method: 'POST',
+    body: JSON.stringify({ best_model, eda_result, goal, processed_sample, model_summaries })
+  });
+}

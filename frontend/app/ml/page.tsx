@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import './ml.css';
+import { explainModelViaGen } from '../../services/api';
 import Logo from '../components/Logo';
 import Button from '../components/Button';
 
@@ -39,6 +40,16 @@ const MLPage: React.FC = () => {
   const [selectedTask, setSelectedTask] = useState<string>('');
   const [userQuery, setUserQuery] = useState<string>('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [preprocessingConfig, setPreprocessingConfig] = useState<any | null>(null);
+  const [processedSample, setProcessedSample] = useState<any[] | null>(null);
+  const [isRunningFP, setIsRunningFP] = useState(false);
+  const [isTraining, setIsTraining] = useState(false);
+  const [trainingResults, setTrainingResults] = useState<any | null>(null);
+  const [bestModelInfo, setBestModelInfo] = useState<any | null>(null);
+  const [isExplaining, setIsExplaining] = useState(false);
+  const [genExplainResult, setGenExplainResult] = useState<any | null>(null);
+  const [isComparing, setIsComparing] = useState(false);
+  const [mocoResults, setMocoResults] = useState<any | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<{ name?: string; avatar?: string } | null>(null);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -364,6 +375,99 @@ const MLPage: React.FC = () => {
       }]);
     }, 800);
   };
+
+  // Build a small CSV text from preview to send to FP agent
+  const buildCsvFromPreview = () => {
+    if (!dataPreview) return '';
+    const header = dataPreview.columns.join(',');
+    const rows = dataPreview.rows.map(r => r.map(c => (c ?? '')).join(','));
+    return [header, ...rows].join('\n');
+  };
+
+  const runFPProcessing = async () => {
+    try {
+      setIsRunningFP(true);
+      const base = process.env.NEXT_PUBLIC_ML_VALIDATION_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const url = `${base.replace(/\/$/, '')}/fp/process`;
+      const csv_text = buildCsvFromPreview();
+      const payload = { csv_text, eda_result: { summary: 'preview' } };
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`FP agent error: ${res.status}`);
+      const data = await res.json();
+      setPreprocessingConfig(data);
+      if (data?.processed_sample) setProcessedSample(data.processed_sample);
+    } catch (err) {
+      console.error('FP processing failed', err);
+    } finally {
+      setIsRunningFP(false);
+    }
+  };
+
+  const runModelTraining = async () => {
+    if (!preprocessingConfig && !processedSample) {
+      alert('No preprocessing result available to train on.');
+      return;
+    }
+    try {
+      setIsTraining(true);
+      setTrainingResults(null);
+      setBestModelInfo(null);
+      const base = process.env.NEXT_PUBLIC_ML_VALIDATION_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const url = `${base.replace(/\/$/, '')}/model/create_and_train`;
+      const payload: any = { goal: { task: selectedTask || 'classification', metric: 'accuracy' } };
+      if (preprocessingConfig && preprocessingConfig.processed_sample) payload.processed_sample = preprocessingConfig.processed_sample;
+      else if (processedSample) payload.processed_sample = processedSample;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`Model agent error: ${res.status}`);
+      const data = await res.json();
+      setTrainingResults(data);
+      if (data?.best_model) setBestModelInfo(data.best_model);
+      // After training, trigger moco compare automatically if possible
+      try {
+        const base = process.env.NEXT_PUBLIC_ML_VALIDATION_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const compUrl = `${base.replace(/\/$/, '')}/moco/compare`;
+        const payload: any = { model_summaries: data.results || [], processed_sample: preprocessingConfig?.processed_sample || processedSample };
+        setIsComparing(true);
+        const cres = await fetch(compUrl, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        if (cres.ok) {
+          const cdata = await cres.json();
+          setMocoResults(cdata);
+        } else {
+          console.warn('Moco compare failed', cres.status);
+        }
+      } catch (e) {
+        console.error('Moco compare encountered error', e);
+      } finally {
+        setIsComparing(false);
+      }
+    } catch (err) {
+      console.error('Model training failed', err);
+      alert('Model training failed: ' + (err as any).message);
+    } finally {
+      setIsTraining(false);
+    }
+  };
+
+  
+
+  // Automatically run FP when entering configure step
+  useEffect(() => {
+    if (currentStep === 'configure' && !preprocessingConfig) {
+      runFPProcessing();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep]);
 
   if (!isHydrated) return null;
 
@@ -794,7 +898,132 @@ const MLPage: React.FC = () => {
           </div>
         )}
 
-        {/* Chat section removed */}
+        {/* Configure / Preprocessing UI */}
+        {currentStep === 'configure' && (
+          <div className="ml-section configure-section">
+            <div className="section-header">
+              <div className="section-title">
+                <h2>Preprocessing & Feature Engineering (suggested)</h2>
+                <p className="text-lg text-white/90 font-medium">FP agent suggestions and a preview of the processed sample</p>
+              </div>
+            </div>
+
+            <div className="configure-grid grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="preproc-card bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-6">
+                <h3>Suggested Transforms</h3>
+                {isRunningFP && <p className="text-white/70">Running preprocessing analysis...</p>}
+                {!isRunningFP && !preprocessingConfig && (
+                  <p className="text-white/70">No suggestions yet. FP agent will run automatically.</p>
+                )}
+                {preprocessingConfig && (
+                  <div className="space-y-3 mt-4">
+                    <div className="text-white/80 font-medium">Selected Features</div>
+                    <div className="feature-list text-sm text-white/70">{(preprocessingConfig.feature_summary?.selected_features || []).join(', ') || '—'}</div>
+
+                    <div className="mt-3 text-white/80 font-medium">Scaling / Imputation / Encoding</div>
+                    <div className="text-sm text-white/70">
+                      {(preprocessingConfig.suggested_transforms || []).map((t: any, i: number) => (
+                        <div key={i} className="py-1">• <strong>{t.column}</strong>: {t.transform}</div>
+                      ))}
+                    </div>
+
+                    <div className="mt-4">
+                      <button
+                        onClick={() => runFPProcessing()}
+                        className="px-4 py-2 rounded-lg bg-blue-500 text-white"
+                      >Re-run FP</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="processed-sample bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-6 lg:col-span-2">
+                <h3>Processed Sample Preview</h3>
+                {!processedSample && <p className="text-white/70">Processed sample not available yet.</p>}
+                {processedSample && (
+                  <div className="table-wrapper overflow-auto mt-3">
+                    <table className="data-table w-full">
+                      <thead>
+                        <tr>
+                          {Object.keys(processedSample[0] || {}).map((col: string) => (
+                            <th key={col}>{col}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {processedSample.map((row: any, idx: number) => (
+                          <tr key={idx}>
+                            {Object.keys(row).map((k: string) => (
+                              <td key={k}>{String(row[k])}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div className="mt-4 flex gap-3">
+                  <button
+                    onClick={() => runModelTraining()}
+                    disabled={isTraining}
+                    className={`px-4 py-2 rounded-lg bg-indigo-600 text-white ${isTraining ? 'opacity-60' : ''}`}
+                  >
+                    {isTraining ? 'Training models…' : 'Train Models'}
+                  </button>
+
+                  {trainingResults && (
+                    <div className="ml-ml-results bg-white/5 p-3 rounded-lg text-sm text-white/80">
+                      <div className="font-medium">Training Results</div>
+                      <div className="mt-2">
+                        {(trainingResults.results || []).map((r: any, i: number) => (
+                          <div key={i} className="py-1">• <strong>{r.name}</strong>: {r.score ? `score=${r.score}` : r.rmse ? `rmse=${r.rmse.toFixed(3)}, r2=${r.r2.toFixed(3)}` : JSON.stringify(r)}</div>
+                        ))}
+                      </div>
+                      {bestModelInfo && (
+                        <div className="mt-2 text-sm">Best: <strong>{bestModelInfo.name}</strong> (<span className="underline">{bestModelInfo.path}</span>)
+                        </div>
+                      )}
+                        {isComparing && <div className="mt-2 text-sm text-white/70">Comparing models with Moco agent…</div>}
+                        {mocoResults && (
+                          <div className="mt-3 bg-white/5 p-3 rounded-lg text-sm text-white/80">
+                            <div className="font-medium">Moco Comparison</div>
+                            <div className="mt-2">
+                              {(mocoResults.evaluations || mocoResults.results || []).map((r: any, i: number) => (
+                                <div key={i} className="py-1">• <strong>{r.name}</strong>: {r.accuracy ? `acc=${r.accuracy}` : r.rmse ? `rmse=${r.rmse.toFixed(3)}` : JSON.stringify(r)}</div>
+                              ))}
+                            </div>
+                            {mocoResults.best_model && (
+                              <div className="mt-2">Moco Best: <strong>{mocoResults.best_model.name}</strong></div>
+                            )}
+                          </div>
+                        )}
+                    </div>
+                  )}
+                  {/* Gen explanations removed per user request */}
+
+                  <button
+                    onClick={() => {
+                      if (preprocessingConfig) {
+                        localStorage.setItem('ml_preprocessing', JSON.stringify(preprocessingConfig));
+                        const activity = { id: Date.now().toString(), action: 'Applied preprocessing suggestions', timestamp: new Date().toLocaleTimeString(), type: 'preprocessing' };
+                        const activities = JSON.parse(localStorage.getItem('userActivities') || '[]');
+                        localStorage.setItem('userActivities', JSON.stringify([activity, ...activities]));
+                        alert('Preprocessing saved. You can now proceed to model training.');
+                      }
+                    }}
+                    className="px-4 py-2 rounded-lg bg-green-500 text-white"
+                  >Accept & Save</button>
+
+                  <button
+                    onClick={() => setCurrentStep('validate')}
+                    className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                  >Back to Validation</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       </div>
 

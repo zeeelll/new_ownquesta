@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '../../components/Button';
+import { explainModelViaGen } from '../../../services/api';
 import Logo from '../../components/Logo';
 import ValidationAgentWidget from './ValidationAgentWidget';
 
@@ -62,6 +63,7 @@ const MLStudioAdvanced: React.FC = () => {
   const [modelTrainingConfig, setModelTrainingConfig] = useState<any>(null);
   const [modelComparisonResults, setModelComparisonResults] = useState<any>(null);
   const [isModelProcessing, setIsModelProcessing] = useState<boolean>(false);
+  const [genExplainResult, setGenExplainResult] = useState<any>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasGoal = userQuery.trim().length > 0;
@@ -1085,7 +1087,8 @@ print(f"""
               result = json.result || json.eda_result || json;
               result.status = 'SUCCESS';
             } else {
-              throw new Error('Validation endpoints failed');
+              console.error('Validation endpoints responded with non-ok status for both endpoints. Falling back to local analysis.');
+              result = generateFallbackValidation(columnStats);
             }
           }
         } catch (apiError) {
@@ -3827,13 +3830,33 @@ print(f"""
 
                     <div className="mt-6 text-center">
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           setIsModelProcessing(true);
-                          setTimeout(() => {
-                            setPreprocessingConfig({ completed: true });
+                          try {
+                            const base = (VALIDATION_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+                            const payload: any = { eda_result: edaResults || validationResult || null, goal: { text: userQuery || '' } };
+                            if (!payload.eda_result && actualFile) {
+                              try { payload.csv_text = await actualFile.text(); } catch (e) { payload.csv_text = null; }
+                            }
+
+                            const res = await fetch(`${base}/fp/process`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(payload),
+                            });
+
+                            if (!res.ok) throw new Error(`FP agent returned ${res.status}`);
+                            const json = await res.json();
+                            setPreprocessingConfig(json);
+                            // Keep user on preprocessing step but show suggestions; auto-advance to modeling
+                            // after a short preview delay so user can inspect transforms.
+                            setTimeout(() => setModelConfigStep('modeling'), 800);
+                          } catch (err: any) {
+                            console.error('FP agent error:', err);
+                            setPreprocessingConfig({ error: String(err?.message || err) });
+                          } finally {
                             setIsModelProcessing(false);
-                            setModelConfigStep('modeling');
-                          }, 2000);
+                          }
                         }}
                         disabled={isModelProcessing}
                         className="px-6 py-3 bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-600 text-white rounded-xl font-medium transition-colors"
@@ -3844,10 +3867,62 @@ print(f"""
                             Processing...
                           </div>
                         ) : (
-                          'Apply Preprocessing'
+                          'Apply Preprocessing (FP Agent)'
                         )}
                       </button>
                     </div>
+
+                    {/* Show preprocessing suggestions and processed sample when available */}
+                    {preprocessingConfig && (
+                      <div className="mt-6 bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                        <h5 className="text-lg font-semibold text-cyan-200 mb-3">Preprocessing Suggestions</h5>
+                        <div className="grid md:grid-cols-3 gap-4">
+                          <div>
+                            <div className="text-sm text-gray-300">Scaling</div>
+                            <pre className="text-xs text-gray-200 bg-slate-900 p-2 rounded mt-2 overflow-auto">{JSON.stringify(preprocessingConfig.suggested_transforms?.scaling || preprocessingConfig.suggested_transforms?.scalers || {}, null, 2)}</pre>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-300">Encoding</div>
+                            <pre className="text-xs text-gray-200 bg-slate-900 p-2 rounded mt-2 overflow-auto">{JSON.stringify(preprocessingConfig.suggested_transforms?.encoding || {}, null, 2)}</pre>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-300">Imputation</div>
+                            <pre className="text-xs text-gray-200 bg-slate-900 p-2 rounded mt-2 overflow-auto">{JSON.stringify(preprocessingConfig.suggested_transforms?.imputation || {}, null, 2)}</pre>
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <div className="text-sm text-gray-300">Selected Features</div>
+                          <div className="text-sm text-gray-200 mt-2">{(preprocessingConfig.feature_summary?.selected_features || []).join(', ') || '—'}</div>
+                        </div>
+
+                        {preprocessingConfig.processed_sample && preprocessingConfig.processed_sample.length > 0 && (
+                          <div className="mt-4">
+                            <div className="text-sm text-gray-300 mb-2">Processed Sample (first rows)</div>
+                            <div className="overflow-auto bg-slate-900 p-2 rounded">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr>
+                                    {(Object.keys(preprocessingConfig.processed_sample[0]) || []).slice(0,8).map((col: any) => (
+                                      <th key={col} className="p-1 text-left text-gray-300">{col}</th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {preprocessingConfig.processed_sample.slice(0,3).map((row: any, idx: number) => (
+                                    <tr key={idx} className="border-t border-slate-700">
+                                      {(Object.keys(preprocessingConfig.processed_sample[0]) || []).slice(0,8).map((col: any) => (
+                                        <td key={col} className="p-1 text-gray-200">{String(row[col] ?? '')}</td>
+                                      ))}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -3908,13 +3983,33 @@ print(f"""
 
                     <div className="mt-6 text-center">
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           setIsModelProcessing(true);
-                          setTimeout(() => {
-                            setModelTrainingConfig({ completed: true });
-                            setIsModelProcessing(false);
+                          try {
+                            const base = (VALIDATION_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+                            const payload: any = { eda_result: edaResults || preprocessingConfig || null, goal: { text: userQuery || '' } };
+
+                            // If preprocessing produced a processed_sample or features, include them
+                            if (preprocessingConfig && preprocessingConfig.processed_sample) {
+                              payload.features = preprocessingConfig.processed_sample;
+                            }
+
+                            const res = await fetch(`${base}/model/create_and_train`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(payload),
+                            });
+
+                            if (!res.ok) throw new Error(`Model agent returned ${res.status}`);
+                            const json = await res.json();
+                            setModelTrainingConfig(json);
                             setModelConfigStep('comparison');
-                          }, 3000);
+                          } catch (err: any) {
+                            console.error('Model agent error:', err);
+                            setModelTrainingConfig({ error: String(err?.message || err) });
+                          } finally {
+                            setIsModelProcessing(false);
+                          }
                         }}
                         disabled={isModelProcessing}
                         className="px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-600 text-white rounded-xl font-medium transition-colors"
@@ -3925,7 +4020,7 @@ print(f"""
                             Training Models...
                           </div>
                         ) : (
-                          'Train Selected Models'
+                          'Train Selected Models (Model Agent)'
                         )}
                       </button>
                     </div>
@@ -3976,6 +4071,48 @@ print(f"""
                         </table>
                       </div>
                     </div>
+
+                    <div className="mt-4 text-center">
+                      <button
+                        onClick={async () => {
+                          try {
+                            const base = (VALIDATION_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+                              const summaries = modelTrainingConfig?.summary || [];
+                              const payload = { model_summaries: summaries, eda_result: edaResults || validationResult || null, goal: { text: userQuery || '' } };
+
+                              if ((!payload.model_summaries || payload.model_summaries.length === 0) && !(preprocessingConfig?.processed_sample || edaResults?.sample || null)) {
+                                // Nothing to compare — report back to UI instead of calling the agent
+                                setModelComparisonResults({ error: 'No model summaries or processed sample available for comparison' });
+                                return;
+                              }
+
+                              const res = await fetch(`${base}/moco/compare`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload),
+                              });
+
+                              if (!res.ok) {
+                                let errBody = '';
+                                try { errBody = await res.text(); } catch (e) { errBody = String(e); }
+                                console.warn('Moco compare returned non-ok status', res.status, errBody);
+                                setModelComparisonResults({ error: `Moco agent returned ${res.status}: ${errBody}` });
+                              } else {
+                                const json = await res.json();
+                                setModelComparisonResults(json);
+                              }
+                          } catch (err) {
+                            console.error('Moco agent error:', err);
+                            setModelComparisonResults({ error: String(err) });
+                          }
+                        }}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium"
+                      >
+                        Run Comparison (Moco Agent)
+                      </button>
+                    </div>
+
+                    {/* Gen explanations removed per user request */}
 
                     {/* Best Model Insights */}
                     <div className="grid md:grid-cols-2 gap-6">
