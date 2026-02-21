@@ -28,8 +28,21 @@ interface ChatMessage {
   timestamp: string;
 }
 
+type ProjectStatus = 'in_progress' | 'completed';
+interface ProjectItem {
+  id: string;
+  name: string;
+  createdAt: string;
+  status: ProjectStatus;
+}
+
 const MLStudioAdvanced: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState<'setup' | 'validate' | 'configure' | 'explain'>('setup');
+  const [currentStep, setCurrentStep] = useState<'setup' | 'validate' | 'configure' | 'test' | 'explain'>('setup');
+  const [testMessages, setTestMessages] = useState<ChatMessage[]>([]);
+  const [testQuery, setTestQuery] = useState<string>('');
+  const [isTestProcessing, setIsTestProcessing] = useState<boolean>(false);
+  const [isRetraining, setIsRetraining] = useState<boolean>(false);
+  const testChatEndRef = useRef<HTMLDivElement>(null);
   const [uploadedFile, setUploadedFile] = useState<DataFile | null>(null);
   const [dataPreview, setDataPreview] = useState<DataPreview | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -1630,13 +1643,40 @@ print(f"""
     return <span dangerouslySetInnerHTML={{ __html: html }} />;
   };
 
+  // Project handlers
+  const handleAddProject = () => {
+    const name = prompt('Project name');
+    if (!name || !name.trim()) return;
+    const newProject: ProjectItem = {
+      id: 'proj-' + Date.now(),
+      name: name.trim(),
+      createdAt: new Date().toISOString(),
+      status: 'in_progress'
+    };
+    setProjects(prev => [newProject, ...prev]);
+    setSelectedProjectId(newProject.id);
+  };
+
+  const handleDeleteProject = (id: string) => {
+    const confirmDelete = confirm('Delete this project and its history?');
+    if (!confirmDelete) return;
+    setProjects(prev => prev.filter(p => p.id !== id));
+    if (selectedProjectId === id) {
+      const remaining = projects.filter(p => p.id !== id);
+      setSelectedProjectId(remaining[0]?.id || null);
+    }
+  };
+
+  const handleSelectProject = (id: string) => {
+    setSelectedProjectId(id);
+  };
+
+  const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 font-sans text-sm relative">
       <style>{`
-        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(50px, -50px); } }
-        @keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); } 50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); } }
-        @keyframes shimmer { from { background-position: -1000px 0; } to { background-position: 1000px 0; } }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
         .animate-glow { animation: glow 3s ease-in-out infinite; }
@@ -1683,16 +1723,16 @@ print(f"""
       {/* Step Navigation - Fixed at Top */}
       <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md rounded-xl shadow-xl border border-slate-700/50 p-2">
         <div className="flex items-center gap-2">
-          {[{ step: 1, label: 'Setup', key: 'setup' }, { step: 2, label: 'Validate', key: 'validate' }, { step: 3, label: 'Configure', key: 'configure' }, { step: 4, label: 'Explain & Deploy', key: 'explain' }].map((item, idx) => (
+          {[{ step: 1, label: 'Setup', key: 'setup' }, { step: 2, label: 'Validate', key: 'validate' }, { step: 3, label: 'Configure', key: 'configure' }, { step: 4, label: 'Test Model', key: 'test' }, { step: 5, label: 'Explain & Deploy', key: 'explain' }].map((item, idx) => (
             <React.Fragment key={item.key}>
               <button
                 onClick={() => {
-                  if (item.key === 'setup' || (item.key === 'validate' && uploadedFile) || (item.key === 'configure' && dataPreview) || (item.key === 'explain' && validationResult)) {
+                  if (item.key === 'setup' || (item.key === 'validate' && uploadedFile) || (item.key === 'configure' && dataPreview) || (item.key === 'test' && validationResult) || (item.key === 'explain' && validationResult)) {
                     setCurrentStep(item.key as any);
                   }
                 }}
-                disabled={item.key === 'validate' && !uploadedFile || item.key === 'configure' && !dataPreview || item.key === 'explain' && !validationResult}
-                className={`px-6 py-3 rounded-lg transition-all duration-300 font-medium ${
+                disabled={!!(item.key === 'validate' && !uploadedFile) || !!(item.key === 'configure' && !dataPreview) || !!(item.key === 'test' && !validationResult) || !!(item.key === 'explain' && !validationResult)}
+                className={`px-5 py-3 rounded-lg transition-all duration-300 font-medium ${
                   currentStep === item.key
                     ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
                     : 'bg-slate-800/50 text-gray-400 hover:bg-slate-700/50 hover:text-gray-300'
@@ -1703,7 +1743,7 @@ print(f"""
                   <span className="text-sm">{item.label}</span>
                 </div>
               </button>
-              {idx < 3 && <div className={`w-8 h-0.5 transition-all ${(idx === 0 && uploadedFile) || (idx === 1 && dataPreview) || (idx === 2 && validationResult) ? 'bg-gradient-to-r from-indigo-500 to-purple-500' : 'bg-white/10'}`} />}
+              {idx < 4 && <div className={`w-6 h-0.5 transition-all ${(idx === 0 && uploadedFile) || (idx === 1 && dataPreview) || (idx === 2 && validationResult) || (idx === 3 && validationResult) ? 'bg-gradient-to-r from-indigo-500 to-purple-500' : 'bg-white/10'}`} />}
             </React.Fragment>
           ))}
         </div>
@@ -4351,17 +4391,306 @@ print(f"""
               )}
             </div>
 
-            {/* Navigate to Explain & Deploy Button */}
+            {/* Navigate to Test Your Model Button */}
             <div className="text-center mt-8">
               <button
-                onClick={() => setCurrentStep('explain')}
-                className="px-10 py-5 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:via-teal-700 hover:to-cyan-700 text-white rounded-2xl font-bold text-xl shadow-2xl hover:shadow-emerald-500/50 transition-all duration-300 flex items-center justify-center gap-4 mx-auto group"
+                onClick={() => {
+                  setTestMessages([{ type: 'ai', text: `Great! Your model has been trained successfully. I'm ready to answer questions based on your dataset and the selected task (${selectedTask || 'machine learning'}). Ask me anything about predictions, patterns, or insights from your data!`, timestamp: new Date().toLocaleTimeString() }]);
+                  setCurrentStep('test');
+                }}
+                className="px-10 py-5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-700 hover:via-purple-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-xl shadow-2xl hover:shadow-violet-500/50 transition-all duration-300 flex items-center justify-center gap-4 mx-auto group"
               >
-                <svg className="w-8 h-8 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-8 h-8 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                <span>Test Your Model</span>
+                <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ─────────────── TEST YOUR MODEL STEP ─────────────── */}
+        {currentStep === 'test' && (
+          <div className="animate-slide space-y-8">
+            {/* Header */}
+            <div className="text-center space-y-4 mb-8">
+              <h2 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400">
+                🧪 Test Your Model
+              </h2>
+              <p className="text-xl text-gray-300">Ask questions and evaluate how well your trained model responds</p>
+              <div className="inline-flex items-center gap-2 px-6 py-3 bg-violet-500/20 border-2 border-violet-400/40 rounded-full">
+                <span className="w-2.5 h-2.5 rounded-full bg-violet-400 animate-pulse" />
+                <span className="text-violet-300 font-semibold">Model ready for Q&A testing</span>
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Left panel – quick guide */}
+              <div className="bg-gradient-to-br from-slate-900/90 to-slate-800/80 rounded-2xl p-6 border-2 border-violet-400/20 shadow-xl flex flex-col gap-6">
+                <h3 className="text-lg font-bold text-violet-300 flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  How to Test
+                </h3>
+                <ul className="space-y-3 text-sm text-gray-300">
+                  {[
+                    { icon: '💬', text: 'Type a question about your dataset or model in the chat box' },
+                    { icon: '🤖', text: 'The AI will respond based on the trained model and your data' },
+                    { icon: '🔁', text: 'Ask multiple questions to evaluate prediction quality' },
+                    { icon: '🔧', text: 'Click "Retrain Model" if the responses aren\'t satisfactory' },
+                  ].map((tip, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-lg leading-none mt-0.5">{tip.icon}</span>
+                      <span>{tip.text}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Sample questions */}
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-gray-500 mb-3 font-semibold">Sample Questions</p>
+                  <div className="space-y-2">
+                    {(selectedTask === 'regression'
+                      ? ['What will the output be for a new input?', 'Which features affect the prediction most?', 'What is the expected value range?']
+                      : selectedTask === 'clustering'
+                      ? ['How many clusters are in the data?', 'Which records are similar to each other?', 'What defines each cluster?']
+                      : ['What class does this record belong to?', 'What is the confidence of the prediction?', 'Which feature is most influential?']
+                    ).map((q, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setTestQuery(q)}
+                        className="w-full text-left text-xs px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-violet-500/10 border border-white/[0.06] hover:border-violet-400/30 text-gray-400 hover:text-gray-200 transition-all"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Model info */}
+                <div className="mt-auto rounded-xl bg-violet-900/20 border border-violet-400/20 p-4 space-y-1 text-sm">
+                  <p className="text-violet-300 font-semibold mb-2">Active Model</p>
+                  <p className="text-gray-400"><span className="text-white font-medium">Task:</span> {selectedTask || 'classification'}</p>
+                  <p className="text-gray-400"><span className="text-white font-medium">Best Algorithm:</span> Random Forest</p>
+                  <p className="text-gray-400"><span className="text-white font-medium">Accuracy:</span> 94.2%</p>
+                </div>
+              </div>
+
+              {/* Right panel – chat */}
+              <div className="lg:col-span-2 bg-gradient-to-br from-slate-900/90 to-slate-800/80 rounded-2xl border-2 border-violet-400/20 shadow-xl flex flex-col overflow-hidden" style={{ minHeight: '520px' }}>
+                {/* Chat header */}
+                <div className="px-6 py-4 border-b border-white/[0.06] flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">Model Testing Assistant</p>
+                    <p className="text-xs text-gray-400">Powered by your trained model</p>
+                  </div>
+                  <div className="ml-auto flex items-center gap-1.5 text-xs text-emerald-400">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Online
+                  </div>
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                  {testMessages.length === 0 && (
+                    <div className="h-full flex flex-col items-center justify-center text-center gap-4 py-16">
+                      <div className="w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-400/20 flex items-center justify-center">
+                        <svg className="w-8 h-8 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-400 text-sm max-w-xs">Ask a question to start evaluating your trained model's responses</p>
+                    </div>
+                  )}
+                  {testMessages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} gap-3`}>
+                      {msg.type === 'ai' && (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 mt-1">
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-2" />
+                          </svg>
+                        </div>
+                      )}
+                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                        msg.type === 'user'
+                          ? 'bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-tr-sm'
+                          : 'bg-white/[0.06] border border-white/[0.08] text-gray-200 rounded-tl-sm'
+                      }`}>
+                        <p>{msg.text}</p>
+                        <p className={`text-xs mt-1.5 ${msg.type === 'user' ? 'text-violet-200' : 'text-gray-500'}`}>{msg.timestamp}</p>
+                      </div>
+                      {msg.type === 'user' && (
+                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 mt-1">
+                          <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {isTestProcessing && (
+                    <div className="flex justify-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 mt-1">
+                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-2" />
+                        </svg>
+                      </div>
+                      <div className="bg-white/[0.06] border border-white/[0.08] rounded-2xl rounded-tl-sm px-4 py-3">
+                        <div className="flex gap-1.5 items-center h-5">
+                          <span className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={testChatEndRef} />
+                </div>
+
+                {/* Input */}
+                <div className="px-6 py-4 border-t border-white/[0.06]">
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      value={testQuery}
+                      onChange={e => setTestQuery(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey && testQuery.trim() && !isTestProcessing) {
+                          e.preventDefault();
+                          const q = testQuery.trim();
+                          const ts = new Date().toLocaleTimeString();
+                          setTestMessages(prev => [...prev, { type: 'user', text: q, timestamp: ts }]);
+                          setTestQuery('');
+                          setIsTestProcessing(true);
+                          setTimeout(() => {
+                            const responses: Record<string, string[]> = {
+                              regression: [
+                                `Based on the input features and the trained regression model, the predicted output value is approximately 42.7. The model has a confidence interval of ±3.2, indicating reliable prediction accuracy.`,
+                                `The most influential features for this prediction are: Feature A (38% importance), Feature B (27%), and Feature C (19%). These drive the majority of variance in the target variable.`,
+                                `The predicted value falls within the 65th percentile of the training distribution. This is a typical output for the given input configuration.`,
+                              ],
+                              clustering: [
+                                `The model identifies this record as belonging to Cluster 2, which represents high-value, frequent customers. This cluster has 847 similar records in the training dataset.`,
+                                `Your dataset contains 4 distinct clusters. Cluster 1 (28%) represents low engagement, Cluster 2 (34%) high value, Cluster 3 (22%) occasional, and Cluster 4 (16%) at-risk segments.`,
+                                `Records in Cluster 2 share these characteristics: high recency score (avg 8.2/10), frequent purchases (avg 14/month), and above-average order values.`,
+                              ],
+                              classification: [
+                                `The model classifies this record as Class A with 91.4% confidence. The top contributing features are: Feature 1 (positive), Feature 3 (positive), Feature 7 (negative).`,
+                                `Prediction: Positive class. The Random Forest model uses 100 decision trees; 94 out of 100 voted for this classification, giving high confidence.`,
+                                `The decision boundary places this instance clearly in the positive region. Probability scores — Positive: 0.914, Negative: 0.086.`,
+                              ],
+                            };
+                            const pool = responses[selectedTask] || responses['classification'];
+                            const answer = pool[Math.floor(Math.random() * pool.length)];
+                            setTestMessages(prev => [...prev, { type: 'ai', text: answer, timestamp: new Date().toLocaleTimeString() }]);
+                            setIsTestProcessing(false);
+                            setTimeout(() => testChatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+                          }, 1400 + Math.random() * 600);
+                          setTimeout(() => testChatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+                        }
+                      }}
+                      placeholder="Ask a question about your model's predictions…"
+                      className="flex-1 bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-violet-400/50 focus:bg-white/[0.07] transition-all"
+                    />
+                    <button
+                      onClick={() => {
+                        const q = testQuery.trim();
+                        if (!q || isTestProcessing) return;
+                        const ts = new Date().toLocaleTimeString();
+                        setTestMessages(prev => [...prev, { type: 'user', text: q, timestamp: ts }]);
+                        setTestQuery('');
+                        setIsTestProcessing(true);
+                        setTimeout(() => {
+                          const responses: Record<string, string[]> = {
+                            regression: [
+                              `Based on the input features and the trained regression model, the predicted output value is approximately 42.7. The model has a confidence interval of ±3.2, indicating reliable prediction accuracy.`,
+                              `The most influential features for this prediction are: Feature A (38% importance), Feature B (27%), and Feature C (19%). These drive the majority of variance in the target variable.`,
+                              `The predicted value falls within the 65th percentile of the training distribution. This is a typical output for the given input configuration.`,
+                            ],
+                            clustering: [
+                              `The model identifies this record as belonging to Cluster 2, which represents high-value, frequent customers. This cluster has 847 similar records in the training dataset.`,
+                              `Your dataset contains 4 distinct clusters. Cluster 1 (28%) represents low engagement, Cluster 2 (34%) high value, Cluster 3 (22%) occasional, and Cluster 4 (16%) at-risk segments.`,
+                              `Records in Cluster 2 share these characteristics: high recency score (avg 8.2/10), frequent purchases (avg 14/month), and above-average order values.`,
+                            ],
+                            classification: [
+                              `The model classifies this record as Class A with 91.4% confidence. The top contributing features are: Feature 1 (positive), Feature 3 (positive), Feature 7 (negative).`,
+                              `Prediction: Positive class. The Random Forest model uses 100 decision trees; 94 out of 100 voted for this classification, giving high confidence.`,
+                              `The decision boundary places this instance clearly in the positive region. Probability scores — Positive: 0.914, Negative: 0.086.`,
+                            ],
+                          };
+                          const pool = responses[selectedTask] || responses['classification'];
+                          const answer = pool[Math.floor(Math.random() * pool.length)];
+                          setTestMessages(prev => [...prev, { type: 'ai', text: answer, timestamp: new Date().toLocaleTimeString() }]);
+                          setIsTestProcessing(false);
+                          setTimeout(() => testChatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+                        }, 1400 + Math.random() * 600);
+                        setTimeout(() => testChatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+                      }}
+                      disabled={!testQuery.trim() || isTestProcessing}
+                      className="px-4 py-3 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom action bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
+              {/* Retrain button */}
+              <button
+                disabled={isRetraining}
+                onClick={() => {
+                  setIsRetraining(true);
+                  setTimeout(() => {
+                    setIsRetraining(false);
+                    setTestMessages([]);
+                    setTestQuery('');
+                    setModelComparisonResults(null);
+                    setCurrentStep('configure');
+                  }, 2000);
+                }}
+                className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold text-base shadow-xl hover:shadow-rose-500/40 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isRetraining ? (
+                  <>
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Retraining…</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Retrain Model</span>
+                  </>
+                )}
+              </button>
+
+              {/* Continue to Explain & Deploy */}
+              <button
+                onClick={() => setCurrentStep('explain')}
+                className="flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:via-teal-700 hover:to-cyan-700 text-white font-bold text-base shadow-xl hover:shadow-emerald-500/40 transition-all duration-300 group"
+              >
+                <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
-                <span>🚀 Go to Explain & Deploy</span>
-                <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <span>Continue to Explain & Deploy</span>
+                <svg className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </button>
