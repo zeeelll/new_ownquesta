@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Logo from '../components/Logo';
+import Chatbot from '../components/Chatbot';
 
 export default function TutorialPage() {
   const steps = [
@@ -273,7 +274,7 @@ export default function TutorialPage() {
 
       <div className="relative z-10">
         {/* Sidebar Navigation */}
-        <div className="hidden lg:fixed lg:left-0 lg:top-20 lg:h-[calc(100vh-80px)] lg:w-64 lg:bg-slate-950/60 lg:backdrop-blur-md lg:border-r lg:border-white/10 lg:overflow-y-auto lg:z-40 lg:block">
+        <div className="hidden lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-64 lg:bg-slate-950/60 lg:backdrop-blur-md lg:border-r lg:border-white/10 lg:overflow-y-auto lg:z-40 lg:block">
           <div className="p-6">
             <h3 className="text-sm font-bold text-white/70 uppercase tracking-widest mb-4">Tutorial Steps</h3>
             <div className="space-y-2">
@@ -319,22 +320,6 @@ export default function TutorialPage() {
             ))}
           </div>
         </div>
-        {/* Navigation */}
-        <nav className="sticky top-0 backdrop-blur-md bg-slate-950/80 border-b border-white/10 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 h-16 md:h-20 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Logo strokeWidth={2} width={32} height={32} />
-              <span className="hidden sm:inline font-bold text-lg">Ownquesta</span>
-            </div>
-            <Link
-              href="/"
-              className="px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 border border-white/20 hover:border-white/40 hover:bg-white/5 text-white/70 hover:text-white"
-            >
-              ← Back
-            </Link>
-          </div>
-        </nav>
-
         {/* Steps - Each Full Page */}
         <div className="space-y-0 lg:ml-64 pb-20 lg:pb-0">
           {steps.map((step) => (
@@ -398,6 +383,7 @@ export default function TutorialPage() {
             </Link>
           </div>
         </section>
+        <Chatbot />
       </div>
     </div>
   );

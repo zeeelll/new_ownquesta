@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Logo from '../components/Logo';
 import Button from '../components/Button';
-import Chatbot from '../components/Chatbot';
 
 type AuthUser = {
   authenticated: boolean;
@@ -202,9 +201,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Chatbot Widget */}
-      {user?.userId && <Chatbot userId={user.userId} />}
     </div>
   );
 }
