@@ -256,7 +256,7 @@ export default function TutorialPage() {
   return (
     <div className="relative text-[#e6eef8] overflow-x-hidden font-chillax bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
       {/* Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 px-4 sm:px-6 md:px-10 py-3 sm:py-4 flex justify-between items-center z-[100] transition-all duration-400 ${isScrolled ? 'bg-[rgba(10,11,20,0.8)] backdrop-blur-xl border-b border-white/[0.06]' : 'bg-transparent'}`}>
+      <nav className={`fixed top-0 left-0 right-0 px-4 sm:px-6 md:px-10 py-3 sm:py-4 flex justify-between items-center z-[100] transition-all duration-400 ${isScrolled ? 'bg-[rgba(10,11,20,0.8)] backdrop-blur-xl' : 'bg-transparent'}`}>
         <Logo href="/" size="md" />
         <Link
           href="/"
