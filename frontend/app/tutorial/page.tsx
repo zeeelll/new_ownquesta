@@ -274,7 +274,7 @@ export default function TutorialPage() {
 
       <div className="relative z-10">
         {/* Sidebar Navigation */}
-        <div className="hidden lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-64 lg:bg-slate-950/60 lg:backdrop-blur-md lg:border-r lg:border-white/10 lg:overflow-y-auto lg:z-40 lg:block">
+        <div className="hidden lg:fixed lg:left-0 lg:top-8 lg:h-[calc(100vh-4rem)] lg:w-72 lg:bg-slate-950/60 lg:backdrop-blur-md lg:border-r lg:border-white/10 lg:overflow-y-auto lg:z-40 lg:block">
           <div className="p-6">
             <h3 className="text-sm font-bold text-white/70 uppercase tracking-widest mb-4">Tutorial Steps</h3>
             <div className="space-y-2">
@@ -282,18 +282,16 @@ export default function TutorialPage() {
                 <button
                   key={step.number}
                   onClick={() => scrollToStep(step.number)}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-300 border ${
+                  className={`w-full text-left px-5 py-3.5 rounded-2xl transition-all duration-300 border flex items-center gap-3 ${
                     currentStep === step.number
-                      ? 'bg-purple-500/30 border-purple-500/60 text-white font-semibold'
+                      ? 'bg-gradient-to-r from-purple-500/30 to-pink-500/20 border-purple-500/60 text-white font-semibold shadow-[0_8px_24px_rgba(110,84,200,0.06)]'
                       : 'border-white/10 text-white/70 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{step.icon}</span>
-                    <div>
-                      <div className="text-xs text-white/50">Step {step.number}</div>
-                      <div className="text-sm truncate">{step.title}</div>
-                    </div>
+                  <div className={`${currentStep === step.number ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : 'bg-white/5 text-white/80'} w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0`}>{step.icon}</div>
+                  <div className="truncate">
+                    <div className="text-xs text-white/50">Step {step.number}</div>
+                    <div className="text-sm truncate">{step.title}</div>
                   </div>
                 </button>
               ))}
@@ -308,25 +306,25 @@ export default function TutorialPage() {
               <button
                 key={step.number}
                 onClick={() => scrollToStep(step.number)}
-                className={`flex-shrink-0 px-4 py-2 rounded-lg transition-all duration-300 border text-center ${
+                className={`flex-shrink-0 px-4 py-2 rounded-xl transition-all duration-300 border text-center flex flex-col items-center gap-1 ${
                   currentStep === step.number
-                    ? 'bg-purple-500/30 border-purple-500/60 text-white font-semibold'
+                    ? 'bg-gradient-to-r from-purple-500/30 to-pink-500/20 border-purple-500/60 text-white font-semibold'
                     : 'border-white/10 text-white/70 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <div className="text-lg">{step.icon}</div>
+                <div className={`${currentStep === step.number ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : 'bg-white/5 text-white/80'} w-8 h-8 rounded-md flex items-center justify-center text-lg`}>{step.icon}</div>
                 <div className="text-xs whitespace-nowrap">Step {step.number}</div>
               </button>
             ))}
           </div>
         </div>
         {/* Steps - Each Full Page */}
-        <div className="space-y-0 lg:ml-64 pb-20 lg:pb-0">
+        <div className="space-y-0 lg:ml-72 pb-20 lg:pb-0">
           {steps.map((step) => (
             <section
               key={step.number}
               data-step={step.number}
-              className={`min-h-screen w-full py-16 md:py-20 flex items-start justify-start border-b border-white/5 bg-gradient-to-br ${step.color}`}
+              className={`min-h-[calc(100vh-4rem)] w-full py-12 md:py-16 flex items-start justify-start border-b border-white/5 bg-gradient-to-br ${step.color}`}
             >
               <div className="w-full lg:w-1/2 px-8 sm:px-12 md:px-16 lg:px-8">
                 {/* Step Header */}
@@ -366,7 +364,7 @@ export default function TutorialPage() {
         </div>
 
         {/* Final CTA */}
-        <section className="min-h-screen w-full lg:ml-64 py-16 md:py-20 flex items-start justify-start bg-gradient-to-br from-purple-600/20 to-pink-600/20">
+        <section className="min-h-[calc(100vh-4rem)] w-full lg:ml-72 py-12 md:py-16 flex items-start justify-start bg-gradient-to-br from-purple-600/20 to-pink-600/20">
           <div className="w-full lg:w-1/2 px-8 sm:px-12 md:px-16 lg:px-8">
             <div className="text-7xl md:text-8xl mb-8 animate-bounce">🎉</div>
             <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
