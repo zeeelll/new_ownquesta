@@ -289,7 +289,18 @@ export default function LoginPage() {
                     </div>
                     <div className="relative">
                       <input type={showSignInPassword ? 'text' : 'password'} placeholder="Enter your password" value={signInPassword} onChange={e => setSignInPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignIn()} className={`${inputClass} pr-12`} />
-                      <button type="button" onClick={() => setShowSignInPassword(prev => !prev)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#a87edf] hover:text-white transition-colors">{showSignInPassword ? 'Hide' : 'Show'}</button>
+                      <button type="button" onClick={() => setShowSignInPassword(prev => !prev)} aria-label={showSignInPassword ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a87edf] hover:text-white transition-colors p-1 rounded">
+                        {showSignInPassword ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.269-2.943-9.543-7a10.05 10.05 0 012.236-3.465M3 3l18 18" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
                     </div>
                   </div>
 
@@ -352,14 +363,36 @@ export default function LoginPage() {
                         <label className={labelClass}>New Password</label>
                         <div className="relative">
                           <input type={showNewPassword ? 'text' : 'password'} placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className={`${inputClass} pr-12`} />
-                          <button type="button" onClick={() => setShowNewPassword(prev => !prev)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#a87edf] hover:text-white transition-colors">{showNewPassword ? 'Hide' : 'Show'}</button>
+                          <button type="button" onClick={() => setShowNewPassword(prev => !prev)} aria-label={showNewPassword ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a87edf] hover:text-white transition-colors p-1 rounded">
+                            {showNewPassword ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.269-2.943-9.543-7a10.05 10.05 0 012.236-3.465M3 3l18 18" />
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            )}
+                          </button>
                         </div>
                       </div>
                       <div>
                         <label className={labelClass}>Confirm Password</label>
                         <div className="relative">
                           <input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className={`${inputClass} pr-12`} />
-                          <button type="button" onClick={() => setShowConfirmPassword(prev => !prev)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#a87edf] hover:text-white transition-colors">{showConfirmPassword ? 'Hide' : 'Show'}</button>
+                          <button type="button" onClick={() => setShowConfirmPassword(prev => !prev)} aria-label={showConfirmPassword ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a87edf] hover:text-white transition-colors p-1 rounded">
+                            {showConfirmPassword ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.269-2.943-9.543-7a10.05 10.05 0 012.236-3.465M3 3l18 18" />
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            )}
+                          </button>
                         </div>
                       </div>
                       <button onClick={handleResetPassword} disabled={loading} className={primaryBtn}>
@@ -407,7 +440,18 @@ export default function LoginPage() {
                   <label className={labelClass}>Password</label>
                   <div className="relative">
                     <input type={showSignUpPassword ? 'text' : 'password'} placeholder="Create a strong password (min. 8 chars)" value={signUpPassword} onChange={e => setSignUpPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignUp()} className={`${inputClass} pr-12`} />
-                    <button type="button" onClick={() => setShowSignUpPassword(prev => !prev)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#a87edf] hover:text-white transition-colors">{showSignUpPassword ? 'Hide' : 'Show'}</button>
+                    <button type="button" onClick={() => setShowSignUpPassword(prev => !prev)} aria-label={showSignUpPassword ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a87edf] hover:text-white transition-colors p-1 rounded">
+                      {showSignUpPassword ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.269-2.943-9.543-7a10.05 10.05 0 012.236-3.465M3 3l18 18" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                   {signUpPassword && (
                     <div className={`text-xs mt-2 ${isSignUpPasswordStrong ? 'text-emerald-300' : 'text-red-400'}`}>{isSignUpPasswordStrong ? 'Strong password' : passwordStrengthMessage}</div>
