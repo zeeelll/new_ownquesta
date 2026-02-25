@@ -236,27 +236,17 @@ export default function TutorialPage() {
   ];
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = document.querySelectorAll('section[data-step]');
-      let activeStep = 1;
-
-      sections.forEach((section) => {
-        const rect = section.getBoundingClientRect();
-        if (rect.top <= window.innerHeight / 2) {
-          activeStep = parseInt(section.getAttribute('data-step') || '1');
-        }
-      });
-
-      setCurrentStep(activeStep);
+      setIsScrolled(window.scrollY > 60);
     };
-
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToStep = (stepNumber) => {
+  const scrollToStep = (stepNumber: number) => {
     const section = document.querySelector(`section[data-step="${stepNumber}"]`);
     if (section) {
       section.scrollIntoView({ behavior: 'smooth' });
@@ -265,6 +255,17 @@ export default function TutorialPage() {
 
   return (
     <div className="relative text-[#e6eef8] overflow-x-hidden font-chillax bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
+      {/* Navigation */}
+      <nav className={`fixed top-0 left-0 right-0 px-4 sm:px-6 md:px-10 py-3 sm:py-4 flex justify-between items-center z-[100] transition-all duration-400 ${isScrolled ? 'bg-[rgba(10,11,20,0.8)] backdrop-blur-xl border-b border-white/[0.06]' : 'bg-transparent'}`}>
+        <Logo href="/" size="md" />
+        <Link
+          href="/"
+          className="px-4 sm:px-5 py-2 sm:py-2.5 glass rounded-xl text-xs sm:text-sm font-semibold transition-all hover:bg-white/[0.08] hover:-translate-y-0.5 border border-white/[0.08] tracking-wide text-[#c5d4ed] hover:text-white"
+        >
+          Home
+        </Link>
+      </nav>
+
       {/* Animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse lg:hidden" />
@@ -392,7 +393,7 @@ export default function TutorialPage() {
             </Link>
           </div>
         </section>
-        <Chatbot />
+        <Chatbot userId="exampleUserId" />
       </div>
     </div>
   );
