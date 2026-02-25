@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [signInEmail, setSignInEmail] = useState('');
   const [signInPassword, setSignInPassword] = useState('');
   const [signInMessage, setSignInMessage] = useState('');
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [signInSuccess, setSignInSuccess] = useState(false);
 
   // Sign Up
@@ -22,6 +23,9 @@ export default function LoginPage() {
   const [lastName, setLastName] = useState('');
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [isSignUpPasswordStrong, setIsSignUpPasswordStrong] = useState(false);
+  const [passwordStrengthMessage, setPasswordStrengthMessage] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [signUpMessage, setSignUpMessage] = useState('');
   const [signUpSuccess, setSignUpSuccess] = useState(false);
@@ -30,7 +34,9 @@ export default function LoginPage() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [forgotStep, setForgotStep] = useState<'email' | 'otp' | 'reset'>('email');
   const [forgotMessage, setForgotMessage] = useState('');
   const [forgotSuccess, setForgotSuccess] = useState(false);
@@ -94,7 +100,7 @@ export default function LoginPage() {
     setSignUpMessage('');
     if (!firstName || !lastName) { setSignUpMessage('Please enter your first and last name.'); setSignUpSuccess(false); return; }
     if (!signUpEmail || !signUpPassword) { setSignUpMessage('Please enter email and password.'); setSignUpSuccess(false); return; }
-    if (signUpPassword.length < 6) { setSignUpMessage('Password must be at least 6 characters.'); setSignUpSuccess(false); return; }
+    if (!isSignUpPasswordStrong) { setSignUpMessage(passwordStrengthMessage || 'Please choose a stronger password.'); setSignUpSuccess(false); return; }
     if (!agreeTerms) { setSignUpMessage('Please agree to the Terms & Conditions.'); setSignUpSuccess(false); return; }
     setLoading(true);
     try {
@@ -152,7 +158,8 @@ export default function LoginPage() {
     setForgotMessage('');
     if (!newPassword || !confirmPassword) { setForgotMessage('Please fill both password fields.'); setForgotSuccess(false); return; }
     if (newPassword !== confirmPassword) { setForgotMessage('Passwords do not match.'); setForgotSuccess(false); return; }
-    if (newPassword.length < 6) { setForgotMessage('Password must be at least 6 characters.'); setForgotSuccess(false); return; }
+    const v = validatePassword(newPassword);
+    if (!v.ok) { setForgotMessage(v.message); setForgotSuccess(false); return; }
     setLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/api/auth/reset-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: forgotEmail, otp, newPassword }) });
@@ -174,6 +181,22 @@ export default function LoginPage() {
   const labelClass = "block text-xs font-semibold text-[#c5d4ed] mb-2 tracking-wide uppercase";
   const primaryBtn = `w-full py-4 rounded-xl font-semibold text-sm tracking-wide cursor-pointer transition-all duration-300 flex items-center justify-center gap-2 bg-gradient-to-r from-[#6e54c8] to-[#7c49a9] text-white hover:from-[#7c62d6] hover:to-[#8a57b7] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(110,84,200,0.4)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 font-chillax`;
   const ghostBtn = `w-full py-3.5 rounded-xl font-medium text-sm tracking-wide cursor-pointer transition-all duration-300 border border-white/[0.08] text-[#8fa3c4] hover:text-white hover:border-white/[0.2] hover:bg-white/[0.04] font-chillax`;
+
+  // Password validator: requires min 8 chars, uppercase, lowercase, number and special char
+  function validatePassword(pw: string) {
+    if (!pw || pw.length < 8) return { ok: false, message: 'Password must be at least 8 characters.' };
+    if (!/[a-z]/.test(pw)) return { ok: false, message: 'Password should include a lowercase letter.' };
+    if (!/[A-Z]/.test(pw)) return { ok: false, message: 'Password should include an uppercase letter.' };
+    if (!/[0-9]/.test(pw)) return { ok: false, message: 'Password should include a number.' };
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pw)) return { ok: false, message: 'Password should include a special character.' };
+    return { ok: true, message: '' };
+  }
+
+  useEffect(() => {
+    const v = validatePassword(signUpPassword);
+    setIsSignUpPasswordStrong(v.ok);
+    setPasswordStrengthMessage(v.message);
+  }, [signUpPassword]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-3 sm:p-5 md:p-8 relative overflow-x-hidden font-chillax" style={{ background: 'radial-gradient(ellipse at top left, #1a1040 0%, #0a0b14 55%, #0e1020 100%)' }}>
@@ -264,7 +287,10 @@ export default function LoginPage() {
                       <label className={labelClass} style={{ marginBottom: 0 }}>Password</label>
                       <button type="button" onClick={() => setIsForgotPassword(true)} className="text-xs text-[#a87edf] hover:text-white transition-colors tracking-wide">Forgot password?</button>
                     </div>
-                    <input type="password" placeholder="Enter your password" value={signInPassword} onChange={e => setSignInPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignIn()} className={inputClass} />
+                    <div className="relative">
+                      <input type={showSignInPassword ? 'text' : 'password'} placeholder="Enter your password" value={signInPassword} onChange={e => setSignInPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignIn()} className={`${inputClass} pr-12`} />
+                      <button type="button" onClick={() => setShowSignInPassword(prev => !prev)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#a87edf] hover:text-white transition-colors">{showSignInPassword ? 'Hide' : 'Show'}</button>
+                    </div>
                   </div>
 
                   <button onClick={handleSignIn} disabled={loading} className={primaryBtn}>
@@ -324,11 +350,17 @@ export default function LoginPage() {
                     <>
                       <div>
                         <label className={labelClass}>New Password</label>
-                        <input type="password" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className={inputClass} />
+                        <div className="relative">
+                          <input type={showNewPassword ? 'text' : 'password'} placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className={`${inputClass} pr-12`} />
+                          <button type="button" onClick={() => setShowNewPassword(prev => !prev)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#a87edf] hover:text-white transition-colors">{showNewPassword ? 'Hide' : 'Show'}</button>
+                        </div>
                       </div>
                       <div>
                         <label className={labelClass}>Confirm Password</label>
-                        <input type="password" placeholder="Confirm new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className={inputClass} />
+                        <div className="relative">
+                          <input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className={`${inputClass} pr-12`} />
+                          <button type="button" onClick={() => setShowConfirmPassword(prev => !prev)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#a87edf] hover:text-white transition-colors">{showConfirmPassword ? 'Hide' : 'Show'}</button>
+                        </div>
                       </div>
                       <button onClick={handleResetPassword} disabled={loading} className={primaryBtn}>
                         {loading ? <><span className="spinner" />Resetting…</> : 'Reset Password'}
@@ -373,7 +405,13 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <label className={labelClass}>Password</label>
-                  <input type="password" placeholder="Create a strong password (min. 6 chars)" value={signUpPassword} onChange={e => setSignUpPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignUp()} className={inputClass} />
+                  <div className="relative">
+                    <input type={showSignUpPassword ? 'text' : 'password'} placeholder="Create a strong password (min. 8 chars)" value={signUpPassword} onChange={e => setSignUpPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignUp()} className={`${inputClass} pr-12`} />
+                    <button type="button" onClick={() => setShowSignUpPassword(prev => !prev)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#a87edf] hover:text-white transition-colors">{showSignUpPassword ? 'Hide' : 'Show'}</button>
+                  </div>
+                  {signUpPassword && (
+                    <div className={`text-xs mt-2 ${isSignUpPasswordStrong ? 'text-emerald-300' : 'text-red-400'}`}>{isSignUpPasswordStrong ? 'Strong password' : passwordStrengthMessage}</div>
+                  )}
                 </div>
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <input type="checkbox" id="agreeTerms" checked={agreeTerms} onChange={e => setAgreeTerms(e.target.checked)} className="mt-0.5 w-4 h-4 cursor-pointer accent-[#7c5cbf] flex-shrink-0" />
@@ -383,7 +421,7 @@ export default function LoginPage() {
                   </span>
                 </label>
 
-                <button onClick={handleSignUp} disabled={loading} className={primaryBtn}>
+                <button onClick={handleSignUp} disabled={loading || !isSignUpPasswordStrong} className={primaryBtn}>
                   {loading ? <><span className="spinner" />Creating account…</> : 'Create Account'}
                 </button>
 
