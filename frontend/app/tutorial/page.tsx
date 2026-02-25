@@ -276,18 +276,9 @@ export default function TutorialPage() {
       <div className="relative z-10">
         {/* Sidebar Navigation */}
         <div className="hidden lg:fixed lg:left-0 lg:top-8 lg:h-[calc(100vh-4rem)] lg:w-72 lg:bg-slate-950/60 lg:backdrop-blur-md lg:border-r lg:border-white/10 lg:overflow-y-auto lg:z-40 lg:block">
-          <div className="p-6">
+          <div className="p-6 mt-6"> {/* Added margin-top to move the content down */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-white/70 uppercase tracking-widest">Tutorial Steps</h3>
-              <Link
-                href="/"
-                className="px-4 sm:px-5 py-2 sm:py-2.5 glass rounded-xl text-xs sm:text-sm font-semibold transition-all hover:bg-white/[0.08] hover:-translate-y-0.5 border border-white/[0.08] tracking-wide text-[#c5d4ed] hover:text-white ml-3 inline-flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V9.5z" />
-                </svg>
-                Home
-              </Link>
             </div>
             <div className="space-y-2">
               {steps.map((step) => (
