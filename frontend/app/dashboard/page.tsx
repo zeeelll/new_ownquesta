@@ -581,9 +581,9 @@ export default function DashboardPage() {
       } catch (e) {
         console.error('Failed to save selected project to localStorage', e);
       }
-      showNotification(`Opening ${project.name} in ML workspace...`, 'success');
+      showNotification(`Opening ${project.name} in Lab Playground...`, 'success');
       setTimeout(() => {
-        router.push('/ml/machine-learning');
+        router.push('/lab');
       }, 250);
       return;
     } else if (action === 'analyze') {
@@ -865,9 +865,9 @@ export default function DashboardPage() {
                   localStorage.setItem('mlSelectedProject', JSON.stringify(continueSelectedProject));
                 } catch (e) {}
                 setShowContinueModal(false);
-                // navigate to ML workspace
-                router.push('/ml/machine-learning');
-              }}>Open in ML</Button>
+                // navigate to Lab Playground
+                router.push('/lab');
+              }}>Open in Lab</Button>
             </div>
           </div>
         </div>
@@ -885,9 +885,9 @@ export default function DashboardPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold text-white">Open ML Workspace</h3>
+                  <h3 className="text-2xl font-bold text-white">Open Lab Playground</h3>
                 </div>
-                <p className="text-white/70 text-sm leading-relaxed">Enter a project name to open in the ML workspace, or pick a previous project.</p>
+                <p className="text-white/70 text-sm leading-relaxed">Enter a project name to open in the Lab Playground, or pick a previous project.</p>
               </div>
               <button 
                 onClick={() => { setShowMLModal(false); setMlProjectName(''); }} 
@@ -962,13 +962,13 @@ export default function DashboardPage() {
                     if (mlSelectedProjectTemp) {
                       // store full project object
                       localStorage.setItem('mlSelectedProject', JSON.stringify(mlSelectedProjectTemp));
-                      showNotification(`Opening ML workspace for ${mlSelectedProjectTemp.name}...`, 'success');
+                      showNotification(`Opening Lab Playground for${mlSelectedProjectTemp.name}...`, 'success');
                     } else if (name.length > 0) {
                       // try to find matching project by name
                       const match = projects.find(p => p.name === name);
                       if (match) {
                         localStorage.setItem('mlSelectedProject', JSON.stringify(match));
-                        showNotification(`Opening ML workspace for ${match.name}...`, 'success');
+                        showNotification(`Opening Lab Playground for${match.name}...`, 'success');
                       } else {
                         // Create new project and save it to userProjects
                         const newProject: Project = {
@@ -994,11 +994,11 @@ export default function DashboardPage() {
                         // Update local state to show new project immediately
                         setProjects(prev => [newProject, ...prev]);
                         
-                        showNotification(`Created and opening ML workspace for ${name}...`, 'success');
+                        showNotification(`Created and opening Lab Playground for ${name}...`, 'success');
                       }
                     } else {
                       try { localStorage.removeItem('mlSelectedProject'); } catch (e) {}
-                      showNotification('Opening blank ML workspace', 'success');
+                      showNotification('Opening blank Lab Playground...', 'success');
                     }
                   } catch (e) {
                     console.error('storage error', e);
@@ -1007,7 +1007,7 @@ export default function DashboardPage() {
                     setShowMLModal(false);
                     setMlProjectName('');
                     setMlSelectedProjectTemp(null);
-                    router.push('/ml/machine-learning');
+                    router.push('/lab');
                   }
                 }} 
                 variant="primary" 
@@ -1017,7 +1017,7 @@ export default function DashboardPage() {
                 <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Open Workspace
+                Open Lab Playground
               </Button>
               </div>
             </div>
@@ -1508,7 +1508,7 @@ export default function DashboardPage() {
                 <button 
                   onClick={() => {
                     if (stats.validations >= 3 && stats.avgConfidence >= 80) {
-                      router.push('/ml');
+                      router.push('/lab');
                     } else {
                       showNotification(`Need ${Math.max(0, 3 - stats.validations)} more validations and ${Math.max(0, 80 - stats.avgConfidence)}% higher confidence`, 'error');
                     }

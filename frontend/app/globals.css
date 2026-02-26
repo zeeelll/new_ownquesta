@@ -230,6 +230,11 @@ input, textarea, select, button, label {
   }
 }
 
+/* Lab Playground spin animation */
+@keyframes lab-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ─────────────────────────────────────────────
    PREMIUM ANIMATIONS
 ───────────────────────────────────────────── */
